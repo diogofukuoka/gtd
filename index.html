@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>GTD Sync (Final v4.1)</title>
+    <title>GTD Sync (Final v4.2)</title>
     <style>
         :root { --primary: #2c3e50; --accent: #3498db; --success: #27ae60; --warning: #f39c12; --danger: #e74c3c; --light: #ecf0f1; --cloud: #8e44ad; --google: #4285f4; }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -25,7 +25,6 @@
         .btn-config { background: none; border: 1px solid #ccc; border-radius: 4px; padding: 5px 10px; cursor: pointer; font-size: 0.8rem; }
         .btn-google { background: var(--google); color: white; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-size: 0.8rem; display: flex; align-items: center; gap: 5px; }
         .btn-google:hover { background: #357ae8; }
-        .btn-sync-g { background: #e8f0fe; color: var(--google); border: 1px solid var(--google); padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 0.75rem; margin-left: 10px; }
 
         /* Modal */
         #configModal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; overflow-y: auto; }
@@ -36,7 +35,7 @@
 
         /* Inputs */
         .input-group { display: flex; gap: 8px; margin-bottom: 20px; }
-        input[type="text"], input[type="datetime-local"] { flex: 1; padding: 12px; border: 2px solid #ddd; border-radius: 8px; font-size: 16px; }
+        input[type="text"], input[type="date"] { flex: 1; padding: 12px; border: 2px solid #ddd; border-radius: 8px; font-size: 16px; }
         button { padding: 12px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; transition: 0.2s; }
         button:active { transform: scale(0.96); }
         .btn-add { background: var(--accent); color: white; min-width: 80px; }
@@ -126,7 +125,7 @@
             <h3 style="text-align:center">O que é isso?</h3>
             <div class="decision-grid">
                 <button class="btn-no" onclick="finalize('trash')">Lixo</button>
-                <button class="btn-opt" onclick="finalize('someday')">Talvez</button>
+                <button class="btn-opt" onclick="finalize('someday')">Um Dia / Talvez</button>
                 <button class="btn-opt full-width" onclick="finalize('reference')">Referência</button>
             </div>
             <button class="btn-back" onclick="resetSteps()">Voltar</button>
@@ -191,25 +190,47 @@
 
     <!-- LISTAS -->
     <div class="lists-grid">
-        <div class="list-card card-inbox"><div class="list-header"><h3>📥 Entrada</h3><span class="badge" id="c-inbox">0</span></div><ul id="l-inbox"></ul></div>
-        <div class="list-card card-next"><div class="list-header"><h3>🔥 Próximas Ações</h3><span class="badge" id="c-next">0</span></div><ul id="l-next"></ul></div>
-        <div class="list-card card-projects"><div class="list-header"><h3>📂 Projetos</h3><span class="badge" id="c-project">0</span></div><ul id="l-project"></ul></div>
-        <div class="list-card card-waiting"><div class="list-header"><h3>⏳ Em Espera</h3><span class="badge" id="c-waiting">0</span></div><ul id="l-waiting"></ul></div>
-        
-        <!-- CALENDÁRIO COM BOTÃO DE VERIFICAÇÃO -->
-        <div class="list-card">
-            <div class="list-header">
-                <h3>📅 Calendário</h3>
-                <div>
-                    <button class="btn-sync-g" onclick="checkDeletedEvents()" title="Sincronizar Exclusões">🔄 Check Google</button>
-                    <span class="badge" id="c-calendar">0</span>
-                </div>
-            </div>
-            <ul id="l-calendar"></ul>
+        <!-- 1. Entrada -->
+        <div class="list-card card-inbox">
+            <div class="list-header"><h3>📥 Entrada</h3><span class="badge" id="c-inbox">0</span></div>
+            <ul id="l-inbox"></ul>
         </div>
         
-        <div class="list-card"><div class="list-header"><h3>💡 Talvez</h3><span class="badge" id="c-someday">0</span></div><ul id="l-someday"></ul></div>
-        <div class="list-card"><div class="list-header"><h3>📚 Referência</h3><span class="badge" id="c-reference">0</span></div><ul id="l-reference"></ul></div>
+        <!-- 2. Próximas Ações -->
+        <div class="list-card card-next">
+            <div class="list-header"><h3>🔥 Próximas Ações</h3><span class="badge" id="c-next">0</span></div>
+            <ul id="l-next"></ul>
+        </div>
+        
+        <!-- 3. Projetos -->
+        <div class="list-card card-projects">
+            <div class="list-header"><h3>📂 Projetos</h3><span class="badge" id="c-project">0</span></div>
+            <ul id="l-project"></ul>
+        </div>
+        
+        <!-- 4. Calendário (Movido para cima) -->
+        <div class="list-card">
+            <div class="list-header"><h3>📅 Calendário</h3><span class="badge" id="c-calendar">0</span></div>
+            <ul id="l-calendar"></ul>
+        </div>
+
+        <!-- 5. Em Espera / Delegar (Renomeado) -->
+        <div class="list-card card-waiting">
+            <div class="list-header"><h3>⏳ Delegar (Esperar)</h3><span class="badge" id="c-waiting">0</span></div>
+            <ul id="l-waiting"></ul>
+        </div>
+        
+        <!-- 6. Um Dia / Talvez (Renomeado) -->
+        <div class="list-card">
+            <div class="list-header"><h3>💡 Um Dia / Talvez</h3><span class="badge" id="c-someday">0</span></div>
+            <ul id="l-someday"></ul>
+        </div>
+        
+        <!-- 7. Referência -->
+        <div class="list-card">
+            <div class="list-header"><h3>📚 Arquivo / Referência</h3><span class="badge" id="c-reference">0</span></div>
+            <ul id="l-reference"></ul>
+        </div>
     </div>
 </div>
 
@@ -261,8 +282,6 @@
                     localStorage.setItem('gtd_google_token', JSON.stringify(tokenData));
                     googleAccessToken = resp.access_token;
                     updateGoogleSyncStatus(true);
-                    
-                    // Auto-check on login/init
                     checkDeletedEvents();
                 },
             });
@@ -277,8 +296,7 @@
                 googleAccessToken = tokenData.access_token;
                 gapi.client.setToken({ access_token: googleAccessToken });
                 updateGoogleSyncStatus(true);
-                // Auto-check on restore
-                setTimeout(checkDeletedEvents, 2000); // Delay para garantir carregamento
+                setTimeout(checkDeletedEvents, 2000); 
             } else {
                 localStorage.removeItem('gtd_google_token');
                 updateGoogleSyncStatus(false);
@@ -297,50 +315,29 @@
         else el.innerHTML = `<span class="dot google-disconnected"></span> Agenda: <a href="#" onclick="handleAuthClick()">Conectar</a>`;
     }
 
-    // --- VERIFICAÇÃO DE EVENTOS EXCLUÍDOS (SYNC REVERSO) ---
+    // --- SYNC REVERSO (GOOGLE -> APP) ---
     async function checkDeletedEvents() {
         if (!gapi.client.getToken()) return;
-
-        // Filtra apenas itens do calendário que têm ID do Google
         const calendarItems = items.filter(i => i.status === 'calendar' && i.googleEventId);
         if (calendarItems.length === 0) return;
-
-        console.log("Verificando exclusões no Google...", calendarItems.length);
         let changesCount = 0;
-
         for (const item of calendarItems) {
             try {
-                // Tenta pegar o evento. Se retornar 404 ou status 'cancelled', deletamos localmente.
-                const response = await gapi.client.calendar.events.get({
-                    'calendarId': 'primary',
-                    'eventId': item.googleEventId
-                });
-
+                const response = await gapi.client.calendar.events.get({ 'calendarId': 'primary', 'eventId': item.googleEventId });
                 if (response.result.status === 'cancelled') {
-                    // Evento foi cancelado no Google
                     removeItemById(item.id);
                     changesCount++;
                 }
             } catch (err) {
-                // Se der 404 (Not Found), também deletamos
-                if (err.status === 404) {
-                    removeItemById(item.id);
-                    changesCount++;
-                }
+                if (err.status === 404) { removeItemById(item.id); changesCount++; }
             }
         }
-
-        if (changesCount > 0) {
-            syncSave();
-            console.log(`${changesCount} itens excluídos sincronizados do Google.`);
-        }
+        if (changesCount > 0) syncSave();
     }
 
     function removeItemById(id) {
         const index = items.findIndex(i => i.id === id);
-        if (index > -1) {
-            items.splice(index, 1);
-        }
+        if (index > -1) items.splice(index, 1);
     }
 
     // --- APP LOGIC ---
@@ -387,26 +384,19 @@
         }
     }
 
-    // --- GOOGLE CALENDAR ACTIONS ---
+    // --- GOOGLE ACTIONS ---
     async function createCalendarEvent(item) {
         if (!gapi.client.getToken()) return null;
         try {
             const startDateTime = new Date(item.date);
             const endDateTime = new Date(startDateTime.getTime() + (60 * 60 * 1000));
             if (!gapi.client.calendar) await gapi.client.load('calendar', 'v3');
-
             const response = await gapi.client.calendar.events.insert({
                 'calendarId': 'primary',
                 'resource': {
                     'summary': "GTD: " + item.text,
-                    'start': { 
-                        'dateTime': startDateTime.toISOString(), 
-                        'timeZone': Intl.DateTimeFormat().resolvedOptions().timeZone 
-                    },
-                    'end': { 
-                        'dateTime': endDateTime.toISOString(),
-                        'timeZone': Intl.DateTimeFormat().resolvedOptions().timeZone
-                    }
+                    'start': { 'dateTime': startDateTime.toISOString(), 'timeZone': Intl.DateTimeFormat().resolvedOptions().timeZone },
+                    'end': { 'dateTime': endDateTime.toISOString(), 'timeZone': Intl.DateTimeFormat().resolvedOptions().timeZone }
                 }
             });
             alert("Evento criado no Google Agenda!");
@@ -426,10 +416,7 @@
     async function deleteCalendarEvent(eventId) {
         if (!eventId || !gapi.client.getToken()) return;
         try {
-            await gapi.client.calendar.events.delete({
-                'calendarId': 'primary',
-                'eventId': eventId
-            });
+            await gapi.client.calendar.events.delete({ 'calendarId': 'primary', 'eventId': eventId });
             alert("Evento excluído do Google Agenda.");
         } catch (err) {
             if (err.status !== 404 && err.status !== 410) {
