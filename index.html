@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>GTD Sync (Final v3.9)</title>
+    <title>GTD Sync (Final v4.0)</title>
     <style>
         :root { --primary: #2c3e50; --accent: #3498db; --success: #27ae60; --warning: #f39c12; --danger: #e74c3c; --light: #ecf0f1; --cloud: #8e44ad; --google: #4285f4; }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -224,14 +224,21 @@
     let currentItemIdx = null;
     let gapiInited = false, gisInited = false, tokenClient, googleAccessToken;
 
+    const DISCOVERY_DOC = 'https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest';
+
     // --- GOOGLE API SETUP ---
     function gapiLoaded() { gapi.load('client', intializeGapiClient); }
+    
     async function intializeGapiClient() { 
-        await gapi.client.init({}); 
+        // CORREÇÃO: Carrega o Discovery Doc na inicialização para evitar erros de método não encontrado
+        await gapi.client.init({
+            discoveryDocs: [DISCOVERY_DOC],
+        }); 
         gapiInited = true; 
         restoreGoogleSession(); 
         maybeEnableGoogleSignIn(); 
     }
+    
     function gisLoaded() { gisInited = true; maybeEnableGoogleSignIn(); }
     
     function maybeEnableGoogleSignIn() {
@@ -323,10 +330,18 @@
 
     // --- GOOGLE CALENDAR ACTIONS ---
     async function createCalendarEvent(item) {
-        if (!gapi.client.getToken()) return null;
+        if (!gapi.client.getToken()) {
+            alert("Não conectado ao Google. Clique em Conectar.");
+            return null;
+        }
         try {
             const startDateTime = new Date(item.date);
             const endDateTime = new Date(startDateTime.getTime() + (60 * 60 * 1000));
+
+            // Garante que o cliente de calendário está carregado
+            if (!gapi.client.calendar) {
+                 await gapi.client.load('calendar', 'v3');
+            }
 
             const response = await gapi.client.calendar.events.insert({
                 'calendarId': 'primary',
@@ -345,12 +360,20 @@
             alert("Evento criado no Google Agenda!");
             return response.result.id; 
         } catch (err) {
+            console.error("Erro Google:", err);
+            
+            let msg = "Erro desconhecido";
+            if (err.result && err.result.error) msg = err.result.error.message;
+            else if (err.message) msg = err.message;
+            else if (err.body) msg = err.body;
+            else msg = JSON.stringify(err);
+
             if (err.status === 401) {
                 localStorage.removeItem('gtd_google_token');
                 updateGoogleSyncStatus(false);
-                alert("Sessão Google expirada. Conecte novamente.");
+                alert("Sessão expirada. Conecte novamente.");
             } else {
-                alert("Erro Google Agenda: " + JSON.stringify(err));
+                alert("Erro Google Agenda: " + msg + "\n(Verifique console F12)");
             }
             return null;
         }
@@ -367,7 +390,7 @@
         } catch (err) {
             if (err.status !== 404 && err.status !== 410) {
                  console.error("Erro ao excluir do Google:", err);
-                 alert("Não foi possível excluir do Google Agenda.");
+                 alert("Aviso: Não foi possível excluir do Google Agenda.");
             }
         }
     }
@@ -424,7 +447,6 @@
     async function deleteItem(idx) {
         const item = items[idx];
         if(confirm("Remover este item?")) { 
-            // Verifica se tem ID para apagar no Google
             if (item.status === 'calendar' && item.googleEventId) {
                 await deleteCalendarEvent(item.googleEventId);
             }
