@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>GTD Sync (Final v4.7)</title>
+    <title>GTD Fukuoka</title>
     <!-- Script para permitir Drag & Drop em Celulares -->
     <script src="https://bernardo-castilho.github.io/DragDropTouch/DragDropTouch.js"></script>
     <style>
@@ -69,11 +69,10 @@
             align-items: center; 
             background: #fff; 
             transition: background-color 0.3s;
-            touch-action: pan-y; /* Permite scroll vertical, bloqueia horizontal */
+            touch-action: pan-y;
         }
         li:last-child { border-bottom: none; }
         
-        /* Classe ativada quando segura por 500ms */
         li.ready-to-drag {
             background-color: #e3f2fd;
             border: 1px solid #3498db;
@@ -82,7 +81,6 @@
             transform: scale(1.01);
         }
         
-        /* Classe enquanto arrasta */
         li.dragging { opacity: 0.5; background: #ccc; }
         
         .task-text { font-weight: 400; font-size: 1rem; color: #2c3e50; pointer-events: none; }
@@ -115,7 +113,7 @@
 
 <div class="container">
     <header>
-        <h1>GTD Sync</h1>
+        <h1>GTD Fukuoka</h1>
         <div class="status-bar">
             <div class="status-indicator">
                 <div id="syncDot" class="dot"></div>
@@ -207,7 +205,7 @@
     const DISCOVERY_DOC = 'https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest';
     let longPressTimer;
 
-    // --- VOICE RECOGNITION ---
+    // --- VOICE RECOGNITION (CAPITALIZED) ---
     let recognition;
     if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -217,67 +215,53 @@
         recognition.interimResults = false;
         recognition.onstart = function() { document.getElementById('voiceBtn').classList.add('listening'); document.getElementById('inboxInput').placeholder = "Ouvindo..."; };
         recognition.onend = function() { document.getElementById('voiceBtn').classList.remove('listening'); document.getElementById('inboxInput').placeholder = "Coleta rápida..."; };
-        recognition.onresult = function(event) { document.getElementById('inboxInput').value = event.results[0][0].transcript; };
+        recognition.onresult = function(event) { 
+            let transcript = event.results[0][0].transcript;
+            // CAPITALIZAÇÃO
+            transcript = transcript.charAt(0).toUpperCase() + transcript.slice(1);
+            document.getElementById('inboxInput').value = transcript; 
+        };
     } else { document.getElementById('voiceBtn').style.display = 'none'; }
     function toggleVoice() { if (!recognition) return alert("Sem suporte voz."); try { recognition.start(); } catch(e) { recognition.stop(); } }
 
     // --- DRAG AND DROP (LONG PRESS LOGIC) ---
     function allowDrop(ev) { ev.preventDefault(); ev.currentTarget.classList.add('drag-over'); }
     function leaveDrop(ev) { ev.currentTarget.classList.remove('drag-over'); }
-
-    // Inicializa o long press
     function handleTouchStart(e, idx) {
         const li = e.currentTarget;
         longPressTimer = setTimeout(() => {
-            // Ativa o modo drag
             li.setAttribute('draggable', 'true');
             li.classList.add('ready-to-drag');
-            if (navigator.vibrate) navigator.vibrate(50); // Feedback tátil
-            // Importante: No mobile, o dragstart pode não disparar automaticamente após o timer,
-            // mas o atributo draggable=true permite que o próximo movimento seja um drag.
-        }, 500); // 500ms delay
+            if (navigator.vibrate) navigator.vibrate(50);
+        }, 500); 
     }
-
     function handleTouchEnd(e) {
         clearTimeout(longPressTimer);
-        // Se soltou antes de 500ms, limpa o estado (é um toque ou scroll)
         const li = e.currentTarget;
         if (!li.classList.contains('dragging')) {
             li.removeAttribute('draggable');
             li.classList.remove('ready-to-drag');
         }
     }
-
-    function handleTouchMove(e) {
-        // Se mover antes do timer, é scroll -> cancela o timer
-        clearTimeout(longPressTimer);
-    }
-
+    function handleTouchMove(e) { clearTimeout(longPressTimer); }
     function drag(ev, index) {
         ev.dataTransfer.setData("text/plain", index);
         ev.target.classList.add('dragging');
         ev.target.classList.remove('ready-to-drag');
     }
-
     function dragEnd(ev) {
         ev.target.classList.remove('dragging');
         ev.target.removeAttribute('draggable');
     }
-
     async function drop(ev, newStatus) {
         ev.preventDefault();
         ev.currentTarget.classList.remove('drag-over');
         const index = ev.dataTransfer.getData("text/plain");
         const item = items[index];
         const draggedEl = document.querySelector('.dragging');
-        if(draggedEl) {
-            draggedEl.classList.remove('dragging');
-            draggedEl.removeAttribute('draggable');
-        }
-
+        if(draggedEl) { draggedEl.classList.remove('dragging'); draggedEl.removeAttribute('draggable'); }
         if (!item || item.status === newStatus) return;
         const oldStatus = item.status;
-        
         if (newStatus === 'calendar') {
             const dateStr = prompt("Para qual data e hora? (AAAA-MM-DD HH:MM)", new Date().toISOString().slice(0,16).replace('T', ' '));
             if (!dateStr) return; 
@@ -290,7 +274,6 @@
             const who = prompt("Delegar para quem?");
             if (who) item.note = "Delegado: " + who;
         }
-
         if (oldStatus === 'calendar' && newStatus !== 'calendar' && item.googleEventId) {
             if(confirm("Remover o evento correspondente do Google Agenda?")) {
                 await deleteCalendarEvent(item.googleEventId);
@@ -298,12 +281,11 @@
                 delete item.date;
             }
         }
-
         item.status = newStatus;
         syncSave();
     }
 
-    // --- GOOGLE API & SYNC (Mesmo da v4.5) ---
+    // --- GOOGLE API & SYNC ---
     function gapiLoaded() { gapi.load('client', intializeGapiClient); }
     async function intializeGapiClient() { await gapi.client.init({ discoveryDocs: [DISCOVERY_DOC] }); gapiInited = true; restoreGoogleSession(); maybeEnableGoogleSignIn(); }
     function gisLoaded() { gisInited = true; maybeEnableGoogleSignIn(); }
@@ -331,7 +313,6 @@
     function openConfig() { document.getElementById('cfgBinId').value = config.binId; document.getElementById('cfgApiKey').value = config.apiKey; document.getElementById('cfgGoogleClientId').value = config.googleClientId; document.getElementById('configModal').style.display = 'block'; }
     function closeConfig() { document.getElementById('configModal').style.display = 'none'; }
     function saveConfig() { config.binId = document.getElementById('cfgBinId').value.trim(); config.apiKey = document.getElementById('cfgApiKey').value.trim(); config.googleClientId = document.getElementById('cfgGoogleClientId').value.trim(); localStorage.setItem('gtd_config', JSON.stringify(config)); closeConfig(); location.reload(); }
-
     function render() {
         const ids = ['inbox', 'next', 'project', 'waiting', 'calendar', 'someday', 'reference'];
         const counts = {};
@@ -342,16 +323,13 @@
             if(document.getElementById('l-'+listId)) {
                 counts[listId]++;
                 const li = document.createElement('li');
-                // DRAG: Listeners para toque e mouse
                 li.setAttribute('onmousedown', `handleTouchStart(event, ${idx})`);
                 li.setAttribute('ontouchstart', `handleTouchStart(event, ${idx})`);
                 li.setAttribute('onmouseup', `handleTouchEnd(event)`);
                 li.setAttribute('ontouchend', `handleTouchEnd(event)`);
                 li.setAttribute('ontouchmove', `handleTouchMove(event)`);
-                
                 li.setAttribute('ondragstart', `drag(event, ${idx})`);
                 li.setAttribute('ondragend', `dragEnd(event)`);
-                
                 let extra = '';
                 if(item.note) extra += `<span class="meta">${item.note}</span>`;
                 let googleIcon = '';
