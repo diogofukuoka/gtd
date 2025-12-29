@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>GTD Sync (Final v3.6)</title>
+    <title>GTD Sync (Final v3.7)</title>
     <style>
         :root { --primary: #2c3e50; --accent: #3498db; --success: #27ae60; --warning: #f39c12; --danger: #e74c3c; --light: #ecf0f1; --cloud: #8e44ad; --google: #4285f4; }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -35,7 +35,7 @@
 
         /* Inputs */
         .input-group { display: flex; gap: 8px; margin-bottom: 20px; }
-        input[type="text"], input[type="date"] { flex: 1; padding: 12px; border: 2px solid #ddd; border-radius: 8px; font-size: 16px; }
+        input[type="text"], input[type="datetime-local"] { flex: 1; padding: 12px; border: 2px solid #ddd; border-radius: 8px; font-size: 16px; }
         button { padding: 12px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; transition: 0.2s; }
         button:active { transform: scale(0.96); }
         .btn-add { background: var(--accent); color: white; min-width: 80px; }
@@ -173,15 +173,16 @@
         <div id="input-defer" class="step hidden">
             <h3 style="text-align:center">Quando?</h3>
             <div class="decision-grid">
-                <button class="btn-opt" onclick="toStep('input-cal')">📅 Data Certa</button>
+                <button class="btn-opt" onclick="toStep('input-cal')">📅 Data/Hora</button>
                 <button class="btn-opt" onclick="finalize('next')">🔥 Assim que der</button>
             </div>
             <button class="btn-back" onclick="toStep('step-del')">Voltar</button>
         </div>
 
         <div id="input-cal" class="step hidden">
-            <h3 style="text-align:center">Escolha a data</h3>
-            <input type="date" id="calInput">
+            <h3 style="text-align:center">Escolha a Data e Hora</h3>
+            <!-- MUDANÇA: Type datetime-local para permitir hora -->
+            <input type="datetime-local" id="calInput">
             <button class="btn-yes" style="width:100%; margin-top:10px;" onclick="finalize('calendar')">Agendar no Google</button>
             <button class="btn-back" onclick="toStep('input-defer')">Voltar</button>
         </div>
@@ -225,14 +226,12 @@
 
     // --- GOOGLE API SETUP ---
     function gapiLoaded() { gapi.load('client', intializeGapiClient); }
-    
     async function intializeGapiClient() { 
         await gapi.client.init({}); 
         gapiInited = true; 
-        restoreGoogleSession(); // Tenta restaurar sessão salva ao carregar
+        restoreGoogleSession(); 
         maybeEnableGoogleSignIn(); 
     }
-    
     function gisLoaded() { gisInited = true; maybeEnableGoogleSignIn(); }
     
     function maybeEnableGoogleSignIn() {
@@ -242,16 +241,9 @@
                 scope: 'https://www.googleapis.com/auth/calendar.events',
                 callback: (resp) => {
                     if (resp.error !== undefined) throw (resp);
-                    
-                    // SUCESSO NO LOGIN: Salva o token no localStorage
                     const expiresAt = Date.now() + (resp.expires_in * 1000);
-                    const tokenData = {
-                        access_token: resp.access_token,
-                        expires_at: expiresAt
-                    };
+                    const tokenData = { access_token: resp.access_token, expires_at: expiresAt };
                     localStorage.setItem('gtd_google_token', JSON.stringify(tokenData));
-                    
-                    // Configura a sessão atual
                     googleAccessToken = resp.access_token;
                     updateGoogleSyncStatus(true);
                 },
@@ -259,23 +251,15 @@
         }
     }
 
-    // --- FUNÇÃO DE PERSISTÊNCIA DE SESSÃO ---
     function restoreGoogleSession() {
         const stored = localStorage.getItem('gtd_google_token');
         if (stored) {
             const tokenData = JSON.parse(stored);
-            // Verifica se o token ainda é válido (damos uma margem de 1 minuto)
             if (Date.now() < (tokenData.expires_at - 60000)) {
                 googleAccessToken = tokenData.access_token;
-                // Configura o gapi com o token salvo
-                gapi.client.setToken({
-                    access_token: googleAccessToken
-                });
+                gapi.client.setToken({ access_token: googleAccessToken });
                 updateGoogleSyncStatus(true);
-                console.log("Sessão Google restaurada via localStorage.");
             } else {
-                // Token expirado
-                console.log("Token Google expirado. Necessário reconectar.");
                 localStorage.removeItem('gtd_google_token');
                 updateGoogleSyncStatus(false);
             }
@@ -283,8 +267,7 @@
     }
 
     function handleAuthClick() {
-        if (!tokenClient) { alert("Google API não iniciada. Verifique o Client ID e recarregue."); return; }
-        // Força novo token
+        if (!tokenClient) { alert("Google API não iniciada."); return; }
         tokenClient.requestAccessToken({prompt: ''});
     }
 
@@ -306,7 +289,7 @@
         document.getElementById('syncText').innerText = 'Sync...';
         try {
             const res = await fetch(`https://api.jsonbin.io/v3/b/${config.binId}/latest`, { headers: { 'X-Master-Key': config.apiKey } });
-            if (!res.ok) throw new Error(res.status + " " + res.statusText);
+            if (!res.ok) throw new Error(res.status);
             const data = await res.json();
             items = data.record.gtd_tasks || data.record || [];
             localStorage.setItem('gtd_data', JSON.stringify(items));
@@ -314,7 +297,6 @@
             document.getElementById('syncText').innerText = 'Online';
             document.getElementById('syncDot').className = 'dot online';
         } catch (e) {
-            console.error(e);
             document.getElementById('syncText').innerText = 'Erro';
             document.getElementById('syncDot').className = 'dot error';
         }
@@ -339,34 +321,40 @@
         }
     }
 
-    // --- CREATE EVENT ---
+    // --- CREATE EVENT (COM HORA) ---
     async function createCalendarEvent(item) {
-        // Verifica se temos token (seja novo ou restaurado)
         if (!gapi.client.getToken()) { 
-            alert("Você não está conectado ao Google. Clique em 'Conectar' no topo."); 
+            alert("Você não está conectado ao Google."); 
             return; 
         }
         try {
+            // Cria data com Fuso Horário Local
+            const startDateTime = new Date(item.date);
+            const endDateTime = new Date(startDateTime.getTime() + (60 * 60 * 1000)); // Duração de 1 hora
+
             await gapi.client.load('calendar', 'v3');
             await gapi.client.calendar.events.insert({
                 'calendarId': 'primary',
                 'resource': {
                     'summary': "GTD: " + item.text,
-                    'start': { 'date': item.date },
-                    'end': { 'date': item.date }
+                    'start': { 
+                        'dateTime': startDateTime.toISOString(), 
+                        'timeZone': Intl.DateTimeFormat().resolvedOptions().timeZone 
+                    },
+                    'end': { 
+                        'dateTime': endDateTime.toISOString(),
+                        'timeZone': Intl.DateTimeFormat().resolvedOptions().timeZone
+                    }
                 }
             });
-            alert("Evento criado no Google Agenda com sucesso!");
+            alert("Evento criado no Google Agenda com sucesso! (1h de duração)");
         } catch (err) {
-            console.error(err);
-            // Se der erro de autenticação (401), limpa o token salvo para forçar login na próxima
             if (err.status === 401) {
                 localStorage.removeItem('gtd_google_token');
                 updateGoogleSyncStatus(false);
-                alert("Sessão Google expirada. Por favor, conecte novamente.");
+                alert("Sessão Google expirada. Conecte novamente.");
             } else {
-                const msg = err.result && err.result.error ? err.result.error.message : JSON.stringify(err);
-                alert("Erro Google Agenda: " + msg);
+                alert("Erro Google Agenda: " + JSON.stringify(err));
             }
         }
     }
@@ -463,8 +451,11 @@
                 let extra = '';
                 if(item.note) extra += `<span class="meta">${item.note}</span>`;
                 if(item.date) {
-                    const d = item.date.split('-');
-                    extra += `<span class="meta">📅 ${d[2]}/${d[1]}</span>`;
+                    const dateObj = new Date(item.date);
+                    // Formata para DD/MM/AAAA HH:MM
+                    const dateStr = dateObj.toLocaleDateString('pt-BR');
+                    const timeStr = dateObj.toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'});
+                    extra += `<span class="meta">📅 ${dateStr} às ${timeStr}</span>`;
                 }
                 const icon = listId === 'inbox' ? '✖' : '✔';
                 li.innerHTML = `<div><span class="task-text">${item.text}</span>${extra}</div><span class="del-btn" onclick="deleteItem(${idx})">${icon}</span>`;
