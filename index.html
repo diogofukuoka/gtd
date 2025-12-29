@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>GTD Sync (Final v3.8)</title>
+    <title>GTD Sync (Final v3.9)</title>
     <style>
         :root { --primary: #2c3e50; --accent: #3498db; --success: #27ae60; --warning: #f39c12; --danger: #e74c3c; --light: #ecf0f1; --cloud: #8e44ad; --google: #4285f4; }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -69,6 +69,7 @@
         li:last-child { border-bottom: none; }
         .task-text { font-weight: 400; font-size: 1rem; color: #2c3e50; }
         .meta { font-size: 0.75rem; color: #666; display: block; margin-top: 3px; }
+        .google-icon { background: #e8f0fe; color: #1967d2; font-weight: bold; padding: 2px 5px; border-radius: 4px; font-size: 0.7em; margin-left: 5px; }
         .del-btn { color: #ccc; font-size: 1.2rem; padding: 0 10px; cursor: pointer; }
         .del-btn:hover { color: var(--danger); }
         .hidden { display: none !important; }
@@ -180,7 +181,7 @@
         </div>
 
         <div id="input-cal" class="step hidden">
-            <h3 style="text-align:center">Escolha a data</h3>
+            <h3 style="text-align:center">Escolha a Data e Hora</h3>
             <input type="datetime-local" id="calInput">
             <button class="btn-yes" style="width:100%; margin-top:10px;" onclick="finalize('calendar')">Agendar no Google</button>
             <button class="btn-back" onclick="toStep('input-defer')">Voltar</button>
@@ -320,8 +321,7 @@
         }
     }
 
-    // --- GOOGLE CALENDAR ACTIONS (Create & Delete) ---
-
+    // --- GOOGLE CALENDAR ACTIONS ---
     async function createCalendarEvent(item) {
         if (!gapi.client.getToken()) return null;
         try {
@@ -343,24 +343,21 @@
                 }
             });
             alert("Evento criado no Google Agenda!");
-            return response.result.id; // Retorna o ID do evento para salvar
+            return response.result.id; 
         } catch (err) {
-            console.error("Erro ao criar evento:", err);
             if (err.status === 401) {
                 localStorage.removeItem('gtd_google_token');
                 updateGoogleSyncStatus(false);
                 alert("Sessão Google expirada. Conecte novamente.");
+            } else {
+                alert("Erro Google Agenda: " + JSON.stringify(err));
             }
             return null;
         }
     }
 
     async function deleteCalendarEvent(eventId) {
-        if (!eventId) return;
-        if (!gapi.client.getToken()) {
-            alert("Conecte-se ao Google para excluir o evento da agenda.");
-            return;
-        }
+        if (!eventId || !gapi.client.getToken()) return;
         try {
             await gapi.client.calendar.events.delete({
                 'calendarId': 'primary',
@@ -368,10 +365,9 @@
             });
             alert("Evento excluído do Google Agenda.");
         } catch (err) {
-            // Ignora erro 404/410 (já deletado)
             if (err.status !== 404 && err.status !== 410) {
                  console.error("Erro ao excluir do Google:", err);
-                 alert("Não foi possível excluir do Google Agenda (verifique conexão).");
+                 alert("Não foi possível excluir do Google Agenda.");
             }
         }
     }
@@ -410,7 +406,7 @@
             item.date = document.getElementById('calInput').value;
             if(item.date && config.googleClientId) {
                 const eventId = await createCalendarEvent(item);
-                if (eventId) item.googleEventId = eventId; // SALVA O ID DO EVENTO
+                if (eventId) item.googleEventId = eventId;
             }
         }
         
@@ -428,7 +424,7 @@
     async function deleteItem(idx) {
         const item = items[idx];
         if(confirm("Remover este item?")) { 
-            // Se for item de calendário e tiver ID do Google, deleta lá também
+            // Verifica se tem ID para apagar no Google
             if (item.status === 'calendar' && item.googleEventId) {
                 await deleteCalendarEvent(item.googleEventId);
             }
@@ -478,15 +474,16 @@
                 const li = document.createElement('li');
                 let extra = '';
                 if(item.note) extra += `<span class="meta">${item.note}</span>`;
+                let googleIcon = '';
                 if(item.date) {
                     const dateObj = new Date(item.date);
                     const dateStr = dateObj.toLocaleDateString('pt-BR');
                     const timeStr = dateObj.toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'});
                     extra += `<span class="meta">📅 ${dateStr} às ${timeStr}</span>`;
+                    if (item.googleEventId) googleIcon = '<span class="google-icon" title="Sincronizado no Google">G</span>';
                 }
                 const icon = listId === 'inbox' ? '✖' : '✔';
-                // Passando o idx para o deleteItem que agora é async
-                li.innerHTML = `<div><span class="task-text">${item.text}</span>${extra}</div><span class="del-btn" onclick="deleteItem(${idx})">${icon}</span>`;
+                li.innerHTML = `<div><span class="task-text">${item.text} ${googleIcon}</span>${extra}</div><span class="del-btn" onclick="deleteItem(${idx})">${icon}</span>`;
                 document.getElementById('l-'+listId).appendChild(li);
             }
         });
