@@ -3,14 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>GTD Sync (Final v4.2)</title>
+    <title>GTD Sync (v4.3)</title>
     <style>
         :root { --primary: #2c3e50; --accent: #3498db; --success: #27ae60; --warning: #f39c12; --danger: #e74c3c; --light: #ecf0f1; --cloud: #8e44ad; --google: #4285f4; }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background: #f0f2f5; color: #333; margin: 0; padding: 15px; padding-bottom: 80px; }
         .container { max-width: 800px; margin: 0 auto; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
         
-        /* Cabeçalho */
         header { text-align: center; margin-bottom: 20px; }
         h1 { margin: 0; color: var(--primary); font-size: 1.5rem; }
         .status-bar { background: #f8f9fa; border: 1px solid #e9ecef; padding: 10px; border-radius: 8px; margin-top: 15px; font-size: 0.85rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
@@ -23,10 +22,8 @@
         .dot.google-disconnected { background: #ccc; }
         
         .btn-config { background: none; border: 1px solid #ccc; border-radius: 4px; padding: 5px 10px; cursor: pointer; font-size: 0.8rem; }
-        .btn-google { background: var(--google); color: white; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-size: 0.8rem; display: flex; align-items: center; gap: 5px; }
-        .btn-google:hover { background: #357ae8; }
-
-        /* Modal */
+        
+        /* Modal Config */
         #configModal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; overflow-y: auto; }
         .modal-content { background: white; width: 90%; max-width: 500px; margin: 5% auto; padding: 20px; border-radius: 10px; box-shadow: 0 5px 20px rgba(0,0,0,0.2); }
         .modal-content label { display: block; margin-top: 10px; font-size: 0.9rem; font-weight: 600; color: var(--primary); }
@@ -35,7 +32,7 @@
 
         /* Inputs */
         .input-group { display: flex; gap: 8px; margin-bottom: 20px; }
-        input[type="text"], input[type="date"] { flex: 1; padding: 12px; border: 2px solid #ddd; border-radius: 8px; font-size: 16px; }
+        input[type="text"], input[type="datetime-local"] { flex: 1; padding: 12px; border: 2px solid #ddd; border-radius: 8px; font-size: 16px; }
         button { padding: 12px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; transition: 0.2s; }
         button:active { transform: scale(0.96); }
         .btn-add { background: var(--accent); color: white; min-width: 80px; }
@@ -72,6 +69,15 @@
         .google-icon { background: #e8f0fe; color: #1967d2; font-weight: bold; padding: 2px 5px; border-radius: 4px; font-size: 0.7em; margin-left: 5px; }
         .del-btn { color: #ccc; font-size: 1.2rem; padding: 0 10px; cursor: pointer; }
         .del-btn:hover { color: var(--danger); }
+        .btn-refresh { background: #f1f3f4; border: 1px solid #dadce0; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 0.75rem; color: var(--google); }
+        .btn-refresh:hover { background: #e8f0fe; }
+        
+        /* Toast Notification */
+        #toast { visibility: hidden; min-width: 250px; background-color: #333; color: #fff; text-align: center; border-radius: 4px; padding: 16px; position: fixed; z-index: 9999; left: 50%; bottom: 30px; transform: translateX(-50%); font-size: 14px; }
+        #toast.show { visibility: visible; -webkit-animation: fadein 0.5s, fadeout 0.5s 2.5s; animation: fadein 0.5s, fadeout 0.5s 2.5s; }
+        @keyframes fadein { from {bottom: 0; opacity: 0;} to {bottom: 30px; opacity: 1;} }
+        @keyframes fadeout { from {bottom: 30px; opacity: 1;} to {bottom: 0; opacity: 0;} }
+        
         .hidden { display: none !important; }
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
         @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
@@ -92,7 +98,7 @@
                 <span id="googleSyncStatus" style="margin-right:10px;">
                     <span id="googleDot" class="dot google-disconnected"></span> Agenda: Off
                 </span>
-                <button class="btn-config" onclick="openConfig()">⚙️ Configurar</button>
+                <button class="btn-config" onclick="openConfig()">⚙️ Config</button>
             </div>
         </div>
     </header>
@@ -112,129 +118,69 @@
             <div style="text-align:center; color:#888; font-size:0.8rem; text-transform:uppercase;">Processando Item:</div>
             <div id="currentItem" class="current-item"></div>
         </div>
-
+        <!-- Steps omitidos para brevidade (mesmos da v4.2) -->
         <div id="step-1" class="step">
             <h3 style="text-align:center">É passível de ação?</h3>
-            <div class="decision-grid">
-                <button class="btn-no" onclick="handleActionable(false)">NÃO</button>
-                <button class="btn-yes" onclick="handleActionable(true)">SIM</button>
-            </div>
+            <div class="decision-grid"><button class="btn-no" onclick="handleActionable(false)">NÃO</button><button class="btn-yes" onclick="handleActionable(true)">SIM</button></div>
         </div>
-
         <div id="step-no" class="step hidden">
             <h3 style="text-align:center">O que é isso?</h3>
-            <div class="decision-grid">
-                <button class="btn-no" onclick="finalize('trash')">Lixo</button>
-                <button class="btn-opt" onclick="finalize('someday')">Um Dia / Talvez</button>
-                <button class="btn-opt full-width" onclick="finalize('reference')">Referência</button>
-            </div>
-            <button class="btn-back" onclick="resetSteps()">Voltar</button>
+            <div class="decision-grid"><button class="btn-no" onclick="finalize('trash')">Lixo</button><button class="btn-opt" onclick="finalize('someday')">Um Dia/Talvez</button><button class="btn-opt full-width" onclick="finalize('reference')">Referência</button></div><button class="btn-back" onclick="resetSteps()">Voltar</button>
         </div>
-
         <div id="step-yes" class="step hidden">
             <h3 style="text-align:center">É um projeto?</h3>
-            <div class="decision-grid">
-                <button class="btn-opt" onclick="finalize('project')">Sim (Planejar)</button>
-                <button class="btn-yes" onclick="toStep('step-2min')">Não (Ação Única)</button>
-            </div>
-            <button class="btn-back" onclick="resetSteps()">Voltar</button>
+            <div class="decision-grid"><button class="btn-opt" onclick="finalize('project')">Sim (Planejar)</button><button class="btn-yes" onclick="toStep('step-2min')">Não (Ação Única)</button></div><button class="btn-back" onclick="resetSteps()">Voltar</button>
         </div>
-
         <div id="step-2min" class="step hidden">
             <h3 style="text-align:center">Leva < 2 minutos?</h3>
-            <div class="decision-grid">
-                <button class="btn-yes" onclick="toStep('step-do')">SIM</button>
-                <button class="btn-no" onclick="toStep('step-del')">NÃO</button>
-            </div>
-            <button class="btn-back" onclick="toStep('step-yes')">Voltar</button>
+            <div class="decision-grid"><button class="btn-yes" onclick="toStep('step-do')">SIM</button><button class="btn-no" onclick="toStep('step-del')">NÃO</button></div><button class="btn-back" onclick="toStep('step-yes')">Voltar</button>
         </div>
-
         <div id="step-do" class="step hidden">
-            <h2 style="text-align:center; color:var(--success)">FAÇA AGORA!</h2>
-            <button class="btn-yes" style="width:100%" onclick="finalize('done')">✅ Já fiz!</button>
-            <button class="btn-back" onclick="toStep('step-2min')">Voltar</button>
+            <h2 style="text-align:center; color:var(--success)">FAÇA AGORA!</h2><button class="btn-yes" style="width:100%" onclick="finalize('done')">✅ Já fiz!</button><button class="btn-back" onclick="toStep('step-2min')">Voltar</button>
         </div>
-
         <div id="step-del" class="step hidden">
             <h3 style="text-align:center">Quem faz?</h3>
-            <div class="decision-grid">
-                <button class="btn-no" onclick="toStep('input-waiting')">Outro (Delegar)</button>
-                <button class="btn-yes" onclick="toStep('input-defer')">Eu (Adiar)</button>
-            </div>
-            <button class="btn-back" onclick="toStep('step-2min')">Voltar</button>
+            <div class="decision-grid"><button class="btn-no" onclick="toStep('input-waiting')">Outro (Delegar)</button><button class="btn-yes" onclick="toStep('input-defer')">Eu (Adiar)</button></div><button class="btn-back" onclick="toStep('step-2min')">Voltar</button>
         </div>
-
         <div id="input-waiting" class="step hidden">
-            <h3 style="text-align:center">Delegar para quem?</h3>
-            <input type="text" id="delInput" placeholder="Nome...">
-            <button class="btn-yes" style="width:100%; margin-top:10px;" onclick="finalize('waiting')">Confirmar</button>
-            <button class="btn-back" onclick="toStep('step-del')">Voltar</button>
+            <h3 style="text-align:center">Delegar para quem?</h3><input type="text" id="delInput" placeholder="Nome..."><button class="btn-yes" style="width:100%; margin-top:10px;" onclick="finalize('waiting')">Confirmar</button><button class="btn-back" onclick="toStep('step-del')">Voltar</button>
         </div>
-
         <div id="input-defer" class="step hidden">
             <h3 style="text-align:center">Quando?</h3>
-            <div class="decision-grid">
-                <button class="btn-opt" onclick="toStep('input-cal')">📅 Data Certa</button>
-                <button class="btn-opt" onclick="finalize('next')">🔥 Assim que der</button>
-            </div>
-            <button class="btn-back" onclick="toStep('step-del')">Voltar</button>
+            <div class="decision-grid"><button class="btn-opt" onclick="toStep('input-cal')">📅 Data Certa</button><button class="btn-opt" onclick="finalize('next')">🔥 Assim que der</button></div><button class="btn-back" onclick="toStep('step-del')">Voltar</button>
         </div>
-
         <div id="input-cal" class="step hidden">
-            <h3 style="text-align:center">Escolha a Data e Hora</h3>
-            <input type="datetime-local" id="calInput">
-            <button class="btn-yes" style="width:100%; margin-top:10px;" onclick="finalize('calendar')">Agendar no Google</button>
-            <button class="btn-back" onclick="toStep('input-defer')">Voltar</button>
+            <h3 style="text-align:center">Escolha a Data e Hora</h3><input type="datetime-local" id="calInput"><button class="btn-yes" style="width:100%; margin-top:10px;" onclick="finalize('calendar')">Agendar no Google</button><button class="btn-back" onclick="toStep('input-defer')">Voltar</button>
         </div>
     </div>
 
     <!-- LISTAS -->
     <div class="lists-grid">
-        <!-- 1. Entrada -->
-        <div class="list-card card-inbox">
-            <div class="list-header"><h3>📥 Entrada</h3><span class="badge" id="c-inbox">0</span></div>
-            <ul id="l-inbox"></ul>
-        </div>
+        <div class="list-card card-inbox"><div class="list-header"><h3>📥 Entrada</h3><span class="badge" id="c-inbox">0</span></div><ul id="l-inbox"></ul></div>
+        <div class="list-card card-next"><div class="list-header"><h3>🔥 Próximas Ações</h3><span class="badge" id="c-next">0</span></div><ul id="l-next"></ul></div>
+        <div class="list-card card-projects"><div class="list-header"><h3>📂 Projetos</h3><span class="badge" id="c-project">0</span></div><ul id="l-project"></ul></div>
         
-        <!-- 2. Próximas Ações -->
-        <div class="list-card card-next">
-            <div class="list-header"><h3>🔥 Próximas Ações</h3><span class="badge" id="c-next">0</span></div>
-            <ul id="l-next"></ul>
-        </div>
-        
-        <!-- 3. Projetos -->
-        <div class="list-card card-projects">
-            <div class="list-header"><h3>📂 Projetos</h3><span class="badge" id="c-project">0</span></div>
-            <ul id="l-project"></ul>
-        </div>
-        
-        <!-- 4. Calendário (Movido para cima) -->
         <div class="list-card">
-            <div class="list-header"><h3>📅 Calendário</h3><span class="badge" id="c-calendar">0</span></div>
+            <div class="list-header">
+                <h3>📅 Calendário</h3>
+                <div>
+                    <button class="btn-refresh" onclick="checkDeletedEvents(true)">🔄 Sync</button>
+                    <span class="badge" id="c-calendar">0</span>
+                </div>
+            </div>
             <ul id="l-calendar"></ul>
         </div>
 
-        <!-- 5. Em Espera / Delegar (Renomeado) -->
-        <div class="list-card card-waiting">
-            <div class="list-header"><h3>⏳ Delegar (Esperar)</h3><span class="badge" id="c-waiting">0</span></div>
-            <ul id="l-waiting"></ul>
-        </div>
-        
-        <!-- 6. Um Dia / Talvez (Renomeado) -->
-        <div class="list-card">
-            <div class="list-header"><h3>💡 Um Dia / Talvez</h3><span class="badge" id="c-someday">0</span></div>
-            <ul id="l-someday"></ul>
-        </div>
-        
-        <!-- 7. Referência -->
-        <div class="list-card">
-            <div class="list-header"><h3>📚 Arquivo / Referência</h3><span class="badge" id="c-reference">0</span></div>
-            <ul id="l-reference"></ul>
-        </div>
+        <div class="list-card card-waiting"><div class="list-header"><h3>⏳ Delegar (Esperar)</h3><span class="badge" id="c-waiting">0</span></div><ul id="l-waiting"></ul></div>
+        <div class="list-card"><div class="list-header"><h3>💡 Um Dia / Talvez</h3><span class="badge" id="c-someday">0</span></div><ul id="l-someday"></ul></div>
+        <div class="list-card"><div class="list-header"><h3>📚 Arquivo / Referência</h3><span class="badge" id="c-reference">0</span></div><ul id="l-reference"></ul></div>
     </div>
 </div>
 
-<!-- Modal Config -->
+<!-- Toast -->
+<div id="toast">Notificação</div>
+
+<!-- Config Modal -->
 <div id="configModal">
     <div class="modal-content">
         <h3>☁️ Configurações</h3>
@@ -242,10 +188,7 @@
         <label>JSONBin API Key:</label><input type="text" id="cfgApiKey">
         <hr style="margin:20px 0; border:0; border-top:1px dashed #ccc;">
         <label>Google Client ID:</label><input type="text" id="cfgGoogleClientId">
-        <div class="modal-footer">
-            <button class="btn-no" onclick="closeConfig()">Cancelar</button>
-            <button class="btn-yes" onclick="saveConfig()">Salvar</button>
-        </div>
+        <div class="modal-footer"><button class="btn-no" onclick="closeConfig()">Cancelar</button><button class="btn-yes" onclick="saveConfig()">Salvar</button></div>
     </div>
 </div>
 
@@ -257,17 +200,11 @@
     let config = JSON.parse(localStorage.getItem('gtd_config')) || { binId: '', apiKey: '', googleClientId: '' };
     let currentItemIdx = null;
     let gapiInited = false, gisInited = false, tokenClient, googleAccessToken;
-
     const DISCOVERY_DOC = 'https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest';
 
-    // --- GOOGLE API SETUP ---
+    // --- SETUP ---
     function gapiLoaded() { gapi.load('client', intializeGapiClient); }
-    async function intializeGapiClient() { 
-        await gapi.client.init({ discoveryDocs: [DISCOVERY_DOC] }); 
-        gapiInited = true; 
-        restoreGoogleSession(); 
-        maybeEnableGoogleSignIn(); 
-    }
+    async function intializeGapiClient() { await gapi.client.init({ discoveryDocs: [DISCOVERY_DOC] }); gapiInited = true; restoreGoogleSession(); maybeEnableGoogleSignIn(); }
     function gisLoaded() { gisInited = true; maybeEnableGoogleSignIn(); }
     
     function maybeEnableGoogleSignIn() {
@@ -276,13 +213,12 @@
                 client_id: config.googleClientId,
                 scope: 'https://www.googleapis.com/auth/calendar.events',
                 callback: (resp) => {
-                    if (resp.error !== undefined) throw (resp);
+                    if (resp.error) throw (resp);
                     const expiresAt = Date.now() + (resp.expires_in * 1000);
-                    const tokenData = { access_token: resp.access_token, expires_at: expiresAt };
-                    localStorage.setItem('gtd_google_token', JSON.stringify(tokenData));
+                    localStorage.setItem('gtd_google_token', JSON.stringify({ access_token: resp.access_token, expires_at: expiresAt }));
                     googleAccessToken = resp.access_token;
                     updateGoogleSyncStatus(true);
-                    checkDeletedEvents();
+                    checkDeletedEvents(); // Check on login
                 },
             });
         }
@@ -296,7 +232,7 @@
                 googleAccessToken = tokenData.access_token;
                 gapi.client.setToken({ access_token: googleAccessToken });
                 updateGoogleSyncStatus(true);
-                setTimeout(checkDeletedEvents, 2000); 
+                setTimeout(() => checkDeletedEvents(), 1500); // Check on load
             } else {
                 localStorage.removeItem('gtd_google_token');
                 updateGoogleSyncStatus(false);
@@ -305,42 +241,67 @@
     }
 
     function handleAuthClick() {
-        if (!tokenClient) { alert("Google API não iniciada. Recarregue."); return; }
+        if (!tokenClient) return alert("Google API não iniciada.");
         tokenClient.requestAccessToken({prompt: ''});
     }
 
     function updateGoogleSyncStatus(isConnected) {
         const el = document.getElementById('googleSyncStatus');
-        if (isConnected) el.innerHTML = `<span class="dot google-connected"></span> Agenda: OK`;
-        else el.innerHTML = `<span class="dot google-disconnected"></span> Agenda: <a href="#" onclick="handleAuthClick()">Conectar</a>`;
+        el.innerHTML = isConnected 
+            ? `<span class="dot google-connected"></span> Agenda: OK` 
+            : `<span class="dot google-disconnected"></span> Agenda: <a href="#" onclick="handleAuthClick()">Conectar</a>`;
     }
 
-    // --- SYNC REVERSO (GOOGLE -> APP) ---
-    async function checkDeletedEvents() {
-        if (!gapi.client.getToken()) return;
+    function showToast(msg) {
+        const t = document.getElementById("toast");
+        t.textContent = msg;
+        t.className = "show";
+        setTimeout(() => { t.className = t.className.replace("show", ""); }, 3000);
+    }
+
+    // --- CHECK DELETED (GOOGLE -> APP) ---
+    async function checkDeletedEvents(manual = false) {
+        if (!gapi.client.getToken()) {
+            if(manual) showToast("Google desconectado.");
+            return;
+        }
+
         const calendarItems = items.filter(i => i.status === 'calendar' && i.googleEventId);
-        if (calendarItems.length === 0) return;
-        let changesCount = 0;
-        for (const item of calendarItems) {
+        if (calendarItems.length === 0) {
+            if(manual) showToast("Nenhum evento vinculado para verificar.");
+            return;
+        }
+
+        if(manual) showToast("Verificando agenda...");
+        let deletedCount = 0;
+
+        // Verifica cada evento
+        await Promise.all(calendarItems.map(async (item) => {
             try {
-                const response = await gapi.client.calendar.events.get({ 'calendarId': 'primary', 'eventId': item.googleEventId });
-                if (response.result.status === 'cancelled') {
-                    removeItemById(item.id);
-                    changesCount++;
+                const res = await gapi.client.calendar.events.get({ 'calendarId': 'primary', 'eventId': item.googleEventId });
+                // Status 'cancelled' significa que foi deletado no Google
+                if (res.result.status === 'cancelled') {
+                    items = items.filter(i => i.id !== item.id);
+                    deletedCount++;
                 }
             } catch (err) {
-                if (err.status === 404) { removeItemById(item.id); changesCount++; }
+                // Erro 404 ou 410 também significa deletado
+                if (err.status === 404 || err.status === 410) {
+                    items = items.filter(i => i.id !== item.id);
+                    deletedCount++;
+                }
             }
+        }));
+
+        if (deletedCount > 0) {
+            syncSave();
+            showToast(`${deletedCount} evento(s) excluído(s) da sincronização.`);
+        } else if (manual) {
+            showToast("Tudo sincronizado.");
         }
-        if (changesCount > 0) syncSave();
     }
 
-    function removeItemById(id) {
-        const index = items.findIndex(i => i.id === id);
-        if (index > -1) items.splice(index, 1);
-    }
-
-    // --- APP LOGIC ---
+    // --- JSONBIN SYNC ---
     window.onload = () => {
         render();
         if (config.binId && config.apiKey) syncLoad();
@@ -384,28 +345,29 @@
         }
     }
 
-    // --- GOOGLE ACTIONS ---
+    // --- CREATE EVENT ---
     async function createCalendarEvent(item) {
         if (!gapi.client.getToken()) return null;
         try {
-            const startDateTime = new Date(item.date);
-            const endDateTime = new Date(startDateTime.getTime() + (60 * 60 * 1000));
+            const start = new Date(item.date);
+            const end = new Date(start.getTime() + (60 * 60 * 1000));
             if (!gapi.client.calendar) await gapi.client.load('calendar', 'v3');
-            const response = await gapi.client.calendar.events.insert({
+
+            const res = await gapi.client.calendar.events.insert({
                 'calendarId': 'primary',
                 'resource': {
                     'summary': "GTD: " + item.text,
-                    'start': { 'dateTime': startDateTime.toISOString(), 'timeZone': Intl.DateTimeFormat().resolvedOptions().timeZone },
-                    'end': { 'dateTime': endDateTime.toISOString(), 'timeZone': Intl.DateTimeFormat().resolvedOptions().timeZone }
+                    'start': { 'dateTime': start.toISOString(), 'timeZone': Intl.DateTimeFormat().resolvedOptions().timeZone },
+                    'end': { 'dateTime': end.toISOString(), 'timeZone': Intl.DateTimeFormat().resolvedOptions().timeZone }
                 }
             });
-            alert("Evento criado no Google Agenda!");
-            return response.result.id; 
+            showToast("Evento criado no Google!");
+            return res.result.id; 
         } catch (err) {
             if (err.status === 401) {
                 localStorage.removeItem('gtd_google_token');
                 updateGoogleSyncStatus(false);
-                alert("Sessão Google expirada. Conecte novamente.");
+                alert("Sessão Google expirada.");
             } else {
                 alert("Erro Google Agenda: " + JSON.stringify(err));
             }
@@ -413,20 +375,18 @@
         }
     }
 
+    // --- DELETE EVENT (APP -> GOOGLE) ---
     async function deleteCalendarEvent(eventId) {
         if (!eventId || !gapi.client.getToken()) return;
         try {
             await gapi.client.calendar.events.delete({ 'calendarId': 'primary', 'eventId': eventId });
-            alert("Evento excluído do Google Agenda.");
+            showToast("Evento excluído do Google Agenda.");
         } catch (err) {
-            if (err.status !== 404 && err.status !== 410) {
-                 console.error("Erro ao excluir do Google:", err);
-                 alert("Aviso: Não foi possível excluir do Google Agenda.");
-            }
+            if (err.status !== 404 && err.status !== 410) console.error("Erro delete Google:", err);
         }
     }
 
-    // --- GTD FUNCTIONS ---
+    // --- GTD CORE ---
     function addToInbox() {
         const val = document.getElementById('inboxInput').value.trim();
         if(val) {
@@ -465,19 +425,18 @@
         }
         
         if (status === 'trash' || status === 'done') items.splice(currentItemIdx, 1);
-
         syncSave();
-        
         if (items.some(i => i.status === 'inbox')) startProcessing();
         else {
             document.getElementById('processing-zone').style.display = 'none';
-            alert("Caixa de entrada zerada!");
+            showToast("Caixa de entrada zerada!");
         }
     }
 
     async function deleteItem(idx) {
         const item = items[idx];
         if(confirm("Remover este item?")) { 
+            // Delete from Google if exists
             if (item.status === 'calendar' && item.googleEventId) {
                 await deleteCalendarEvent(item.googleEventId);
             }
@@ -514,10 +473,7 @@
     function render() {
         const ids = ['inbox', 'next', 'project', 'waiting', 'calendar', 'someday', 'reference'];
         const counts = {};
-        ids.forEach(id => {
-            document.getElementById('l-'+id).innerHTML = '';
-            counts[id] = 0;
-        });
+        ids.forEach(id => { document.getElementById('l-'+id).innerHTML = ''; counts[id] = 0; });
 
         items.forEach((item, idx) => {
             let listId = item.status;
@@ -529,11 +485,9 @@
                 if(item.note) extra += `<span class="meta">${item.note}</span>`;
                 let googleIcon = '';
                 if(item.date) {
-                    const dateObj = new Date(item.date);
-                    const dateStr = dateObj.toLocaleDateString('pt-BR');
-                    const timeStr = dateObj.toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'});
-                    extra += `<span class="meta">📅 ${dateStr} às ${timeStr}</span>`;
-                    if (item.googleEventId) googleIcon = '<span class="google-icon" title="Sincronizado">G</span>';
+                    const d = new Date(item.date);
+                    extra += `<span class="meta">📅 ${d.toLocaleDateString('pt-BR')} ${d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}</span>`;
+                    if (item.googleEventId) googleIcon = '<span class="google-icon" title="Sync Google">G</span>';
                 }
                 const icon = listId === 'inbox' ? '✖' : '✔';
                 li.innerHTML = `<div><span class="task-text">${item.text} ${googleIcon}</span>${extra}</div><span class="del-btn" onclick="deleteItem(${idx})">${icon}</span>`;
@@ -541,11 +495,7 @@
             }
         });
 
-        ids.forEach(id => {
-            const el = document.getElementById('c-'+id);
-            if(el) el.innerText = counts[id];
-        });
-
+        ids.forEach(id => { const el = document.getElementById('c-'+id); if(el) el.innerText = counts[id]; });
         const btn = document.getElementById('btnProcess');
         document.getElementById('inboxCount').innerText = counts['inbox'];
         counts['inbox'] > 0 ? btn.classList.remove('hidden') : btn.classList.add('hidden');
