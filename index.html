@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>GTD Sync com Google Calendar</title>
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --accent: #3498db;
+            --success: #27ae60;
+            --warning: #f39c12;
+            --danger: #e74c3c;
+            --light: #ecf0f1;
+            --cloud: #8e44ad;
+            --google: #4285f4; /* Google blue */
+        }
+        
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background: #f0f2f5; color: #333; margin: 0; padding: 15px; padding-bottom: 80px; }
+        .container { max-width: 800px; margin: 0 auto; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+        
+        /* Cabeçalho e Sync */
+        header { text-align: center; margin-bottom: 20px; }
+        h1 { margin: 0; color: var(--primary); font-size: 1.5rem; }
+        .status-bar { 
+            background: #f8f9fa; border: 1px solid #e9ecef; padding: 10px; border-radius: 8px; 
+            margin-top: 15px; font-size: 0.85rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;
+        }
+        .status-indicator { display: flex; align-items: center; gap: 6px; font-weight: 600; }
+        .dot { width: 10px; height: 10px; border-radius: 50%; background: #ccc; transition: 0.3s; }
+        .dot.online { background: var(--success); box-shadow: 0 0 5px var(--success); }
+        .dot.syncing { background: var(--warning); animation: pulse 1s infinite; }
+        .dot.error { background: var(--danger); }
+        .dot.google-connected { background: var(--google); box-shadow: 0 0 5px var(--google); }
+        .dot.google-disconnected { background: #ccc; }
+        
+        .btn-config { background: none; border: 1px solid #ccc; border-radius: 4px; padding: 5px 10px; cursor: pointer; font-size: 0.8rem; }
+        .btn-google { background: var(--google); color: white; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-size: 0.8rem; display: flex; align-items: center; gap: 5px; }
+        .btn-google:hover { background: #357ae8; }
+
+        /* Configurações (Modal) */
+        #configModal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; overflow-y: auto; }
+        .modal-content { 
+            background: white; width: 90%; max-width: 500px; margin: 5% auto; padding: 20px; border-radius: 10px; 
+            box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+        }
+        .modal-content label { display: block; margin-top: 10px; font-size: 0.9rem; font-weight: 600; color: var(--primary); }
+        .modal-content input { width: 100%; padding: 10px; margin: 5px 0 15px; border: 1px solid #ddd; border-radius: 4px; font-size: 1rem; }
+        .modal-footer { text-align: right; margin-top: 20px; }
+
+        /* Inputs Principais */
+        .input-group { display: flex; gap: 8px; margin-bottom: 20px; }
+        input[type="text"], input[type="date"] { flex: 1; padding: 12px; border: 2px solid #ddd; border-radius: 8px; font-size: 16px; }
+        button { padding: 12px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; transition: 0.2s; }
+        button:active { transform: scale(0.96); }
+        .btn-add { background: var(--accent); color: white; min-width: 80px; }
+        
+        /* Processamento */
+        #processing-zone { 
+            background: #fff; border: 2px solid var(--accent); padding: 20px; border-radius: 12px; 
+            margin-bottom: 25px; display: none; animation: slideDown 0.3s;
+        }
+        
+        /* ITEM EM DESTAQUE */
+        .processing-header {
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        .current-item { 
+            font-size: 1.3rem; 
+            font-weight: bold;
+            background: #fff8e1; 
+            padding: 15px; 
+            border-radius: 6px; 
+            margin-top: 5px; 
+            border-left: 5px solid var(--warning); 
+            color: #333;
+            word-wrap: break-word;
+        }
+
+        .step { animation: fadeIn 0.3s; }
+        
+        .decision-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
+        .full-width { grid-column: span 2; }
+        
+        .btn-yes { background: var(--success); color: white; }
+        .btn-no { background: var(--danger); color: white; }
+        .btn-opt { background: var(--primary); color: white; }
+        .btn-back { background: transparent; color: #777; text-decoration: underline; margin-top: 15px; width: 100%; }
+
+        /* Listas */
+        .lists-grid { display: grid; grid-template-columns: 1fr; gap: 15px; }
+        @media(min-width: 700px) { .lists-grid { grid-template-columns: 1fr 1fr; } }
+        
+        .list-card { background: white; border: 1px solid #eee; border-radius: 8px; padding: 15px; }
+        
+        /* TÍTULOS DAS CAIXAS (Mantidos em Negrito) */
+        .list-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #f0f0f0; padding-bottom: 8px; margin-bottom: 10px; }
+        .list-header h3 { margin: 0; font-size: 1rem; font-weight: 700; display: flex; align-items: center; gap: 5px; }
+        .badge { background: #eee; padding: 2px 8px; border-radius: 10px; font-size: 0.75rem; font-weight: normal; }
+
+        /* Cores de borda */
+        .card-inbox { border-left: 4px solid var(--danger); }
+        .card-next { border-left: 4px solid var(--success); }
+        .card-waiting { border-left: 4px solid var(--warning); }
+        .card-projects { border-left: 4px solid var(--primary); }
+
+        ul { list-style: none; padding: 0; margin: 0; }
+        li { 
+            padding: 10px 0; border-bottom: 1px solid #f9f9f9; display: flex; justify-content: space-between; align-items: center; 
+        }
+        li:last-child { border-bottom: none; }
+        
+        /* ESTILO DO TEXTO DA TAREFA (Normal, não negrito) */
+        .task-text {
+            font-weight: 400; /* Normal */
+            font-size: 1rem;
+            color: #2c3e50;
+        }
+
+        .meta { font-size: 0.75rem; color: #666; display: block; margin-top: 3px; }
+        .del-btn { color: #ccc; font-size: 1.2rem; padding: 0 10px; cursor: pointer; }
+        .del-btn:hover { color: var(--danger); }
+
+        /* Helpers */
+        .hidden { display: none !important; }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
+        @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>GTD Sync</h1>
+        <div class="status-bar">
+            <div class="status-indicator">
+                <div id="syncDot" class="dot"></div>
+                <span id="syncText">Offline</span>
+            </div>
+            <div>
+                <span id="googleSyncStatus" style="margin-right:10px;">
+                    <span id="googleDot" class="dot google-disconnected"></span> Google Agenda: Desconectado
+                </span>
+                <button class="btn-config" onclick="openConfig()">⚙️ Configurar</button>
+            </div>
+        </div>
+    </header>
+
+    <!-- ÁREA DE COLETA -->
+    <div class="input-group">
+        <input type="text" id="inboxInput" placeholder="Coleta rápida..." onkeypress="if(event.key==='Enter') addToInbox()">
+        <button class="btn-add" onclick="addToInbox()">+</button>
+    </div>
+
+    <button onclick="startProcessing()" id="btnProcess" class="btn-opt hidden" style="width:100%; margin-bottom:20px;">
+        ⚡ Processar Caixa de Entrada (<span id="inboxCount">0</span>)
+    </button>
+
+    <!-- WIZARD DE PROCESSAMENTO -->
+    <div id="processing-zone">
+        <!-- ÁREA FIXA: O QUE ESTÁ SENDO PROCESSADO -->
+        <div class="processing-header">
+            <div style="text-align:center; color:#888; font-size:0.8rem; text-transform:uppercase; letter-spacing:1px;">Processando Item:</div>
+            <div id="currentItem" class="current-item"></div>
+        </div>
+
+        <!-- Passo 1 -->
+        <div id="step-1" class="step">
+            <h3 style="text-align:center">É passível de ação?</h3>
+            <p style="text-align:center; color:#666; font-size:0.9rem;">Existe algo físico a fazer sobre isso agora?</p>
+            <div class="decision-grid">
+                <button class="btn-no" onclick="handleActionable(false)">NÃO</button>
+                <button class="btn-yes" onclick="handleActionable(true)">SIM</button>
+            </div>
+        </div>
+
+        <!-- Ramo NÃO -->
+        <div id="step-no" class="step hidden">
+            <h3 style="text-align:center">O que é isso?</h3>
+            <div class="decision-grid">
+                <button class="btn-no" onclick="finalize('trash')">Lixo</button>
+                <button class="btn-opt" onclick="finalize('someday')">Talvez</button>
+                <button class="btn-opt full-width" onclick="finalize('reference')">Referência</button>
+            </div>
+            <button class="btn-back" onclick="resetSteps()">Voltar</button>
+        </div>
+
+        <!-- Ramo SIM -->
+        <div id="step-yes" class="step hidden">
+            <h3 style="text-align:center">É um projeto?</h3>
+            <p style="text-align:center; color:#666; font-size:0.9rem;">Requer mais de um passo para concluir?</p>
+            <div class="decision-grid">
+                <button class="btn-opt" onclick="finalize('project')">Sim (Planejar)</button>
+                <button class="btn-yes" onclick="toStep('step-2min')">Não (Ação Única)</button>
+            </div>
+            <button class="btn-back" onclick="resetSteps()">Voltar</button>
+        </div>
+
+        <div id="step-2min" class="step hidden">
+            <h3 style="text-align:center">Leva < 2 minutos?</h3>
+            <div class="decision-grid">
+                <button class="btn-yes" onclick="toStep('step-do')">SIM</button>
+                <button class="btn-no" onclick="toStep('step-del')">NÃO</button>
+            </div>
+            <button class="btn-back" onclick="toStep('step-yes')">Voltar</button>
+        </div>
+
+        <div id="step-do" class="step hidden">
+            <h2 style="text-align:center; color:var(--success)">FAÇA AGORA!</h2>
+            <p style="text-align:center">Se é rápido, faça já e tire da frente.</p>
+            <button class="btn-yes" style="width:100%" onclick="finalize('done')">✅ Já fiz!</button>
+            <button class="btn-back" onclick="toStep('step-2min')">Voltar</button>
+        </div>
+
+        <div id="step-del" class="step hidden">
+            <h3 style="text-align:center">Quem faz?</h3>
+            <div class="decision-grid">
+                <button class="btn-no" onclick="toStep('input-waiting')">Outro (Delegar)</button>
+                <button class="btn-yes" onclick="toStep('input-defer')">Eu (Adiar)</button>
+            </div>
+            <button class="btn-back" onclick="toStep('step-2min')">Voltar</button>
+        </div>
+
+        <!-- Inputs Finais -->
+        <div id="input-waiting" class="step hidden">
+            <h3 style="text-align:center">Delegar para quem?</h3>
+            <input type="text" id="delInput" placeholder="Nome da pessoa / departamento...">
+            <button class="btn-yes" style="width:100%; margin-top:10px;" onclick="finalize('waiting')">Confirmar</button>
+            <button class="btn-back" onclick="toStep('step-del')">Voltar</button>
+        </div>
+
+        <div id="input-defer" class="step hidden">
+            <h3 style="text-align:center">Quando?</h3>
+            <div class="decision-grid">
+                <button class="btn-opt" onclick="toStep('input-cal')">📅 Data Certa</button>
+                <button class="btn-opt" onclick="finalize('next')">🔥 Assim que der</button>
+            </div>
+            <button class="btn-back" onclick="toStep('step-del')">Voltar</button>
+        </div>
+
+        <div id="input-cal" class="step hidden">
+            <h3 style="text-align:center">Escolha a data</h3>
+            <input type="date" id="calInput">
+            <button class="btn-yes" style="width:100%; margin-top:10px;" onclick="finalize('calendar')">Agendar</button>
+            <button class="btn-back" onclick="toStep('input-defer')">Voltar</button>
+        </div>
+    </div>
+
+    <!-- LISTAS -->
+    <div class="lists-grid">
+        <div class="list-card card-inbox">
+            <div class="list-header"><h3>📥 Entrada</h3><span class="badge" id="c-inbox">0</span></div>
+            <ul id="l-inbox"></ul>
+        </div>
+        <div class="list-card card-next">
+            <div class="list-header"><h3>🔥 Próximas Ações</h3><span class="badge" id="c-next">0</span></div>
+            <ul id="l-next"></ul>
+        </div>
+        <div class="list-card card-projects">
+            <div class="list-header"><h3>📂 Projetos</h3><span class="badge" id="c-project">0</span></div>
+            <ul id="l-project"></ul>
+        </div>
+        <div class="list-card card-waiting">
+            <div class="list-header"><h3>⏳ Em Espera</h3><span class="badge" id="c-waiting">0</span></div>
+            <ul id="l-waiting"></ul>
+        </div>
+        <div class="list-card">
+            <div class="list-header"><h3>📅 Calendário</h3><span class="badge" id="c-calendar">0</span></div>
+            <ul id="l-calendar"></ul>
+        </div>
+        <div class="list-card">
+            <div class="list-header"><h3>💡 Talvez</h3><span class="badge" id="c-someday">0</span></div>
+            <ul id="l-someday"></ul>
+        </div>
+        <div class="list-card">
+            <div class="list-header"><h3>📚 Referência</h3><span class="badge" id="c-reference">0</span></div>
+            <ul id="l-reference"></ul>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Configuração -->
+<div id="configModal">
+    <div class="modal-content">
+        <h3>☁️ Configurar Nuvem & Google</h3>
+        
+        <p style="font-size:0.8rem; color:#666; margin-bottom: 20px;">
+            **Sincronização GTD (JSONBin.io):** Crie uma conta gratuita em <a href="https://jsonbin.io" target="_blank">jsonbin.io</a>. Crie um Bin e copie o ID e a Master Key.
+            Inicie o Bin com `{"gtd_tasks": []}`.
+        </p>
+
+        <label>Bin ID (JSONBin.io):</label>
+        <input type="text" id="cfgBinId" placeholder="Seu Bin ID">
+        
+        <label>API Key (X-Master-Key):</label>
+        <input type="text" id="cfgApiKey" placeholder="Sua Master Key">
+
+        <hr style="margin: 25px 0; border: none; border-top: 1px dashed #eee;">
+
+        <p style="font-size:0.8rem; color:#666; margin-bottom: 20px;">
+            **Integração Google Agenda:** 
+            1. Crie um projeto no <a href="https://console.developers.google.com/" target="_blank">Google Cloud Console</a>.
+            2. Ative a "Google Calendar API".
+            3. Crie credenciais OAuth 2.0 para "Aplicativo da Web".
+            4. Em "URIs de redirecionamento autorizados", adicione o endereço exato do seu arquivo HTML (ex: `http://localhost:8000/gtd-sync.html` ou `file:///C:/Users/seu_usuario/Downloads/gtd-sync.html`).
+            5. Copie o "ID do Cliente" gerado.
+        </p>
+
+        <label>Google Client ID:</label>
+        <input type="text" id="cfgGoogleClientId" placeholder="Seu Client ID do Google">
+
+        <label>ID da Agenda (opcional, 'primary' ou um ID específico):</label>
+        <input type="text" id="cfgGoogleCalendarId" value="primary" placeholder="primary">
+        
+        <div class="modal-footer">
+            <button class="btn-no" onclick="closeConfig()">Cancelar</button>
+            <button class="btn-yes" onclick="saveConfig()">Salvar & Conectar</button>
+        </div>
+    </div>
+</div>
+
+<script async defer src="https://apis.google.com/js/api.js" onload="gapiLoaded()"></script>
+<script async defer src="https://accounts.google.com/gsi/client" onload="gisLoaded()"></script>
+
+<script>
+    // --- ESTADO GERAL ---
+    let items = JSON.parse(localStorage.getItem('gtd_data')) || [];
+    let config = JSON.parse(localStorage.getItem('gtd_config')) || { binId: '', apiKey: '', googleClientId: '', googleCalendarId: 'primary' };
+    let currentItemIdx = null;
+
+    // Google API related variables
+    let gapiInited = false;
+    let gisInited = false;
+    let tokenClient;
+    let googleAccessToken; // Armazena o token de acesso do Google
+
+    // --- INICIALIZAÇÃO ---
+    window.onload = () => {
+        render();
+        if (config.binId && config.apiKey) {
+            syncLoad();
+        }
+    };
+
+    // --- SINCRONIZAÇÃO JSONBIN.IO ---
+    function updateStatus(status, msg) {
+        const dot = document.getElementById('syncDot');
+        const text = document.getElementById('syncText');
+        
+        if (status === 'syncing') {
+            dot.className = 'dot syncing';
+            text.innerText = 'Sincronizando...';
+        } else if (status === 'online') {
+            dot.className = 'dot online';
+            const time = new Date().toLocaleTimeString().slice(0,5);
+            text.innerText = 'Sincronizado às ' + time;
+        } else if (status === 'error') {
+            dot.className = 'dot error';
+            text.innerText = 'Erro Sync';
+            if (msg) alert('Erro na Sincronização:\n' + msg);
+        } else {
+            dot.className = 'dot';
+            text.innerText = 'Offline (Local)';
+        }
+    }
+
+    async function syncLoad() {
+        if (!config.binId || !config.apiKey) return;
+        updateStatus('syncing');
+        try {
+            const res = await fetch(`https://api.jsonbin.io/v3/b/${config.binId}/latest`, {
+                headers: { 'X-Master-Key': config.apiKey }
+            });
+            
+            if (!res.ok) {
+                if(res.status === 401) throw new Error("Chave API Incorreta.");
+                if(res.status === 404) throw new Error("Bin ID não encontrado.");
+                throw new Error(`Erro API: ${res.status}`);
+            }
+
+            const data = await res.json();
+            
+            let loadedItems = [];
+            if (data.record && data.record.gtd_tasks) { // Novo formato (envelopado)
+                loadedItems = data.record.gtd_tasks;
+            } else if (Array.isArray(data.record)) { // Formato antigo (array direto)
+                loadedItems = data.record;
+            } else {
+                loadedItems = []; // Bin existe mas está vazio/estranho
+            }
+
+            items = loadedItems;
+            localStorage.setItem('gtd_data', JSON.stringify(items));
+            render();
+            updateStatus('online');
+        } catch (e) {
+            console.error(e);
+            updateStatus('error', e.message);
+        }
+    }
+
+    async function syncSave() {
+        // Salva Localmente Primeiro
+        localStorage.setItem('gtd_data', JSON.stringify(items));
+        render();
+
+        if (!config.binId || !config.apiKey) return;
+        
+        updateStatus('syncing');
+        try {
+            const payload = {
+                gtd_tasks: items, // Sempre envia como parte de um objeto
+                last_updated: new Date().toISOString()
+            };
+
+            const res = await fetch(`https://api.jsonbin.io/v3/b/${config.binId}`, {
+                method: 'PUT',
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'X-Master-Key': config.apiKey,
+                    'X-Bin-Versioning': 'false' 
+                },
+                body: JSON.stringify(payload)
+            });
+
+            if (!res.ok) {
+                const errText = await res.text();
+                throw new Error(`Servidor recusou (${res.status}): ${errText}`);
+            }
+            
+            updateStatus('online');
+        } catch (e) {
+            console.error(e);
+            updateStatus('error', e.message);
+        }
+    }
+
+    // --- CONFIGURAÇÃO (MODAL) ---
+    function openConfig() {
+        document.getElementById('cfgBinId').value = config.binId;
+        document.getElementById('cfgApiKey').value = config.apiKey;
+        document.getElementById('cfgGoogleClientId').value = config.googleClientId;
+        document.getElementById('cfgGoogleCalendarId').value = config.googleCalendarId;
+        document.getElementById('configModal').style.display = 'block';
+    }
+    function closeConfig() {
+        document.getElementById('configModal').style.display = 'none';
+    }
+    async function saveConfig() {
+        config.binId = document.getElementById('cfgBinId').value.trim();
+        config.apiKey = document.getElementById('cfgApiKey').value.trim();
+        config.googleClientId = document.getElementById('cfgGoogleClientId').value.trim();
+        config.googleCalendarId = document.getElementById('cfgGoogleCalendarId').value.trim() || 'primary';
+        localStorage.setItem('gtd_config', JSON.stringify(config));
+        closeConfig();
+        
+        // Tenta sincronizar JSONBin e Google
+        await syncLoad();
+        if (config.googleClientId) {
+            await handleAuthClick(); // Tenta autenticar no Google Calendar
+        } else {
+            updateGoogleSyncStatus(false);
+        }
+    }
+
+    // --- GOOGLE CALENDAR INTEGRATION ---
+
+    const GOOGLE_SCOPES = 'https://www.googleapis.com/auth/calendar.events';
+
+    function gapiLoaded() {
+        gapi.load('client', initializeGapiClient);
+    }
+
+    async function initializeGapiClient() {
+        await gapi.client.init({});
+        gapiInited = true;
+        maybeEnableGoogleSignIn();
+    }
+
+    function gisLoaded() {
+        gisInited = true;
+        maybeEnableGoogleSignIn();
+    }
+
+    function maybeEnableGoogleSignIn() {
+        if (gapiInited && gisInited && config.googleClientId) {
+            tokenClient = google.accounts.oauth2.initTokenClient({
+                client_id: config.googleClientId,
+                scope: GOOGLE_SCOPES,
+                callback: (tokenResponse) => {
+                    if (tokenResponse && tokenResponse.access_token) {
+                        googleAccessToken = tokenResponse.access_token;
+                        updateGoogleSyncStatus(true);
+                    } else {
+                        updateGoogleSyncStatus(false);
+                    }
+                },
+            });
+            // Try to auto-authenticate if a token exists in localStorage (gapi handles this usually)
+            if (gapi.client.getToken()) {
+                googleAccessToken = gapi.client.getToken().access_token;
+                updateGoogleSyncStatus(true);
+            }
+        }
+    }
+
+    async function handleAuthClick() {
+        if (!config.googleClientId) {
+            alert('Por favor, configure o Google Client ID primeiro nas configurações.');
+            return;
+        }
+
+        if (!tokenClient) {
+            alert('Google API ainda não inicializada. Tente novamente em alguns segundos ou recarregue a página.');
+            gapi.load('client', initializeGapiClient); // Tenta recarregar
+            return;
+        }
+
+        try {
+            // Check if current token is valid or needs to be refreshed
+            if (gapi.client.getToken() === null) {
+                // No token, request a new one
+                tokenClient.requestAccessToken({prompt: 'consent'});
+            } else {
+                // Token exists, check if it's expired or if we need specific scopes
+                const token = gapi.client.getToken();
+                if (Date.now() < token.expires_at && token.scope.includes(GOOGLE_SCOPES)) {
+                    googleAccessToken = token.access_token;
+                    updateGoogleSyncStatus(true);
+                } else {
+                    // Token expired or wrong scope, request a new one
+                    tokenClient.requestAccessToken({prompt: 'consent'});
+                }
+            }
+        } catch (e) {
+            console.error("Erro ao autenticar com Google:", e);
+            updateGoogleSyncStatus(false);
+            alert("Erro ao conectar com Google Agenda. Verifique seu Client ID e console.");
+        }
+    }
+    
+    function updateGoogleSyncStatus(isConnected) {
+        const dot = document.getElementById('googleDot');
+        const statusText = document.getElementById('googleSyncStatus');
+        if (isConnected) {
+            dot.className = 'dot google-connected';
+            statusText.innerHTML = `<span id="googleDot" class="dot google-connected"></span> Google Agenda: Conectado`;
+        } else {
+            dot.className = 'dot google-disconnected';
+            statusText.innerHTML = `<span id="googleDot" class="dot google-disconnected"></span> Google Agenda: Desconectado (<a href="#" onclick="event.preventDefault(); handleAuthClick()">Conectar</a>)`;
+        }
+    }
+
+    async function createGoogleCalendarEvent(taskText, taskDate) {
+        if (!googleAccessToken) {
+            alert('Não conectado ao Google Agenda. Conecte nas configurações.');
+            return;
+        }
+        if (!config.googleCalendarId) {
+            alert('ID da Agenda do Google não configurado. Use "primary" ou um ID específico nas configurações.');
+            return;
+        }
+        if (!taskDate) {
+            alert('Para criar um evento na agenda, a tarefa precisa ter uma data.');
+            return;
+        }
+
+        try {
+            const event = {
+                'summary': `GTD: ${taskText}`,
+                'description': `Tarefa GTD: ${taskText}`,
+                'start': {
+                    'date': taskDate, // YYYY-MM-DD
+                    'timeZone': Intl.DateTimeFormat().resolvedOptions().timeZone, // Pega o fuso horário local
+                },
+                'end': {
+                    'date': taskDate,
+                    'timeZone': Intl.DateTimeFormat().resolvedOptions().timeZone,
+                },
+                'reminders': {
+                    'useDefault': true,
+                },
+            };
+
+            await gapi.client.load('calendar', 'v3');
+            const response = await gapi.client.calendar.events.insert({
+                'calendarId': config.googleCalendarId,
+                'resource': event,
+            });
+            console.log('Evento do Google Agenda criado:', response.result);
+            alert(`Evento "${response.result.summary}" criado na Google Agenda.`);
+        } catch (error) {
+            console.error('Erro ao criar evento na Google Agenda:', error);
+            alert('Erro ao criar evento na Google Agenda. Verifique a conexão e permissões. Detalhes no console.');
+            updateGoogleSyncStatus(false); // Desconecta visualmente em caso de erro API
+        }
+    }
+
+    // --- LÓGICA GTD (COM HOOK PARA GOOGLE CALENDAR) ---
+    function addToInbox() {
+        const input = document.getElementById('inboxInput');
+        if (!input.value.trim()) return;
+        
+        items.push({
+            id: Date.now(),
+            text: input.value.trim(),
+            status: 'inbox',
+            date: null,
+            note: ''
+        });
+        input.value = '';
+        syncSave();
+    }
+
+    function startProcessing() {
+        currentItemIdx = items.findIndex(i => i.status === 'inbox');
+        if (currentItemIdx === -1) return;
+        
+        document.getElementById('processing-zone').style.display = 'block';
+        document.getElementById('currentItem').innerText = items[currentItemIdx].text;
+        resetSteps();
+        
+        document.getElementById('processing-zone').scrollIntoView({behavior: 'smooth'});
+    }
+
+    function handleActionable(bool) {
+        bool ? toStep('step-yes') : toStep('step-no');
+    }
+
+    async function finalize(status) { // Agora é async para esperar o Google Calendar
+        if (currentItemIdx === null) return;
+        const item = items[currentItemIdx];
+        item.status = status;
+
+        if (status === 'waiting') {
+            const val = document.getElementById('delInput').value;
+            item.note = val ? `Delegado: ${val}` : '';
+            document.getElementById('delInput').value = '';
+        }
+        if (status === 'calendar') {
+            item.date = document.getElementById('calInput').value;
+            // HOOK GOOGLE CALENDAR
+            if (config.googleClientId && googleAccessToken) {
+                await createGoogleCalendarEvent(item.text, item.date);
+            }
+        }
+        
+        if (status === 'trash' || status === 'done') {
+            items.splice(currentItemIdx, 1);
+        }
+
+        syncSave();
+
+        if (items.some(i => i.status === 'inbox')) {
+            startProcessing();
+        } else {
+            document.getElementById('processing-zone').style.display = 'none';
+            alert("Caixa de entrada zerada! 🎉");
+        }
+    }
+
+    function deleteItem(idx) {
+        if(confirm("Remover este item?")) {
+            items.splice(idx, 1);
+            syncSave();
+        }
+    }
+
+    // --- NAVEGAÇÃO WIZARD ---
+    function resetSteps() {
+        document.querySelectorAll('.step').forEach(el => el.classList.add('hidden'));
+        document.getElementById('step-1').classList.remove('hidden');
+    }
+    function toStep(id) {
+        document.querySelectorAll('.step').forEach(el => el.classList.add('hidden'));
+        document.getElementById(id).classList.remove('hidden');
+    }
+
+    // --- RENDER ---
+    function render() {
+        const listIds = ['inbox', 'next', 'project', 'waiting', 'calendar', 'someday', 'reference'];
+        const counts = {};
+        listIds.forEach(id => {
+            document.getElementById('l-'+id).innerHTML = '';
+            counts[id] = 0;
+        });
+
+        items.forEach((item, idx) => {
+            let listId = item.status;
+            if (listId === 'next-action') listId = 'next';
+            
+            if (document.getElementById('l-'+listId)) {
+                counts[listId]++;
+                const li = document.createElement('li');
+                let extra = '';
+                if(item.note) extra += `<span class="meta">${item.note}</span>`;
+                if(item.date) {
+                    const d = item.date.split('-');
+                    extra += `<span class="meta">📅 ${d[2]}/${d[1]}</span>`;
+                }
+
+                const icon = listId === 'inbox' ? '✖' : '✔';
+                
+                li.innerHTML = `
+                    <div>
+                        <span class="task-text">${item.text}</span>
+                        ${extra}
+                    </div>
+                    <span class="del-btn" onclick="deleteItem(${idx})">${icon}</span>
+                `;
+                document.getElementById('l-'+listId).appendChild(li);
+            }
+        });
+
+        listIds.forEach(id => {
+            const el = document.getElementById('c-'+id);
+            if(el) el.innerText = counts[id];
+        });
+
+        const btnProcess = document.getElementById('btnProcess');
+        const inboxCount = counts['inbox'];
+        document.getElementById('inboxCount').innerText = inboxCount;
+        
+        if (inboxCount > 0) btnProcess.classList.remove('hidden');
+        else {
+            btnProcess.classList.add('hidden');
+            document.getElementById('processing-zone').style.display = 'none';
+        }
+    }
+</script>
+
+</body>
+</html>
