@@ -3,12 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>GTD Sync (Final v4.4 - Voz)</title>
+    <title>GTD Sync (Final v4.6 - Drag & Drop)</title>
+    <!-- Script para permitir Drag & Drop em Celulares -->
+    <script src="https://bernardo-castilho.github.io/DragDropTouch/DragDropTouch.js"></script>
     <style>
         :root { --primary: #2c3e50; --accent: #3498db; --success: #27ae60; --warning: #f39c12; --danger: #e74c3c; --light: #ecf0f1; --cloud: #8e44ad; --google: #4285f4; }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background: #f0f2f5; color: #333; margin: 0; padding: 15px; padding-bottom: 80px; }
-        .container { max-width: 800px; margin: 0 auto; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background: #f0f2f5; color: #333; margin: 0; padding: 15px; padding-bottom: 80px; user-select: none; }
+        .container { max-width: 900px; margin: 0 auto; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
         
         /* Cabeçalho */
         header { text-align: center; margin-bottom: 20px; }
@@ -23,24 +25,13 @@
         .dot.google-disconnected { background: #ccc; }
         
         .btn-config { background: none; border: 1px solid #ccc; border-radius: 4px; padding: 5px 10px; cursor: pointer; font-size: 0.8rem; }
-        .btn-google { background: var(--google); color: white; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-size: 0.8rem; display: flex; align-items: center; gap: 5px; }
-        .btn-google:hover { background: #357ae8; }
-
-        /* Modal */
-        #configModal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; overflow-y: auto; }
-        .modal-content { background: white; width: 90%; max-width: 500px; margin: 5% auto; padding: 20px; border-radius: 10px; box-shadow: 0 5px 20px rgba(0,0,0,0.2); }
-        .modal-content label { display: block; margin-top: 10px; font-size: 0.9rem; font-weight: 600; color: var(--primary); }
-        .modal-content input { width: 100%; padding: 10px; margin: 5px 0 15px; border: 1px solid #ddd; border-radius: 4px; font-size: 1rem; }
-        .modal-footer { text-align: right; margin-top: 20px; }
-
+        
         /* Inputs */
         .input-group { display: flex; gap: 8px; margin-bottom: 20px; }
         input[type="text"], input[type="datetime-local"] { flex: 1; padding: 12px; border: 2px solid #ddd; border-radius: 8px; font-size: 16px; }
         button { padding: 12px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; transition: 0.2s; }
         button:active { transform: scale(0.96); }
-        .btn-add { background: var(--accent); color: white; min-width: 60px; }
-        
-        /* Botão Mic */
+        .btn-add { background: var(--accent); color: white; min-width: 80px; }
         .btn-mic { background: #607d8b; color: white; min-width: 50px; font-size: 1.2rem; }
         .btn-mic.listening { background: #e74c3c; animation: pulse-red 1.5s infinite; }
         
@@ -56,10 +47,15 @@
         .btn-opt { background: var(--primary); color: white; }
         .btn-back { background: transparent; color: #777; text-decoration: underline; margin-top: 15px; width: 100%; }
 
-        /* Listas */
+        /* Listas Drag & Drop */
         .lists-grid { display: grid; grid-template-columns: 1fr; gap: 15px; }
         @media(min-width: 700px) { .lists-grid { grid-template-columns: 1fr 1fr; } }
-        .list-card { background: white; border: 1px solid #eee; border-radius: 8px; padding: 15px; }
+        
+        .list-card { background: white; border: 1px solid #eee; border-radius: 8px; padding: 15px; transition: 0.2s; min-height: 100px; }
+        
+        /* Estilo quando arrastando item por cima da caixa */
+        .list-card.drag-over { background-color: #e8f8f5; border: 2px dashed #27ae60; transform: scale(1.02); }
+
         .list-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #f0f0f0; padding-bottom: 8px; margin-bottom: 10px; }
         .list-header h3 { margin: 0; font-size: 1rem; font-weight: 700; display: flex; align-items: center; gap: 5px; }
         .badge { background: #eee; padding: 2px 8px; border-radius: 10px; font-size: 0.75rem; font-weight: normal; }
@@ -68,28 +64,38 @@
         .card-waiting { border-left: 4px solid var(--warning); }
         .card-projects { border-left: 4px solid var(--primary); }
         
-        ul { list-style: none; padding: 0; margin: 0; }
-        li { padding: 10px 0; border-bottom: 1px solid #f9f9f9; display: flex; justify-content: space-between; align-items: center; }
-        li:last-child { border-bottom: none; }
-        .task-text { font-weight: 400; font-size: 1rem; color: #2c3e50; }
-        .meta { font-size: 0.75rem; color: #666; display: block; margin-top: 3px; }
-        .google-icon { background: #e8f0fe; color: #1967d2; font-weight: bold; padding: 2px 5px; border-radius: 4px; font-size: 0.7em; margin-left: 5px; }
-        .del-btn { color: #ccc; font-size: 1.2rem; padding: 0 10px; cursor: pointer; }
-        .del-btn:hover { color: var(--danger); }
-        .btn-refresh { background: #f1f3f4; border: 1px solid #dadce0; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 0.75rem; color: var(--google); }
-        .btn-refresh:hover { background: #e8f0fe; }
+        ul { list-style: none; padding: 0; margin: 0; min-height: 50px; }
         
-        /* Toast Notification */
+        li { padding: 10px 5px; border-bottom: 1px solid #f9f9f9; display: flex; justify-content: space-between; align-items: center; cursor: grab; background: #fff; }
+        li:active { cursor: grabbing; }
+        li.dragging { opacity: 0.5; background: #f0f0f0; border: 1px dashed #ccc; }
+        
+        .task-text { font-weight: 400; font-size: 1rem; color: #2c3e50; pointer-events: none; }
+        .meta { font-size: 0.75rem; color: #666; display: block; margin-top: 3px; pointer-events: none; }
+        .google-icon { background: #e8f0fe; color: #1967d2; font-weight: bold; padding: 2px 5px; border-radius: 4px; font-size: 0.7em; margin-left: 5px; }
+        
+        .actions-group { display: flex; gap: 5px; }
+        .icon-btn { color: #bdc3c7; font-size: 1.1rem; padding: 5px; cursor: pointer; transition: 0.2s; }
+        .icon-del:hover { color: var(--danger); }
+        .icon-edit:hover { color: var(--accent); }
+        .icon-check:hover { color: var(--success); }
+        .btn-refresh { background: #f1f3f4; border: 1px solid #dadce0; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 0.75rem; color: var(--google); }
+
+        /* Modal e Toast */
         #toast { visibility: hidden; min-width: 250px; background-color: #333; color: #fff; text-align: center; border-radius: 4px; padding: 16px; position: fixed; z-index: 9999; left: 50%; bottom: 30px; transform: translateX(-50%); font-size: 14px; }
         #toast.show { visibility: visible; -webkit-animation: fadein 0.5s, fadeout 0.5s 2.5s; animation: fadein 0.5s, fadeout 0.5s 2.5s; }
+        #configModal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; overflow-y: auto; }
+        .modal-content { background: white; width: 90%; max-width: 500px; margin: 5% auto; padding: 20px; border-radius: 10px; box-shadow: 0 5px 20px rgba(0,0,0,0.2); }
+        .modal-content label { display: block; margin-top: 10px; font-size: 0.9rem; font-weight: 600; color: var(--primary); }
+        .modal-content input { width: 100%; padding: 10px; margin: 5px 0 15px; border: 1px solid #ddd; border-radius: 4px; font-size: 1rem; }
+        .modal-footer { text-align: right; margin-top: 20px; }
+
         @keyframes fadein { from {bottom: 0; opacity: 0;} to {bottom: 30px; opacity: 1;} }
         @keyframes fadeout { from {bottom: 30px; opacity: 1;} to {bottom: 0; opacity: 0;} }
         @keyframes pulse-red { 0% { background: #c0392b; box-shadow: 0 0 0 0 rgba(192, 57, 43, 0.7); } 70% { background: #e74c3c; box-shadow: 0 0 0 10px rgba(192, 57, 43, 0); } 100% { background: #c0392b; box-shadow: 0 0 0 0 rgba(192, 57, 43, 0); } }
-        
-        .hidden { display: none !important; }
-        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
         @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .hidden { display: none !important; }
     </style>
 </head>
 <body>
@@ -127,66 +133,47 @@
             <div style="text-align:center; color:#888; font-size:0.8rem; text-transform:uppercase;">Processando Item:</div>
             <div id="currentItem" class="current-item"></div>
         </div>
-        <!-- Steps -->
-        <div id="step-1" class="step">
-            <h3 style="text-align:center">É passível de ação?</h3>
-            <div class="decision-grid"><button class="btn-no" onclick="handleActionable(false)">NÃO</button><button class="btn-yes" onclick="handleActionable(true)">SIM</button></div>
-        </div>
-        <div id="step-no" class="step hidden">
-            <h3 style="text-align:center">O que é isso?</h3>
-            <div class="decision-grid"><button class="btn-no" onclick="finalize('trash')">Lixo</button><button class="btn-opt" onclick="finalize('someday')">Um Dia/Talvez</button><button class="btn-opt full-width" onclick="finalize('reference')">Referência</button></div><button class="btn-back" onclick="resetSteps()">Voltar</button>
-        </div>
-        <div id="step-yes" class="step hidden">
-            <h3 style="text-align:center">É um projeto?</h3>
-            <div class="decision-grid"><button class="btn-opt" onclick="finalize('project')">Sim (Planejar)</button><button class="btn-yes" onclick="toStep('step-2min')">Não (Ação Única)</button></div><button class="btn-back" onclick="resetSteps()">Voltar</button>
-        </div>
-        <div id="step-2min" class="step hidden">
-            <h3 style="text-align:center">Leva < 2 minutos?</h3>
-            <div class="decision-grid"><button class="btn-yes" onclick="toStep('step-do')">SIM</button><button class="btn-no" onclick="toStep('step-del')">NÃO</button></div><button class="btn-back" onclick="toStep('step-yes')">Voltar</button>
-        </div>
-        <div id="step-do" class="step hidden">
-            <h2 style="text-align:center; color:var(--success)">FAÇA AGORA!</h2><button class="btn-yes" style="width:100%" onclick="finalize('done')">✅ Já fiz!</button><button class="btn-back" onclick="toStep('step-2min')">Voltar</button>
-        </div>
-        <div id="step-del" class="step hidden">
-            <h3 style="text-align:center">Quem faz?</h3>
-            <div class="decision-grid"><button class="btn-no" onclick="toStep('input-waiting')">Outro (Delegar)</button><button class="btn-yes" onclick="toStep('input-defer')">Eu (Adiar)</button></div><button class="btn-back" onclick="toStep('step-2min')">Voltar</button>
-        </div>
-        <div id="input-waiting" class="step hidden">
-            <h3 style="text-align:center">Delegar para quem?</h3><input type="text" id="delInput" placeholder="Nome..."><button class="btn-yes" style="width:100%; margin-top:10px;" onclick="finalize('waiting')">Confirmar</button><button class="btn-back" onclick="toStep('step-del')">Voltar</button>
-        </div>
-        <div id="input-defer" class="step hidden">
-            <h3 style="text-align:center">Quando?</h3>
-            <div class="decision-grid"><button class="btn-opt" onclick="toStep('input-cal')">📅 Data Certa</button><button class="btn-opt" onclick="finalize('next')">🔥 Assim que der</button></div><button class="btn-back" onclick="toStep('step-del')">Voltar</button>
-        </div>
-        <div id="input-cal" class="step hidden">
-            <h3 style="text-align:center">Escolha a Data e Hora</h3><input type="datetime-local" id="calInput"><button class="btn-yes" style="width:100%; margin-top:10px;" onclick="finalize('calendar')">Agendar no Google</button><button class="btn-back" onclick="toStep('input-defer')">Voltar</button>
-        </div>
+        <!-- Steps resumidos -->
+        <div id="step-1" class="step"><h3 style="text-align:center">É passível de ação?</h3><div class="decision-grid"><button class="btn-no" onclick="handleActionable(false)">NÃO</button><button class="btn-yes" onclick="handleActionable(true)">SIM</button></div></div>
+        <div id="step-no" class="step hidden"><h3 style="text-align:center">O que é isso?</h3><div class="decision-grid"><button class="btn-no" onclick="finalize('trash')">Lixo</button><button class="btn-opt" onclick="finalize('someday')">Um Dia/Talvez</button><button class="btn-opt full-width" onclick="finalize('reference')">Referência</button></div><button class="btn-back" onclick="resetSteps()">Voltar</button></div>
+        <div id="step-yes" class="step hidden"><h3 style="text-align:center">É um projeto?</h3><div class="decision-grid"><button class="btn-opt" onclick="finalize('project')">Sim (Planejar)</button><button class="btn-yes" onclick="toStep('step-2min')">Não (Ação Única)</button></div><button class="btn-back" onclick="resetSteps()">Voltar</button></div>
+        <div id="step-2min" class="step hidden"><h3 style="text-align:center">Leva < 2 minutos?</h3><div class="decision-grid"><button class="btn-yes" onclick="toStep('step-do')">SIM</button><button class="btn-no" onclick="toStep('step-del')">NÃO</button></div><button class="btn-back" onclick="toStep('step-yes')">Voltar</button></div>
+        <div id="step-do" class="step hidden"><h2 style="text-align:center; color:var(--success)">FAÇA AGORA!</h2><button class="btn-yes" style="width:100%" onclick="finalize('done')">✅ Já fiz!</button><button class="btn-back" onclick="toStep('step-2min')">Voltar</button></div>
+        <div id="step-del" class="step hidden"><h3 style="text-align:center">Quem faz?</h3><div class="decision-grid"><button class="btn-no" onclick="toStep('input-waiting')">Outro (Delegar)</button><button class="btn-yes" onclick="toStep('input-defer')">Eu (Adiar)</button></div><button class="btn-back" onclick="toStep('step-2min')">Voltar</button></div>
+        <div id="input-waiting" class="step hidden"><h3 style="text-align:center">Delegar para quem?</h3><input type="text" id="delInput" placeholder="Nome..."><button class="btn-yes" style="width:100%; margin-top:10px;" onclick="finalize('waiting')">Confirmar</button><button class="btn-back" onclick="toStep('step-del')">Voltar</button></div>
+        <div id="input-defer" class="step hidden"><h3 style="text-align:center">Quando?</h3><div class="decision-grid"><button class="btn-opt" onclick="toStep('input-cal')">📅 Data Certa</button><button class="btn-opt" onclick="finalize('next')">🔥 Assim que der</button></div><button class="btn-back" onclick="toStep('step-del')">Voltar</button></div>
+        <div id="input-cal" class="step hidden"><h3 style="text-align:center">Escolha a Data e Hora</h3><input type="datetime-local" id="calInput"><button class="btn-yes" style="width:100%; margin-top:10px;" onclick="finalize('calendar')">Agendar no Google</button><button class="btn-back" onclick="toStep('input-defer')">Voltar</button></div>
     </div>
 
     <!-- LISTAS -->
     <div class="lists-grid">
-        <div class="list-card card-inbox"><div class="list-header"><h3>📥 Entrada</h3><span class="badge" id="c-inbox">0</span></div><ul id="l-inbox"></ul></div>
-        <div class="list-card card-next"><div class="list-header"><h3>🔥 Próximas Ações</h3><span class="badge" id="c-next">0</span></div><ul id="l-next"></ul></div>
-        <div class="list-card card-projects"><div class="list-header"><h3>📂 Projetos</h3><span class="badge" id="c-project">0</span></div><ul id="l-project"></ul></div>
-        
-        <div class="list-card">
-            <div class="list-header">
-                <h3>📅 Calendário</h3>
-                <div><button class="btn-refresh" onclick="checkDeletedEvents(true)">🔄 Sync</button><span class="badge" id="c-calendar">0</span></div>
-            </div>
-            <ul id="l-calendar"></ul>
+        <!-- Áreas de Drop definidas pelo ID e classe ondragover/drop -->
+        <div class="list-card card-inbox" ondrop="drop(event, 'inbox')" ondragover="allowDrop(event)" ondragleave="leaveDrop(event)">
+            <div class="list-header"><h3>📥 Entrada</h3><span class="badge" id="c-inbox">0</span></div><ul id="l-inbox"></ul>
         </div>
-
-        <div class="list-card card-waiting"><div class="list-header"><h3>⏳ Delegar (Esperar)</h3><span class="badge" id="c-waiting">0</span></div><ul id="l-waiting"></ul></div>
-        <div class="list-card"><div class="list-header"><h3>💡 Um Dia / Talvez</h3><span class="badge" id="c-someday">0</span></div><ul id="l-someday"></ul></div>
-        <div class="list-card"><div class="list-header"><h3>📚 Arquivo / Referência</h3><span class="badge" id="c-reference">0</span></div><ul id="l-reference"></ul></div>
+        <div class="list-card card-next" ondrop="drop(event, 'next')" ondragover="allowDrop(event)" ondragleave="leaveDrop(event)">
+            <div class="list-header"><h3>🔥 Próximas Ações</h3><span class="badge" id="c-next">0</span></div><ul id="l-next"></ul>
+        </div>
+        <div class="list-card card-projects" ondrop="drop(event, 'project')" ondragover="allowDrop(event)" ondragleave="leaveDrop(event)">
+            <div class="list-header"><h3>📂 Projetos</h3><span class="badge" id="c-project">0</span></div><ul id="l-project"></ul>
+        </div>
+        <div class="list-card" ondrop="drop(event, 'calendar')" ondragover="allowDrop(event)" ondragleave="leaveDrop(event)">
+            <div class="list-header"><h3>📅 Calendário</h3><div><button class="btn-refresh" onclick="checkDeletedEvents(true)">🔄 Sync</button><span class="badge" id="c-calendar">0</span></div></div><ul id="l-calendar"></ul>
+        </div>
+        <div class="list-card card-waiting" ondrop="drop(event, 'waiting')" ondragover="allowDrop(event)" ondragleave="leaveDrop(event)">
+            <div class="list-header"><h3>⏳ Delegar (Esperar)</h3><span class="badge" id="c-waiting">0</span></div><ul id="l-waiting"></ul>
+        </div>
+        <div class="list-card" ondrop="drop(event, 'someday')" ondragover="allowDrop(event)" ondragleave="leaveDrop(event)">
+            <div class="list-header"><h3>💡 Um Dia / Talvez</h3><span class="badge" id="c-someday">0</span></div><ul id="l-someday"></ul>
+        </div>
+        <div class="list-card" ondrop="drop(event, 'reference')" ondragover="allowDrop(event)" ondragleave="leaveDrop(event)">
+            <div class="list-header"><h3>📚 Arquivo / Referência</h3><span class="badge" id="c-reference">0</span></div><ul id="l-reference"></ul>
+        </div>
     </div>
 </div>
 
-<!-- Toast -->
+<!-- Modal / Toast (Mantidos) -->
 <div id="toast">Notificação</div>
-
-<!-- Config Modal -->
 <div id="configModal">
     <div class="modal-content">
         <h3>☁️ Configurações</h3>
@@ -208,7 +195,7 @@
     let gapiInited = false, gisInited = false, tokenClient, googleAccessToken;
     const DISCOVERY_DOC = 'https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest';
 
-    // --- VOICE RECOGNITION SETUP ---
+    // --- VOICE RECOGNITION ---
     let recognition;
     if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -216,36 +203,67 @@
         recognition.lang = 'pt-BR';
         recognition.continuous = false;
         recognition.interimResults = false;
+        recognition.onstart = function() { document.getElementById('voiceBtn').classList.add('listening'); document.getElementById('inboxInput').placeholder = "Ouvindo..."; };
+        recognition.onend = function() { document.getElementById('voiceBtn').classList.remove('listening'); document.getElementById('inboxInput').placeholder = "Coleta rápida..."; };
+        recognition.onresult = function(event) { document.getElementById('inboxInput').value = event.results[0][0].transcript; };
+    } else { document.getElementById('voiceBtn').style.display = 'none'; }
+    function toggleVoice() { if (!recognition) return alert("Sem suporte voz."); try { recognition.start(); } catch(e) { recognition.stop(); } }
 
-        recognition.onstart = function() {
-            document.getElementById('voiceBtn').classList.add('listening');
-            document.getElementById('inboxInput').placeholder = "Ouvindo... Fale agora";
-        };
-
-        recognition.onend = function() {
-            document.getElementById('voiceBtn').classList.remove('listening');
-            document.getElementById('inboxInput').placeholder = "Coleta rápida...";
-        };
-
-        recognition.onresult = function(event) {
-            const transcript = event.results[0][0].transcript;
-            document.getElementById('inboxInput').value = transcript;
-            // Opcional: Para adicionar direto descomente a linha abaixo
-            // addToInbox(); 
-        };
-        
-        recognition.onerror = function(event) {
-            console.error(event.error);
-            showToast("Erro no reconhecimento de voz");
-            document.getElementById('voiceBtn').classList.remove('listening');
-        };
-    } else {
-        document.getElementById('voiceBtn').style.display = 'none'; // Esconde se não suportado
+    // --- DRAG AND DROP LOGIC ---
+    function allowDrop(ev) {
+        ev.preventDefault();
+        ev.currentTarget.classList.add('drag-over');
     }
 
-    function toggleVoice() {
-        if (!recognition) return alert("Navegador não suporta voz.");
-        try { recognition.start(); } catch(e) { recognition.stop(); }
+    function leaveDrop(ev) {
+        ev.currentTarget.classList.remove('drag-over');
+    }
+
+    function drag(ev, index) {
+        ev.dataTransfer.setData("text/plain", index);
+        ev.target.classList.add('dragging');
+    }
+
+    async function drop(ev, newStatus) {
+        ev.preventDefault();
+        ev.currentTarget.classList.remove('drag-over');
+        
+        const index = ev.dataTransfer.getData("text/plain");
+        const item = items[index];
+        
+        // Remove a classe visual
+        const draggedEl = document.querySelector('.dragging');
+        if(draggedEl) draggedEl.classList.remove('dragging');
+
+        if (!item || item.status === newStatus) return;
+
+        const oldStatus = item.status;
+        
+        // Lógica de Movimentação Inteligente
+        if (newStatus === 'calendar') {
+            const dateStr = prompt("Para qual data e hora? (AAAA-MM-DD HH:MM)", new Date().toISOString().slice(0,16).replace('T', ' '));
+            if (!dateStr) return; // Cancelou
+            item.date = dateStr.includes('T') ? dateStr : dateStr.replace(' ', 'T');
+            if (config.googleClientId) {
+                const eventId = await createCalendarEvent(item);
+                if (eventId) item.googleEventId = eventId;
+            }
+        } else if (newStatus === 'waiting') {
+            const who = prompt("Delegar para quem?");
+            if (who) item.note = "Delegado: " + who;
+        }
+
+        // Se saiu do calendário, perguntar se apaga do Google
+        if (oldStatus === 'calendar' && newStatus !== 'calendar' && item.googleEventId) {
+            if(confirm("Remover o evento correspondente do Google Agenda?")) {
+                await deleteCalendarEvent(item.googleEventId);
+                delete item.googleEventId;
+                delete item.date;
+            }
+        }
+
+        item.status = newStatus;
+        syncSave();
     }
 
     // --- GOOGLE API SETUP ---
@@ -269,7 +287,6 @@
             });
         }
     }
-
     function restoreGoogleSession() {
         const stored = localStorage.getItem('gtd_google_token');
         if (stored) {
@@ -279,35 +296,19 @@
                 gapi.client.setToken({ access_token: googleAccessToken });
                 updateGoogleSyncStatus(true);
                 setTimeout(() => checkDeletedEvents(), 1500); 
-            } else {
-                localStorage.removeItem('gtd_google_token');
-                updateGoogleSyncStatus(false);
-            }
+            } else { localStorage.removeItem('gtd_google_token'); updateGoogleSyncStatus(false); }
         }
     }
-
-    function handleAuthClick() {
-        if (!tokenClient) return alert("Google API não iniciada.");
-        tokenClient.requestAccessToken({prompt: ''});
-    }
-
+    function handleAuthClick() { if (!tokenClient) return alert("Google API não iniciada."); tokenClient.requestAccessToken({prompt: ''}); }
     function updateGoogleSyncStatus(isConnected) {
         const el = document.getElementById('googleSyncStatus');
-        el.innerHTML = isConnected 
-            ? `<span class="dot google-connected"></span> Agenda: OK` 
-            : `<span class="dot google-disconnected"></span> Agenda: <a href="#" onclick="handleAuthClick()">Conectar</a>`;
+        el.innerHTML = isConnected ? `<span class="dot google-connected"></span> Agenda: OK` : `<span class="dot google-disconnected"></span> Agenda: <a href="#" onclick="handleAuthClick()">Conectar</a>`;
     }
-
-    function showToast(msg) {
-        const t = document.getElementById("toast");
-        t.textContent = msg;
-        t.className = "show";
-        setTimeout(() => { t.className = t.className.replace("show", ""); }, 3000);
-    }
+    function showToast(msg) { const t = document.getElementById("toast"); t.textContent = msg; t.className = "show"; setTimeout(() => { t.className = t.className.replace("show", ""); }, 3000); }
 
     // --- SYNC REVERSO ---
     async function checkDeletedEvents(manual = false) {
-        if (!gapi.client.getToken()) { if(manual) showToast("Google desconectado."); return; }
+        if (!gapi.client.getToken()) { if(manual) showToast("Google Off."); return; }
         const calendarItems = items.filter(i => i.status === 'calendar' && i.googleEventId);
         if (calendarItems.length === 0) { if(manual) showToast("Nada para verificar."); return; }
         if(manual) showToast("Verificando agenda...");
@@ -315,22 +316,15 @@
         await Promise.all(calendarItems.map(async (item) => {
             try {
                 const res = await gapi.client.calendar.events.get({ 'calendarId': 'primary', 'eventId': item.googleEventId });
-                if (res.result.status === 'cancelled') { items = items.filter(i => i.id !== item.id); deletedCount++; }
-            } catch (err) {
-                if (err.status === 404 || err.status === 410) { items = items.filter(i => i.id !== item.id); deletedCount++; }
-            }
+                if (res.result.status === 'cancelled') { removeItemById(item.id); deletedCount++; }
+            } catch (err) { if (err.status === 404 || err.status === 410) { removeItemById(item.id); deletedCount++; } }
         }));
-        if (deletedCount > 0) { syncSave(); showToast(`${deletedCount} evento(s) deletados sync.`); } 
-        else if (manual) showToast("Tudo sincronizado.");
+        if (deletedCount > 0) { syncSave(); showToast(`${deletedCount} evento(s) deletados sync.`); } else if (manual) showToast("Tudo ok.");
     }
+    function removeItemById(id) { const index = items.findIndex(i => i.id === id); if (index > -1) items.splice(index, 1); }
 
-    // --- JSONBIN SYNC ---
-    window.onload = () => {
-        render();
-        if (config.binId && config.apiKey) syncLoad();
-        if (config.googleClientId) updateGoogleSyncStatus(false);
-    };
-
+    // --- SYNC CORE ---
+    window.onload = () => { render(); if (config.binId && config.apiKey) syncLoad(); if (config.googleClientId) updateGoogleSyncStatus(false); };
     async function syncLoad() {
         if (!config.binId) return;
         document.getElementById('syncText').innerText = 'Sync...';
@@ -343,12 +337,8 @@
             render();
             document.getElementById('syncText').innerText = 'Online';
             document.getElementById('syncDot').className = 'dot online';
-        } catch (e) {
-            document.getElementById('syncText').innerText = 'Erro';
-            document.getElementById('syncDot').className = 'dot error';
-        }
+        } catch (e) { document.getElementById('syncText').innerText = 'Erro'; document.getElementById('syncDot').className = 'dot error'; }
     }
-
     async function syncSave() {
         localStorage.setItem('gtd_data', JSON.stringify(items));
         render();
@@ -362,10 +352,7 @@
             });
             document.getElementById('syncText').innerText = 'Salvo';
             document.getElementById('syncDot').className = 'dot online';
-        } catch (e) {
-            document.getElementById('syncText').innerText = 'Erro Salvar';
-            document.getElementById('syncDot').className = 'dot error';
-        }
+        } catch (e) { document.getElementById('syncText').innerText = 'Erro Salvar'; document.getElementById('syncDot').className = 'dot error'; }
     }
 
     // --- GOOGLE ACTIONS ---
@@ -375,7 +362,7 @@
             const startDateTime = new Date(item.date);
             const endDateTime = new Date(startDateTime.getTime() + (60 * 60 * 1000));
             if (!gapi.client.calendar) await gapi.client.load('calendar', 'v3');
-            const response = await gapi.client.calendar.events.insert({
+            const res = await gapi.client.calendar.events.insert({
                 'calendarId': 'primary',
                 'resource': {
                     'summary': "GTD: " + item.text,
@@ -383,36 +370,28 @@
                     'end': { 'dateTime': endDateTime.toISOString(), 'timeZone': Intl.DateTimeFormat().resolvedOptions().timeZone }
                 }
             });
-            showToast("Evento criado no Google!");
-            return response.result.id; 
+            showToast("Evento criado!");
+            return res.result.id; 
         } catch (err) {
-            if (err.status === 401) {
-                localStorage.removeItem('gtd_google_token');
-                updateGoogleSyncStatus(false);
-                alert("Sessão Google expirada.");
-            } else alert("Erro Google: " + JSON.stringify(err));
+            if (err.status === 401) { localStorage.removeItem('gtd_google_token'); updateGoogleSyncStatus(false); alert("Sessão expirada."); }
+            else alert("Erro Google: " + JSON.stringify(err));
             return null;
         }
     }
-
+    async function updateGoogleEvent(item) {
+        if (!gapi.client.getToken() || !item.googleEventId) return;
+        try { await gapi.client.calendar.events.patch({ 'calendarId': 'primary', 'eventId': item.googleEventId, 'resource': { 'summary': "GTD: " + item.text } }); showToast("Atualizado no Google."); } catch (e) { console.error(e); }
+    }
     async function deleteCalendarEvent(eventId) {
         if (!eventId || !gapi.client.getToken()) return;
-        try {
-            await gapi.client.calendar.events.delete({ 'calendarId': 'primary', 'eventId': eventId });
-            showToast("Evento excluído do Google.");
-        } catch (err) { if (err.status !== 404 && err.status !== 410) console.error("Erro delete Google:", err); }
+        try { await gapi.client.calendar.events.delete({ 'calendarId': 'primary', 'eventId': eventId }); showToast("Excluído do Google."); } catch (err) { if(err.status!==404 && err.status!==410) console.error(err); }
     }
 
     // --- GTD FUNCTIONS ---
     function addToInbox() {
         const val = document.getElementById('inboxInput').value.trim();
-        if(val) {
-            items.push({ id: Date.now(), text: val, status: 'inbox' });
-            document.getElementById('inboxInput').value = '';
-            syncSave();
-        }
+        if(val) { items.push({ id: Date.now(), text: val, status: 'inbox' }); document.getElementById('inboxInput').value = ''; syncSave(); }
     }
-
     function startProcessing() {
         currentItemIdx = items.findIndex(i => i.status === 'inbox');
         if (currentItemIdx === -1) return;
@@ -421,36 +400,33 @@
         resetSteps();
         document.getElementById('processing-zone').scrollIntoView({behavior:'smooth'});
     }
-
     function handleActionable(bool) { bool ? toStep('step-yes') : toStep('step-no'); }
-
     async function finalize(status) {
         if (currentItemIdx === null) return;
         const item = items[currentItemIdx];
         item.status = status;
-        if (status === 'waiting') {
-            item.note = "Delegado: " + document.getElementById('delInput').value;
-            document.getElementById('delInput').value = '';
-        }
+        if (status === 'waiting') { item.note = "Delegado: " + document.getElementById('delInput').value; document.getElementById('delInput').value = ''; }
         if (status === 'calendar') {
             item.date = document.getElementById('calInput').value;
-            if(item.date && config.googleClientId) {
-                const eventId = await createCalendarEvent(item);
-                if (eventId) item.googleEventId = eventId;
-            }
+            if(item.date && config.googleClientId) { const eid = await createCalendarEvent(item); if(eid) item.googleEventId = eid; }
         }
         if (status === 'trash' || status === 'done') items.splice(currentItemIdx, 1);
         syncSave();
         if (items.some(i => i.status === 'inbox')) startProcessing();
-        else {
-            document.getElementById('processing-zone').style.display = 'none';
-            showToast("Caixa de entrada zerada!");
+        else { document.getElementById('processing-zone').style.display = 'none'; showToast("Entrada zerada!"); }
+    }
+    async function editItem(idx) {
+        const item = items[idx];
+        const newText = prompt("Editar:", item.text);
+        if (newText && newText !== item.text) {
+            item.text = newText;
+            if (item.status === 'calendar' && item.googleEventId) await updateGoogleEvent(item);
+            syncSave();
         }
     }
-
     async function deleteItem(idx) {
         const item = items[idx];
-        if(confirm("Remover este item?")) { 
+        if(confirm("Remover?")) { 
             if (item.status === 'calendar' && item.googleEventId) await deleteCalendarEvent(item.googleEventId);
             items.splice(idx, 1); 
             syncSave(); 
@@ -458,29 +434,11 @@
     }
 
     // UI Helpers
-    function resetSteps() {
-        document.querySelectorAll('.step').forEach(e => e.classList.add('hidden'));
-        document.getElementById('step-1').classList.remove('hidden');
-    }
-    function toStep(id) {
-        document.querySelectorAll('.step').forEach(e => e.classList.add('hidden'));
-        document.getElementById(id).classList.remove('hidden');
-    }
-    function openConfig() {
-        document.getElementById('cfgBinId').value = config.binId;
-        document.getElementById('cfgApiKey').value = config.apiKey;
-        document.getElementById('cfgGoogleClientId').value = config.googleClientId;
-        document.getElementById('configModal').style.display = 'block';
-    }
+    function resetSteps() { document.querySelectorAll('.step').forEach(e => e.classList.add('hidden')); document.getElementById('step-1').classList.remove('hidden'); }
+    function toStep(id) { document.querySelectorAll('.step').forEach(e => e.classList.add('hidden')); document.getElementById(id).classList.remove('hidden'); }
+    function openConfig() { document.getElementById('cfgBinId').value = config.binId; document.getElementById('cfgApiKey').value = config.apiKey; document.getElementById('cfgGoogleClientId').value = config.googleClientId; document.getElementById('configModal').style.display = 'block'; }
     function closeConfig() { document.getElementById('configModal').style.display = 'none'; }
-    function saveConfig() {
-        config.binId = document.getElementById('cfgBinId').value.trim();
-        config.apiKey = document.getElementById('cfgApiKey').value.trim();
-        config.googleClientId = document.getElementById('cfgGoogleClientId').value.trim();
-        localStorage.setItem('gtd_config', JSON.stringify(config));
-        closeConfig();
-        location.reload();
-    }
+    function saveConfig() { config.binId = document.getElementById('cfgBinId').value.trim(); config.apiKey = document.getElementById('cfgApiKey').value.trim(); config.googleClientId = document.getElementById('cfgGoogleClientId').value.trim(); localStorage.setItem('gtd_config', JSON.stringify(config)); closeConfig(); location.reload(); }
 
     function render() {
         const ids = ['inbox', 'next', 'project', 'waiting', 'calendar', 'someday', 'reference'];
@@ -492,16 +450,24 @@
             if(document.getElementById('l-'+listId)) {
                 counts[listId]++;
                 const li = document.createElement('li');
+                // DRAG: Adiciona atributos
+                li.setAttribute('draggable', true);
+                li.setAttribute('ondragstart', `drag(event, ${idx})`);
+                
                 let extra = '';
                 if(item.note) extra += `<span class="meta">${item.note}</span>`;
                 let googleIcon = '';
                 if(item.date) {
                     const d = new Date(item.date);
                     extra += `<span class="meta">📅 ${d.toLocaleDateString('pt-BR')} ${d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}</span>`;
-                    if (item.googleEventId) googleIcon = '<span class="google-icon" title="Sincronizado">G</span>';
+                    if (item.googleEventId) googleIcon = '<span class="google-icon">G</span>';
                 }
                 const icon = listId === 'inbox' ? '✖' : '✔';
-                li.innerHTML = `<div><span class="task-text">${item.text} ${googleIcon}</span>${extra}</div><span class="del-btn" onclick="deleteItem(${idx})">${icon}</span>`;
+                li.innerHTML = `<div><span class="task-text">${item.text} ${googleIcon}</span>${extra}</div>
+                    <div class="actions-group">
+                        <span class="icon-btn icon-edit" onclick="editItem(${idx})">✏️</span>
+                        <span class="icon-btn icon-del" onclick="deleteItem(${idx})">${icon}</span>
+                    </div>`;
                 document.getElementById('l-'+listId).appendChild(li);
             }
         });
