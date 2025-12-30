@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>GTD Fukuoka AI (v8.4)</title>
+    <title>GTD Fukuoka (v9.0)</title>
     <script src="https://bernardo-castilho.github.io/DragDropTouch/DragDropTouch.js"></script>
     <style>
-        :root { --primary: #2c3e50; --accent: #3498db; --success: #27ae60; --warning: #f39c12; --danger: #e74c3c; --light: #ecf0f1; --cloud: #8e44ad; --google: #4285f4; --ai: #8e44ad; --gray: #95a5a6; }
+        :root { --primary: #2c3e50; --accent: #3498db; --success: #27ae60; --warning: #f39c12; --danger: #e74c3c; --light: #ecf0f1; --cloud: #8e44ad; --google: #4285f4; --gray: #95a5a6; }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background: #f8f9fa; color: #333; margin: 0; padding: 15px; padding-bottom: 80px; user-select: none; }
         .container { max-width: 900px; margin: 0 auto; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
@@ -69,7 +69,16 @@
         li.item-completed .task-text { text-decoration: line-through; color: #95a5a6; }
 
         .task-text { font-weight: 400; font-size: 1rem; color: #2c3e50; pointer-events: none; }
-        .meta { font-size: 0.75rem; color: #666; display: block; margin-top: 3px; pointer-events: none; }
+        .meta { 
+            font-size: 0.75rem; 
+            color: #666; 
+            display: inline-block; 
+            margin-top: 3px; 
+            pointer-events: none; 
+            background: #eee;
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
         .google-icon { background: #e8f0fe; color: #1967d2; font-weight: bold; padding: 2px 5px; border-radius: 4px; font-size: 0.7em; margin-left: 5px; }
         
         .actions-group { display: flex; gap: 5px; }
@@ -262,36 +271,20 @@
     const DISCOVERY_DOC = 'https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest';
     let longPressTimer, longPressItem, dateResolver, headerPressTimer;
 
-    // --- AI INTEGRATION (GEMINI - FIXED MODEL) ---
+    // --- AI INTEGRATION (GEMINI - PORTUGUESE ONLY TAGS) ---
     async function callGemini(prompt) {
-        if (!config.geminiKey) {
-            alert("Configure a chave do Gemini em Configurações para usar IA.");
-            return null;
-        }
+        if (!config.geminiKey) { alert("Configure a chave do Gemini em Configurações para usar IA."); return null; }
         document.getElementById('loadingOverlay').style.display = 'flex';
         try {
-            // USANDO GEMINI-1.5-PRO (Estável)
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${config.geminiKey}`;
-            
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key=${config.geminiKey}`;
             const response = await fetch(url, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ 
-                    contents: [{ parts: [{ text: prompt }] }]
-                })
+                body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
             });
-
             const data = await response.json();
-            
-            if (data.error) {
-                console.error("Gemini Error:", data.error);
-                throw new Error(data.error.message);
-            }
-            
-            if (!data.candidates || !data.candidates[0] || !data.candidates[0].content) {
-                throw new Error("Resposta da IA vazia ou bloqueada.");
-            }
-
+            if (data.error) throw new Error(data.error.message);
+            if (!data.candidates || !data.candidates[0] || !data.candidates[0].content) throw new Error("Resposta da IA vazia.");
             return data.candidates[0].content.parts[0].text;
         } catch (e) {
             console.error(e);
@@ -307,12 +300,22 @@
         if (inboxItems.length === 0) return alert("Caixa de entrada vazia.");
         
         const tasksText = inboxItems.map(i => `- ${i.text} (ID: ${i.id})`).join('\n');
+        // PROMPT ATUALIZADO PARA PORTUGUÊS E ETIQUETAS CURTAS
         const prompt = `
-            Act as a GTD expert. Inbox items:
+            Você é um especialista em GTD. Tenho estes itens na entrada:
             ${tasksText}
             
-            For each item, decide the list (next, project, waiting, calendar, someday, reference, trash).
-            Return ONLY a valid JSON array. Example: [{"id": "123", "status": "next", "note": "context"}]. No markdown.
+            Para cada item, decida a melhor lista (next, project, waiting, calendar, someday, reference, trash).
+            Retorne APENAS um array JSON válido.
+            Formato: [{"id": "...", "status": "...", "note": "..."}]
+            
+            Regra IMPORTANTE para o campo 'note':
+            1. Deve ser em PORTUGUÊS.
+            2. Deve ser uma ETIQUETA CURTA de contexto (ex: "Casa", "Rua", "Computador", "Escritório", "Mercado").
+            3. Máximo 2 palavras.
+            4. NÃO explique a tarefa. Apenas o contexto físico.
+            
+            Não use markdown. Apenas JSON.
         `;
 
         const result = await callGemini(prompt);
@@ -341,7 +344,7 @@
 
     async function breakdownProject(idx) {
         const project = items[idx];
-        const prompt = `Project: "${project.text}". List 3 to 5 concrete next actions. Return ONLY a JSON array of strings. No markdown.`;
+        const prompt = `Projeto: "${project.text}". Liste 3 a 5 próximas ações físicas concretas. Responda em Português. Retorne APENAS um array JSON de strings. Sem markdown.`;
         const result = await callGemini(prompt);
         if (!result) return;
         try {
@@ -359,7 +362,7 @@
         const completed = items.filter(i => i.status === 'completed');
         if (completed.length === 0) return alert("Nada concluído para analisar.");
         const tasks = completed.map(i => i.text).join(', ');
-        const prompt = `Tarefas concluídas: ${tasks}. Dê um resumo motivacional curto em Português e 1 sugestão.`;
+        const prompt = `Tarefas concluídas: ${tasks}. Dê um resumo motivacional curto em Português e 1 sugestão de melhoria.`;
         const feedback = await callGemini(prompt);
         if (feedback) alert("🤖 Relatório da IA:\n\n" + feedback);
     }
@@ -408,7 +411,7 @@
             delete item.date;
         }
         if (newStatus === 'completed') { item.completedAt = new Date().toISOString(); }
-        
+
         if (newStatus === 'calendar') {
             const dateStr = await openDateModal(); if (!dateStr) return false; item.date = dateStr;
             if (config.googleClientId) { const eventId = await createCalendarEvent(item); if (eventId) item.googleEventId = eventId; }
