@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>GTD Fukuoka (v6.5)</title>
+    <title>GTD Fukuoka (v6.6)</title>
     <script src="https://bernardo-castilho.github.io/DragDropTouch/DragDropTouch.js"></script>
     <style>
         :root { --primary: #2c3e50; --accent: #3498db; --success: #27ae60; --warning: #f39c12; --danger: #e74c3c; --light: #ecf0f1; --cloud: #8e44ad; --google: #4285f4; --gray: #95a5a6; }
@@ -14,8 +14,7 @@
         header { text-align: center; margin-bottom: 20px; }
         h1 { margin: 0; color: var(--primary); font-size: 1.5rem; }
         .status-bar { background: #f8f9fa; border: 1px solid #e9ecef; padding: 10px; border-radius: 8px; margin-top: 15px; font-size: 0.85rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
-        .status-indicator { display: flex; align-items: center; gap: 6px; font-weight: 600; cursor: pointer; padding: 5px; border-radius: 4px; transition: background 0.2s; }
-        .status-indicator:hover { background: #eee; }
+        .status-indicator { display: flex; align-items: center; gap: 6px; font-weight: 600; cursor: pointer; }
         .dot { width: 10px; height: 10px; border-radius: 50%; background: #ccc; transition: 0.3s; }
         .dot.online { background: var(--success); box-shadow: 0 0 5px var(--success); }
         .dot.syncing { background: var(--warning); animation: pulse 1s infinite; }
@@ -31,7 +30,7 @@
         button:active { transform: scale(0.96); }
         .btn-add { background: var(--accent); color: white; min-width: 50px; font-size: 1.2rem; display: flex; align-items: center; justify-content: center; }
         .btn-mic { background: #607d8b; color: white; min-width: 46px; padding: 0; font-size: 1.2rem; display: flex; align-items: center; justify-content: center; }
-        .btn-mic.listening { background: #e74c3c; animation: pulse-red 1.5s infinite; }
+        .btn-mic.listening { background: #e74c3c; animation: pulse-red 1.5s infinite; border: 2px solid #c0392b; }
         
         #processing-zone { background: #fff; border: 2px solid var(--accent); padding: 20px; border-radius: 12px; margin-bottom: 25px; display: none; animation: slideDown 0.3s; }
         .processing-header { margin-bottom: 20px; padding-bottom: 10px; border-bottom: 1px solid #eee; }
@@ -43,40 +42,22 @@
         .btn-no { background: var(--danger); color: white; }
         .btn-opt { background: var(--primary); color: white; }
         .btn-back { background: transparent; color: #777; text-decoration: underline; margin-top: 15px; width: 100%; }
-        .btn-ai-magic { background: linear-gradient(135deg, #8e44ad, #3498db); color: white; border: none; font-weight: bold; animation: glow 2s infinite; }
 
         .lists-grid { display: grid; grid-template-columns: 1fr; gap: 20px; }
         @media(min-width: 700px) { .lists-grid { grid-template-columns: 1fr 1fr; } }
         
-        .list-card { 
-            background-color: #f1f3f5; 
-            border: 1px solid #ced4da; 
-            border-radius: 8px; 
-            padding: 15px; 
-            transition: 0.2s; 
-            min-height: 100px; 
-            display: flex; 
-            flex-direction: column; 
-            box-shadow: inset 0 0 5px rgba(0,0,0,0.02);
-        }
+        .list-card { background-color: #f1f3f5; border: 1px solid #ced4da; border-radius: 8px; padding: 15px; transition: 0.2s; min-height: 100px; display: flex; flex-direction: column; box-shadow: inset 0 0 5px rgba(0,0,0,0.02); }
         .list-card.drag-over-container { background-color: #e3f2fd; border: 2px dashed #3498db; }
-
-        .list-header { 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-            border-bottom: 2px solid #dee2e6; 
-            padding-bottom: 8px; 
-            margin-bottom: 10px; 
-            cursor: pointer; 
-            user-select: none;
-        }
+        .list-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #dee2e6; padding-bottom: 8px; margin-bottom: 10px; cursor: pointer; user-select: none; }
         .list-header:active { opacity: 0.6; }
-        
         .list-header h3 { margin: 0; font-size: 1rem; font-weight: 800; display: flex; align-items: center; gap: 5px; color: #000; }
         .badge { background: #fff; padding: 2px 8px; border-radius: 10px; font-size: 0.75rem; font-weight: bold; border: 1px solid #ccc; color: #333; }
         
-        /* CAIXA FAZER AGORA (ESPECIAL) */
+        .card-inbox { border-top: 4px solid var(--danger); }
+        .card-next { border-top: 4px solid var(--success); }
+        .card-waiting { border-top: 4px solid var(--warning); }
+        .card-projects { border-top: 4px solid var(--primary); }
+        .card-completed { border-top: 4px solid var(--gray); opacity: 0.8; }
         .card-do-now { background-color: #fff3cd !important; border: 1px solid #ffeeba !important; }
         .card-do-now h3 { color: #856404; }
 
@@ -133,10 +114,9 @@
     <header>
         <h1>GTD Fukuoka</h1>
         <div class="status-bar">
-            <!-- Clique no texto do Sync para ver o erro detalhado -->
-            <div class="status-indicator" onclick="showSyncError()" title="Clique para ver detalhes do status">
+            <div class="status-indicator" onclick="alert(document.getElementById('syncText').title || 'Status Normal')">
                 <div id="syncDot" class="dot"></div>
-                <span id="syncText">Offline</span>
+                <span id="syncText" title="">Offline</span>
             </div>
             <div>
                 <span id="googleSyncStatus" style="margin-right:10px;">
@@ -150,7 +130,7 @@
     <div class="input-group">
         <input type="text" id="inboxInput" list="historyList" placeholder="Coleta rápida (ou use o microfone)..." onkeypress="if(event.key==='Enter') addToInbox()">
         <datalist id="historyList"></datalist>
-        <button class="btn-mic" id="voiceBtn" onclick="toggleVoice()" title="Falar">🎤</button>
+        <button class="btn-mic" id="voiceBtn" onclick="toggleVoice()" title="Falar/Parar">🎤</button>
         <button class="btn-add" onclick="addToInbox()">+</button>
     </div>
 
@@ -165,6 +145,7 @@
 
     <!-- WIZARD -->
     <div id="processing-zone">
+        <!-- Mantido igual ao anterior por brevidade, a lógica JS controla o fluxo -->
         <div class="processing-header"><div style="text-align:center; color:#888; font-size:0.8rem; text-transform:uppercase;">Processando Item:</div><div id="currentItem" class="current-item"></div></div>
         <div id="step-1" class="step"><h3 style="text-align:center">É passível de ação?</h3><div class="decision-grid"><button class="btn-no" onclick="handleActionable(false)">NÃO</button><button class="btn-yes" onclick="handleActionable(true)">SIM</button></div></div>
         <div id="step-no" class="step hidden"><h3 style="text-align:center">O que é isso?</h3><div class="decision-grid"><button class="btn-no" onclick="finalize('trash')">Lixo</button><button class="btn-opt" onclick="finalize('someday')">Um Dia/Talvez</button><button class="btn-opt full-width" onclick="finalize('reference')">Referência</button></div><button class="btn-back" onclick="resetSteps()">Voltar</button></div>
@@ -291,47 +272,25 @@
     let gapiInited = false, gisInited = false, tokenClient, googleAccessToken;
     const DISCOVERY_DOC = 'https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest';
     let longPressTimer, longPressItem, dateResolver, headerPressTimer;
-    
-    // VARIÁVEL GLOBAL DE ERRO
-    let lastSyncError = "";
+    let isListening = false;
 
     // --- AI INTEGRATION (GEMINI - FIXED MODEL) ---
     async function callGemini(prompt) {
-        if (!config.geminiKey) {
-            alert("Configure a chave do Gemini em Configurações para usar IA.");
-            return null;
-        }
+        if (!config.geminiKey) { alert("Configure a chave do Gemini."); return null; }
         document.getElementById('loadingOverlay').style.display = 'flex';
         try {
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${config.geminiKey}`;
-            
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key=${config.geminiKey}`;
             const response = await fetch(url, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ 
-                    contents: [{ parts: [{ text: prompt }] }]
-                })
+                body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
             });
-
             const data = await response.json();
-            
-            if (data.error) {
-                console.error("Gemini Error:", data.error);
-                throw new Error(data.error.message);
-            }
-            
-            if (!data.candidates || !data.candidates[0] || !data.candidates[0].content) {
-                throw new Error("Resposta da IA vazia ou bloqueada.");
-            }
-
+            if (data.error) throw new Error(data.error.message);
+            if (!data.candidates || !data.candidates[0] || !data.candidates[0].content) throw new Error("Resposta vazia.");
             return data.candidates[0].content.parts[0].text;
-        } catch (e) {
-            console.error(e);
-            alert("Erro na IA: " + e.message);
-            return null;
-        } finally {
-            document.getElementById('loadingOverlay').style.display = 'none';
-        }
+        } catch (e) { console.error(e); alert("Erro na IA: " + e.message); return null; } 
+        finally { document.getElementById('loadingOverlay').style.display = 'none'; }
     }
 
     async function magicProcess() {
@@ -339,7 +298,6 @@
         if (inboxItems.length === 0) return alert("Caixa de entrada vazia.");
         
         const tasksText = inboxItems.map(i => `- ${i.text} (ID: ${i.id})`).join('\n');
-        
         const now = new Date();
         const dateStr = now.toLocaleDateString('pt-BR') + " " + now.toLocaleTimeString('pt-BR');
 
@@ -349,28 +307,25 @@
             ${tasksText}
             
             Regras de Processamento (RIGOROSAS):
-            
             1. **PRIORIDADE 1: DELEGAÇÃO**
-               Se a tarefa começa com nome/apelido (ex: "Je ver...", "João enviar"), O STATUS É 'waiting'.
-               No campo 'note', coloque APENAS: "Delegado: [Nome]".
-               Se tiver data/hora, extraia para 'date' (ISO).
+               Se começa com nome/apelido (ex: "Je ver", "João enviar"), status: 'waiting'.
+               Note: "Delegado: [Nome]". Extraia data ISO se houver.
             
             2. **PRIORIDADE 2: CALENDÁRIO**
-               Se NÃO for delegação, mas tiver data ou hora específica (ex: "Agendar médico", "Reunião amanhã"), status: 'calendar'.
-               Extraia a data futura correta para o campo 'date' (ISO).
+               Se tem data/hora específica (ex: "Agendar médico", "Reunião amanhã"), status: 'calendar'.
+               Extraia data ISO.
             
             3. **PRIORIDADE 3: FAZER AGORA (< 2 min)**
-               Se for uma ação muito rápida e NÃO depender de um local específico (ex: "Responder email", "Ligar para X"), status: 'do-now'.
-               IMPORTANTE: Se a ação rápida depender de chegar em casa ou outro local (ex: "Ligar a TV quando chegar"), ENTÃO É 'next', com note: "Casa".
+               Ação rápida sem local específico (ex: "Responder email"), status: 'do-now'.
+               Se depende de local (ex: "Ligar a TV em casa"), status: 'next', note: "Casa".
             
             4. **OUTROS**
-               - Material de leitura/arquivo -> status: 'reference'
-               - Ideia vaga/sonho -> status: 'someday'
-               - Projeto complexo -> status: 'project'
-               - Ação física sem data -> status: 'next'
+               - Material leitura -> 'reference'
+               - Ideia vaga -> 'someday'
+               - Projeto -> 'project'
+               - Ação sem data -> 'next'
             
-            Retorne APENAS um array JSON válido.
-            Formato: [{"id": "...", "status": "...", "note": "...", "date": "..."}]
+            Retorne APENAS um array JSON válido. Formato: [{"id": "...", "status": "...", "note": "...", "date": "..."}]
         `;
 
         const result = await callGemini(prompt);
@@ -379,45 +334,34 @@
         try {
             const cleanJson = result.replace(/```json/g, '').replace(/```/g, '').trim();
             const decisions = JSON.parse(cleanJson);
-            
             let count = 0;
             for (const d of decisions) {
                 const item = items.find(i => i.id == d.id);
                 if (item) {
                     item.status = d.status;
                     if (d.note) item.note = d.note;
-                    
                     if ((d.status === 'calendar' || d.status === 'waiting') && d.date && config.googleClientId) {
                         item.date = d.date;
-                        try {
-                            const eid = await createCalendarEvent(item);
-                            if (eid) item.googleEventId = eid;
-                        } catch(e) { console.error("Erro auto-agendamento IA", e); }
+                        try { const eid = await createCalendarEvent(item); if (eid) item.googleEventId = eid; } catch(e) { console.error(e); }
                     }
-
                     if (d.status === 'trash') items = items.filter(i => i.id != d.id);
                     count++;
                 }
             }
             syncSave();
-            showToast(`${count} itens processados pela IA! 🧠`);
-        } catch (e) {
-            console.error(e);
-            alert("Erro ao processar resposta da IA. Verifique o console.");
-        }
+            showToast(`${count} itens processados! ✨`);
+        } catch (e) { alert("Erro ao ler resposta da IA."); }
     }
 
     async function breakdownProject(idx) {
         const project = items[idx];
-        const prompt = `Projeto: "${project.text}". Liste 3 a 5 próximas ações físicas concretas. Responda em Português. Retorne APENAS um array JSON de strings. Sem markdown.`;
+        const prompt = `Projeto: "${project.text}". Liste 3 a 5 próximas ações físicas concretas. Responda em Português. Retorne APENAS um array JSON de strings.`;
         const result = await callGemini(prompt);
         if (!result) return;
         try {
             const cleanJson = result.replace(/```json/g, '').replace(/```/g, '').trim();
             const actions = JSON.parse(cleanJson);
-            actions.forEach(actionText => {
-                items.push({ id: Date.now() + Math.random(), text: actionText, status: 'next', note: `De: ${project.text}` });
-            });
+            actions.forEach(actionText => { items.push({ id: Date.now() + Math.random(), text: actionText, status: 'next', note: `De: ${project.text}` }); });
             syncSave();
             showToast("Ações geradas! ⚡");
         } catch (e) { alert("Erro ao quebrar projeto."); }
@@ -425,11 +369,70 @@
 
     async function aiReview() {
         const completed = items.filter(i => i.status === 'completed');
-        if (completed.length === 0) return alert("Nada concluído para analisar.");
+        if (completed.length === 0) return alert("Nada concluído.");
         const tasks = completed.map(i => i.text).join(', ');
-        const prompt = `Tarefas concluídas: ${tasks}. Dê um resumo motivacional curto em Português e 1 sugestão.`;
+        const prompt = `Tarefas concluídas: ${tasks}. Dê um resumo motivacional curto em Português.`;
         const feedback = await callGemini(prompt);
-        if (feedback) alert("🤖 Relatório da IA:\n\n" + feedback);
+        if (feedback) alert("🤖 IA:\n\n" + feedback);
+    }
+
+    // --- VOICE (UPDATED LOGIC) ---
+    let recognition;
+    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        recognition = new SpeechRecognition();
+        recognition.lang = 'pt-BR';
+        recognition.continuous = true; // Mantém ouvindo
+        recognition.interimResults = true; // Mostra o que está ouvindo
+
+        recognition.onstart = function() { 
+            isListening = true;
+            document.getElementById('voiceBtn').classList.add('listening'); 
+            document.getElementById('inboxInput').placeholder = "Ouvindo... (Toque para parar)";
+        };
+        
+        recognition.onend = function() { 
+            isListening = false;
+            document.getElementById('voiceBtn').classList.remove('listening'); 
+            document.getElementById('inboxInput').placeholder = "Coleta rápida...";
+        };
+
+        recognition.onresult = function(event) {
+            let finalTranscript = '';
+            for (let i = event.resultIndex; i < event.results.length; ++i) {
+                if (event.results[i].isFinal) {
+                    finalTranscript += event.results[i][0].transcript;
+                } else {
+                    // Interim results (opcional: mostrar em algum lugar)
+                }
+            }
+            if (finalTranscript) {
+                // Capitalize e insere
+                finalTranscript = finalTranscript.trim();
+                finalTranscript = finalTranscript.charAt(0).toUpperCase() + finalTranscript.slice(1);
+                
+                // Se já tem texto, adiciona espaço
+                const input = document.getElementById('inboxInput');
+                if (input.value) input.value += ' ' + finalTranscript;
+                else input.value = finalTranscript;
+            }
+        };
+        
+        recognition.onerror = function(event) {
+            console.error(event.error);
+            isListening = false;
+            document.getElementById('voiceBtn').classList.remove('listening');
+        };
+
+    } else { document.getElementById('voiceBtn').style.display = 'none'; }
+
+    function toggleVoice() {
+        if (!recognition) return alert("Sem suporte voz.");
+        if (isListening) {
+            recognition.stop();
+        } else {
+            recognition.start();
+        }
     }
 
     // --- STANDARD FUNCTIONS ---
@@ -439,17 +442,6 @@
     function clearHeaderPress() { clearTimeout(headerPressTimer); }
     function statusToName(s) { const map = { 'inbox': 'Entrada', 'do-now': 'Fazer Agora', 'next': 'Próximas Ações', 'project': 'Projetos', 'waiting': 'Delegar', 'calendar': 'Calendário', 'someday': 'Talvez', 'reference': 'Referência' }; return map[s] || s; }
     
-    // Voice
-    let recognition;
-    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
-        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-        recognition = new SpeechRecognition(); recognition.lang = 'pt-BR';
-        recognition.onstart = function() { document.getElementById('voiceBtn').classList.add('listening'); };
-        recognition.onend = function() { document.getElementById('voiceBtn').classList.remove('listening'); };
-        recognition.onresult = function(event) { let t = event.results[0][0].transcript; t = t.charAt(0).toUpperCase() + t.slice(1); document.getElementById('inboxInput').value = t; };
-    } else { document.getElementById('voiceBtn').style.display = 'none'; }
-    function toggleVoice() { if (!recognition) return alert("Sem suporte voz."); try { recognition.start(); } catch(e) { recognition.stop(); } }
-
     // Date Picker
     function openDateModal() { return new Promise((resolve) => { const now = new Date(); const offset = now.getTimezoneOffset() * 60000; const localISOTime = (new Date(now - offset)).toISOString().slice(0, 16); document.getElementById('modalDateInput').value = localISOTime; document.getElementById('dateModal').style.display = 'flex'; dateResolver = resolve; }); }
     function closeDateModal() { document.getElementById('dateModal').style.display = 'none'; if (dateResolver) { dateResolver(null); dateResolver = null; } }
@@ -487,7 +479,6 @@
         item.status = newStatus; return true;
     }
 
-    // --- AUTO-MOVE ---
     function checkCalendarDueDates() {
         const now = new Date(); const today = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
         let changed = false;
@@ -495,7 +486,7 @@
         if (changed) { syncSave(); showToast("Tarefas vencidas movidas para Próximas Ações"); }
     }
 
-    // --- GOOGLE API & SYNC ---
+    // Google & Sync
     function gapiLoaded() { gapi.load('client', intializeGapiClient); }
     async function intializeGapiClient() { await gapi.client.init({ discoveryDocs: [DISCOVERY_DOC] }); gapiInited = true; restoreGoogleSession(); maybeEnableGoogleSignIn(); }
     function gisLoaded() { gisInited = true; maybeEnableGoogleSignIn(); }
@@ -503,58 +494,12 @@
     function restoreGoogleSession() { const stored = localStorage.getItem('gtd_google_token'); if (stored) { const tokenData = JSON.parse(stored); if (Date.now() < (tokenData.expires_at - 60000)) { googleAccessToken = tokenData.access_token; gapi.client.setToken({ access_token: googleAccessToken }); updateGoogleSyncStatus(true); setTimeout(() => checkDeletedEvents(), 1500); } else { localStorage.removeItem('gtd_google_token'); updateGoogleSyncStatus(false); } } }
     function handleAuthClick() { if (!tokenClient) return alert("Google API não iniciada."); tokenClient.requestAccessToken({prompt: ''}); }
     function updateGoogleSyncStatus(isConnected) { const el = document.getElementById('googleSyncStatus'); el.innerHTML = isConnected ? `<span class="dot google-connected"></span> Agenda: OK` : `<span class="dot google-disconnected"></span> Agenda: <a href="#" onclick="handleAuthClick()">Conectar</a>`; }
-    
-    // MODIFIED SHOW ERROR LOGIC
-    function showSyncError() {
-        if(lastSyncError) alert("Detalhes do Erro:\n" + lastSyncError);
-        else alert("Nenhum erro registrado recentemente.");
-    }
-    
     function showToast(msg) { const t = document.getElementById("toast"); t.textContent = msg; t.className = "show"; setTimeout(() => { t.className = t.className.replace("show", ""); }, 3000); }
     async function checkDeletedEvents(manual = false) { if (!gapi.client.getToken()) { if(manual) showToast("Google Off."); return; } const calendarItems = items.filter(i => (i.status === 'calendar' || i.status === 'waiting') && i.googleEventId); if (calendarItems.length === 0) { if(manual) showToast("Nada para verificar."); return; } if(manual) showToast("Verificando agenda..."); let deletedCount = 0; await Promise.all(calendarItems.map(async (item) => { try { const res = await gapi.client.calendar.events.get({ 'calendarId': 'primary', 'eventId': item.googleEventId }); if (res.result.status === 'cancelled') { removeItemById(item.id); deletedCount++; } } catch (err) { if (err.status === 404 || err.status === 410) { removeItemById(item.id); deletedCount++; } } })); if (deletedCount > 0) { syncSave(); showToast(`${deletedCount} evento(s) deletados sync.`); } else if (manual) showToast("Tudo ok."); }
     function removeItemById(id) { const index = items.findIndex(i => i.id === id); if (index > -1) items.splice(index, 1); }
     window.onload = () => { render(); renderHistory(); if (config.binId && config.apiKey) syncLoad(); if (config.googleClientId) updateGoogleSyncStatus(false); checkCalendarDueDates(); };
-    async function syncLoad() { 
-        if (!config.binId) return; 
-        document.getElementById('syncText').innerText = 'Sync...'; 
-        try { 
-            const res = await fetch(`https://api.jsonbin.io/v3/b/${config.binId}/latest`, { headers: { 'X-Master-Key': config.apiKey } }); 
-            if (!res.ok) throw new Error(res.status + " " + res.statusText); 
-            const data = await res.json(); 
-            items = data.record.gtd_tasks || data.record || []; 
-            localStorage.setItem('gtd_data', JSON.stringify(items)); 
-            render(); 
-            document.getElementById('syncText').innerText = 'Online'; 
-            document.getElementById('syncDot').className = 'dot online'; 
-            lastSyncError = ""; // Clear error
-            checkCalendarDueDates(); 
-        } catch (e) { 
-            console.error(e);
-            lastSyncError = e.message;
-            document.getElementById('syncText').innerText = 'Erro'; 
-            document.getElementById('syncDot').className = 'dot error'; 
-        } 
-    }
-    async function syncSave() { 
-        localStorage.setItem('gtd_data', JSON.stringify(items)); 
-        render(); 
-        if (!config.binId) return; 
-        document.getElementById('syncText').innerText = 'Salvando...'; 
-        try { 
-            await fetch(`https://api.jsonbin.io/v3/b/${config.binId}`, { 
-                method: 'PUT', 
-                headers: { 'Content-Type': 'application/json', 'X-Master-Key': config.apiKey, 'X-Bin-Versioning': 'false' }, 
-                body: JSON.stringify({ gtd_tasks: items }) 
-            }); 
-            document.getElementById('syncText').innerText = 'Salvo'; 
-            document.getElementById('syncDot').className = 'dot online'; 
-            lastSyncError = "";
-        } catch (e) { 
-            lastSyncError = e.message;
-            document.getElementById('syncText').innerText = 'Erro Salvar'; 
-            document.getElementById('syncDot').className = 'dot error'; 
-        } 
-    }
+    async function syncLoad() { if (!config.binId) return; document.getElementById('syncText').innerText = 'Sync...'; try { const res = await fetch(`https://api.jsonbin.io/v3/b/${config.binId}/latest`, { headers: { 'X-Master-Key': config.apiKey } }); if (!res.ok) throw new Error(res.status); const data = await res.json(); items = data.record.gtd_tasks || data.record || []; localStorage.setItem('gtd_data', JSON.stringify(items)); render(); document.getElementById('syncText').innerText = 'Online'; document.getElementById('syncDot').className = 'dot online'; checkCalendarDueDates(); } catch (e) { document.getElementById('syncText').innerText = 'Erro'; document.getElementById('syncDot').className = 'dot error'; document.getElementById('syncText').title = e.message; } }
+    async function syncSave() { localStorage.setItem('gtd_data', JSON.stringify(items)); render(); if (!config.binId) return; document.getElementById('syncText').innerText = 'Salvando...'; try { await fetch(`https://api.jsonbin.io/v3/b/${config.binId}`, { method: 'PUT', headers: { 'Content-Type': 'application/json', 'X-Master-Key': config.apiKey, 'X-Bin-Versioning': 'false' }, body: JSON.stringify({ gtd_tasks: items }) }); document.getElementById('syncText').innerText = 'Salvo'; document.getElementById('syncDot').className = 'dot online'; } catch (e) { document.getElementById('syncText').innerText = 'Erro Salvar'; document.getElementById('syncDot').className = 'dot error'; } }
     async function createCalendarEvent(item) { if (!gapi.client.getToken()) return null; try { const startDateTime = new Date(item.date); const endDateTime = new Date(startDateTime.getTime() + (30 * 60 * 1000)); if (!gapi.client.calendar) await gapi.client.load('calendar', 'v3'); const response = await gapi.client.calendar.events.insert({ 'calendarId': 'primary', 'resource': { 'summary': "GTD: " + item.text, 'start': { 'dateTime': startDateTime.toISOString(), 'timeZone': Intl.DateTimeFormat().resolvedOptions().timeZone }, 'end': { 'dateTime': endDateTime.toISOString(), 'timeZone': Intl.DateTimeFormat().resolvedOptions().timeZone } } }); showToast("Evento criado!"); return response.result.id; } catch (err) { if (err.status === 401) { localStorage.removeItem('gtd_google_token'); updateGoogleSyncStatus(false); alert("Sessão expirada."); } else alert("Erro Google: " + JSON.stringify(err)); return null; } }
     async function updateGoogleEvent(item) { if (!gapi.client.getToken() || !item.googleEventId) return; try { await gapi.client.calendar.events.patch({ 'calendarId': 'primary', 'eventId': item.googleEventId, 'resource': { 'summary': "GTD: " + item.text } }); showToast("Atualizado no Google."); } catch (e) { console.error(e); } }
     async function deleteCalendarEvent(eventId) { if (!eventId || !gapi.client.getToken()) return; try { await gapi.client.calendar.events.delete({ 'calendarId': 'primary', 'eventId': eventId }); showToast("Excluído do Google."); } catch (err) { if(err.status!==404 && err.status!==410) console.error(err); } }
