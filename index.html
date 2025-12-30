@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>GTD Fukuoka AI (v8.3)</title>
+    <title>GTD Fukuoka AI (v8.4)</title>
     <script src="https://bernardo-castilho.github.io/DragDropTouch/DragDropTouch.js"></script>
     <style>
         :root { --primary: #2c3e50; --accent: #3498db; --success: #27ae60; --warning: #f39c12; --danger: #e74c3c; --light: #ecf0f1; --cloud: #8e44ad; --google: #4285f4; --ai: #8e44ad; --gray: #95a5a6; }
@@ -270,7 +270,8 @@
         }
         document.getElementById('loadingOverlay').style.display = 'flex';
         try {
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${config.geminiKey}`;
+            // USANDO GEMINI-1.5-PRO (Estável)
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key=${config.geminiKey}`;
             
             const response = await fetch(url, {
                 method: 'POST',
