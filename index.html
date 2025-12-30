@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>GTD Fukuoka AI (v8.0)</title>
+    <title>GTD Fukuoka AI (v8.1)</title>
     <script src="https://bernardo-castilho.github.io/DragDropTouch/DragDropTouch.js"></script>
     <style>
         :root { --primary: #2c3e50; --accent: #3498db; --success: #27ae60; --warning: #f39c12; --danger: #e74c3c; --light: #ecf0f1; --cloud: #8e44ad; --google: #4285f4; --ai: #8e44ad; --gray: #95a5a6; }
@@ -42,6 +42,7 @@
         .btn-no { background: var(--danger); color: white; }
         .btn-opt { background: var(--primary); color: white; }
         .btn-back { background: transparent; color: #777; text-decoration: underline; margin-top: 15px; width: 100%; }
+        .btn-ai-magic { background: linear-gradient(135deg, #8e44ad, #3498db); color: white; border: none; font-weight: bold; animation: glow 2s infinite; }
 
         .lists-grid { display: grid; grid-template-columns: 1fr; gap: 20px; }
         @media(min-width: 700px) { .lists-grid { grid-template-columns: 1fr 1fr; } }
@@ -70,6 +71,7 @@
         .task-text { font-weight: 400; font-size: 1rem; color: #2c3e50; pointer-events: none; }
         .meta { font-size: 0.75rem; color: #666; display: block; margin-top: 3px; pointer-events: none; }
         .google-icon { background: #e8f0fe; color: #1967d2; font-weight: bold; padding: 2px 5px; border-radius: 4px; font-size: 0.7em; margin-left: 5px; }
+        .notion-icon { background: #000; color: #fff; font-weight: bold; padding: 2px 5px; border-radius: 4px; font-size: 0.7em; margin-left: 5px; }
         
         .actions-group { display: flex; gap: 5px; }
         .icon-btn { color: #bdc3c7; font-size: 1.1rem; padding: 5px; cursor: pointer; transition: 0.2s; }
@@ -78,12 +80,11 @@
         .icon-check:hover { color: var(--success); }
         .icon-restore:hover { color: var(--warning); }
         .icon-ai { color: var(--ai); }
-        .icon-ai:hover { color: #9b59b6; transform: scale(1.1); }
-        
+        .icon-ai:hover { color: #9b59b6; transform: scale(1.2); }
+
         .btn-refresh { background: #fff; border: 1px solid #dadce0; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 0.75rem; color: var(--google); margin-left: 5px; }
         .btn-clear-hist { color: var(--danger); border-color: #fcc; background: #fff; }
-        .btn-ai-magic { background: linear-gradient(135deg, #8e44ad, #3498db); color: white; border: none; font-weight: bold; animation: glow 2s infinite; }
-        
+
         /* Modal e Toast */
         #toast { visibility: hidden; min-width: 250px; background-color: #333; color: #fff; text-align: center; border-radius: 4px; padding: 16px; position: fixed; z-index: 9999; left: 50%; bottom: 30px; transform: translateX(-50%); font-size: 14px; }
         #toast.show { visibility: visible; -webkit-animation: fadein 0.5s, fadeout 0.5s 2.5s; animation: fadein 0.5s, fadeout 0.5s 2.5s; }
@@ -93,7 +94,6 @@
         .modal-content input { width: 100%; padding: 10px; margin: 5px 0 15px; border: 1px solid #ddd; border-radius: 4px; font-size: 1rem; }
         .modal-footer { text-align: right; margin-top: 20px; display: flex; justify-content: flex-end; gap: 10px; }
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; }
-        /* Loading Overlay */
         #loadingOverlay { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.8); z-index: 9999; align-items: center; justify-content: center; flex-direction: column; }
         .spinner { border: 4px solid #f3f3f3; border-top: 4px solid var(--accent); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; }
 
@@ -143,7 +143,7 @@
         </button>
     </div>
 
-    <!-- WIZARD (Omitted for brevity, same as v5.7 logic, keeps working) -->
+    <!-- WIZARD -->
     <div id="processing-zone">
         <div class="processing-header"><div style="text-align:center; color:#888; font-size:0.8rem; text-transform:uppercase;">Processando Item:</div><div id="currentItem" class="current-item"></div></div>
         <div id="step-1" class="step"><h3 style="text-align:center">É passível de ação?</h3><div class="decision-grid"><button class="btn-no" onclick="handleActionable(false)">NÃO</button><button class="btn-yes" onclick="handleActionable(true)">SIM</button></div></div>
@@ -217,14 +217,14 @@
     </div>
 </div>
 
-<!-- Modal / Toast -->
-<div id="toast">Notificação</div>
 <!-- Loading -->
 <div id="loadingOverlay">
     <div class="spinner"></div>
     <p style="margin-top:15px; font-weight:bold; color:#555;">IA Pensando...</p>
 </div>
 
+<!-- Modal / Toast -->
+<div id="toast">Notificação</div>
 <div id="configModal">
     <div class="modal-content">
         <h3>☁️ Configurações</h3>
@@ -233,7 +233,7 @@
         <hr style="margin:15px 0; border:0; border-top:1px dashed #ccc;">
         <label>Google Client ID:</label><input type="text" id="cfgGoogleClientId">
         <hr style="margin:15px 0; border:0; border-top:1px dashed #ccc;">
-        <label>Gemini API Key (IA):</label><input type="password" id="cfgGeminiKey" placeholder="AIza...">
+        <label>Gemini API Key (IA):</label><input type="password" id="cfgGeminiKey">
         <div class="modal-footer"><button class="btn-no" onclick="closeConfig()">Cancelar</button><button class="btn-yes" onclick="saveConfig()">Salvar</button></div>
     </div>
 </div>
@@ -263,7 +263,7 @@
     const DISCOVERY_DOC = 'https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest';
     let longPressTimer, longPressItem, dateResolver, headerPressTimer;
 
-    // --- AI INTEGRATION (GEMINI) ---
+    // --- AI INTEGRATION (GEMINI - FIXED) ---
     async function callGemini(prompt) {
         if (!config.geminiKey) {
             alert("Configure a chave do Gemini em Configurações para usar IA.");
@@ -272,15 +272,29 @@
         document.getElementById('loadingOverlay').style.display = 'flex';
         try {
             const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${config.geminiKey}`;
+            
             const response = await fetch(url, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+                body: JSON.stringify({ 
+                    contents: [{ parts: [{ text: prompt }] }]
+                })
             });
+
             const data = await response.json();
+            
+            if (data.error) {
+                console.error("Gemini Error:", data.error);
+                throw new Error(data.error.message);
+            }
+            
+            if (!data.candidates || !data.candidates[0] || !data.candidates[0].content) {
+                throw new Error("Resposta da IA vazia ou bloqueada.");
+            }
+
             return data.candidates[0].content.parts[0].text;
         } catch (e) {
-            console.error("AI Error:", e);
+            console.error(e);
             alert("Erro na IA: " + e.message);
             return null;
         } finally {
@@ -288,7 +302,6 @@
         }
     }
 
-    // 1. Magic Process (Auto-process Inbox)
     async function magicProcess() {
         const inboxItems = items.filter(i => i.status === 'inbox');
         if (inboxItems.length === 0) return alert("Caixa de entrada vazia.");
@@ -299,10 +312,11 @@
             ${tasksText}
             
             For each item, decide the best GTD list (next, project, waiting, calendar, someday, reference, trash).
-            Return ONLY a JSON array with objects: { "id": "original_id", "status": "list_name", "note": "context_tag" }.
-            Use status codes: next, project, waiting, calendar, someday, reference, trash.
-            For 'note', suggest a context like 'Computer', 'Errand', 'Home' or delegation name.
-            Do not include markdown formatting.
+            Return ONLY a valid JSON array. Each object must have: 
+            "id" (string from input), 
+            "status" (one of: next, project, waiting, calendar, someday, reference, trash),
+            "note" (string, suggested context or delegation).
+            Do not use markdown code blocks. Just raw JSON.
         `;
 
         const result = await callGemini(prompt);
@@ -318,57 +332,43 @@
                 if (item) {
                     item.status = d.status;
                     if (d.note) item.note = d.note;
-                    if (d.status === 'trash') items = items.filter(i => i.id != d.id); // Remover lixo real
+                    if (d.status === 'trash') items = items.filter(i => i.id != d.id);
                     count++;
                 }
             });
             syncSave();
-            showToast(`${count} itens processados magicamente! ✨`);
+            showToast(`${count} itens processados! ✨`);
         } catch (e) {
-            alert("Erro ao processar resposta da IA.");
+            alert("Erro ao ler resposta da IA. Tente novamente.");
         }
     }
 
-    // 2. Project Breakdown
     async function breakdownProject(idx) {
         const project = items[idx];
-        const prompt = `I have a project: "${project.text}". List 3 to 5 concrete, physical next actions to start this project. Return ONLY a JSON array of strings. No markdown.`;
-        
+        const prompt = `I have a project: "${project.text}". List 3 to 5 concrete next actions. Return ONLY a JSON array of strings. No markdown.`;
         const result = await callGemini(prompt);
         if (!result) return;
-        
         try {
             const cleanJson = result.replace(/```json/g, '').replace(/```/g, '').trim();
             const actions = JSON.parse(cleanJson);
-            
             actions.forEach(actionText => {
-                items.push({
-                    id: Date.now() + Math.random(),
-                    text: actionText,
-                    status: 'next',
-                    note: `De: ${project.text}`
-                });
+                items.push({ id: Date.now() + Math.random(), text: actionText, status: 'next', note: `De: ${project.text}` });
             });
             syncSave();
-            showToast("Novas ações geradas! ⚡");
-        } catch (e) {
-            alert("Erro ao quebrar projeto.");
-        }
+            showToast("Ações geradas! ⚡");
+        } catch (e) { alert("Erro ao quebrar projeto."); }
     }
 
-    // 3. AI Review
     async function aiReview() {
         const completed = items.filter(i => i.status === 'completed');
-        if (completed.length === 0) return alert("Nenhuma tarefa concluída para analisar.");
-        
+        if (completed.length === 0) return alert("Nada concluído para analisar.");
         const tasks = completed.map(i => i.text).join(', ');
-        const prompt = `I completed these tasks: ${tasks}. Give me a short, motivating summary (in Portuguese) and suggest 1 thing I might be forgetting based on this context.`;
-        
+        const prompt = `Completed tasks: ${tasks}. Give a short motivating summary in Portuguese and 1 suggestion.`;
         const feedback = await callGemini(prompt);
         if (feedback) alert("🤖 Relatório da IA:\n\n" + feedback);
     }
 
-    // --- STANDARD FUNCTIONS (Existing Logic) ---
+    // --- STANDARD FUNCTIONS ---
     function updateHistory(text) { if (!text) return; if (!history.includes(text)) { history.push(text); if (history.length > 50) history.shift(); localStorage.setItem('gtd_history', JSON.stringify(history)); renderHistory(); } }
     function renderHistory() { const dl = document.getElementById('historyList'); dl.innerHTML = ''; history.slice().reverse().forEach(h => { const op = document.createElement('option'); op.value = h; dl.appendChild(op); }); }
     function handleHeaderPress(status) { headerPressTimer = setTimeout(async () => { if (navigator.vibrate) navigator.vibrate(50); const text = prompt(`Adicionar em "${statusToName(status)}":`); if (text) { const newItem = { id: Date.now(), text: text, status: status }; if (status === 'calendar' || status === 'waiting') { if (status === 'waiting') { const who = prompt("Delegar para quem?"); if (who) newItem.note = "Delegado: " + who; else return; } const dateStr = await openDateModal(); if (dateStr) { newItem.date = dateStr; if (config.googleClientId) { const eid = await createCalendarEvent(newItem); if (eid) newItem.googleEventId = eid; } } else if (status === 'calendar') return; } items.push(newItem); updateHistory(text); syncSave(); showToast("Item adicionado!"); } }, 500); }
@@ -412,12 +412,26 @@
             delete item.date;
         }
         if (newStatus === 'completed') { item.completedAt = new Date().toISOString(); }
-        if (newStatus === 'calendar') { const dateStr = await openDateModal(); if (!dateStr) return false; item.date = dateStr; if (config.googleClientId) { const eventId = await createCalendarEvent(item); if (eventId) item.googleEventId = eventId; } } 
-        else if (newStatus === 'waiting') { const who = prompt("Delegar para quem?"); if (who) item.note = "Delegado: " + who; const dateStr = await openDateModal(); if (dateStr) { item.date = dateStr; if (config.googleClientId) { const eventId = await createCalendarEvent(item); if (eventId) item.googleEventId = eventId; } } }
+        
+        if (newStatus === 'calendar') {
+            const dateStr = await openDateModal(); if (!dateStr) return false; item.date = dateStr;
+            if (config.googleClientId) { const eventId = await createCalendarEvent(item); if (eventId) item.googleEventId = eventId; }
+        } else if (newStatus === 'waiting') {
+            const who = prompt("Delegar para quem?"); if (who) item.note = "Delegado: " + who;
+            const dateStr = await openDateModal(); if (dateStr) { item.date = dateStr; if (config.googleClientId) { const eventId = await createCalendarEvent(item); if (eventId) item.googleEventId = eventId; } }
+        }
         item.status = newStatus; return true;
     }
 
-    // Google & Sync
+    // --- AUTO-MOVE ---
+    function checkCalendarDueDates() {
+        const now = new Date(); const today = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
+        let changed = false;
+        items.forEach(item => { if ((item.status === 'calendar' || item.status === 'waiting') && item.date) { const taskDate = item.date.split('T')[0]; if (taskDate <= today && item.status === 'calendar') { item.status = 'next'; changed = true; } } });
+        if (changed) { syncSave(); showToast("Tarefas vencidas movidas para Próximas Ações"); }
+    }
+
+    // --- GOOGLE API & SYNC ---
     function gapiLoaded() { gapi.load('client', intializeGapiClient); }
     async function intializeGapiClient() { await gapi.client.init({ discoveryDocs: [DISCOVERY_DOC] }); gapiInited = true; restoreGoogleSession(); maybeEnableGoogleSignIn(); }
     function gisLoaded() { gisInited = true; maybeEnableGoogleSignIn(); }
@@ -434,12 +448,25 @@
     async function createCalendarEvent(item) { if (!gapi.client.getToken()) return null; try { const startDateTime = new Date(item.date); const endDateTime = new Date(startDateTime.getTime() + (30 * 60 * 1000)); if (!gapi.client.calendar) await gapi.client.load('calendar', 'v3'); const response = await gapi.client.calendar.events.insert({ 'calendarId': 'primary', 'resource': { 'summary': "GTD: " + item.text, 'start': { 'dateTime': startDateTime.toISOString(), 'timeZone': Intl.DateTimeFormat().resolvedOptions().timeZone }, 'end': { 'dateTime': endDateTime.toISOString(), 'timeZone': Intl.DateTimeFormat().resolvedOptions().timeZone } } }); showToast("Evento criado!"); return response.result.id; } catch (err) { if (err.status === 401) { localStorage.removeItem('gtd_google_token'); updateGoogleSyncStatus(false); alert("Sessão expirada."); } else alert("Erro Google: " + JSON.stringify(err)); return null; } }
     async function updateGoogleEvent(item) { if (!gapi.client.getToken() || !item.googleEventId) return; try { await gapi.client.calendar.events.patch({ 'calendarId': 'primary', 'eventId': item.googleEventId, 'resource': { 'summary': "GTD: " + item.text } }); showToast("Atualizado no Google."); } catch (e) { console.error(e); } }
     async function deleteCalendarEvent(eventId) { if (!eventId || !gapi.client.getToken()) return; try { await gapi.client.calendar.events.delete({ 'calendarId': 'primary', 'eventId': eventId }); showToast("Excluído do Google."); } catch (err) { if(err.status!==404 && err.status!==410) console.error(err); } }
-    function checkCalendarDueDates() { const now = new Date(); const today = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0'); let changed = false; items.forEach(item => { if ((item.status === 'calendar' || item.status === 'waiting') && item.date) { const taskDate = item.date.split('T')[0]; if (taskDate <= today && item.status === 'calendar') { item.status = 'next'; changed = true; } } }); if (changed) { syncSave(); showToast("Tarefas vencidas movidas para Próximas Ações"); } }
     function addToInbox() { const val = document.getElementById('inboxInput').value.trim(); if(val) { items.push({ id: Date.now(), text: val, status: 'inbox' }); document.getElementById('inboxInput').value = ''; updateHistory(val); syncSave(); } }
     function startProcessing() { currentItemIdx = items.findIndex(i => i.status === 'inbox'); if (currentItemIdx === -1) return; document.getElementById('processing-zone').style.display = 'block'; document.getElementById('currentItem').innerText = items[currentItemIdx].text; resetSteps(); document.getElementById('processing-zone').scrollIntoView({behavior:'smooth'}); }
     function handleActionable(bool) { bool ? toStep('step-yes') : toStep('step-no'); }
-    async function finalize(status) { if (currentItemIdx === null) return; const item = items[currentItemIdx]; item.status = status; if (status === 'waiting') { const who = document.getElementById('delInput').value; item.note = "Delegado: " + who; document.getElementById('delInput').value = ''; const d = await openDateModal(); if(d) { item.date = d; if(config.googleClientId) { const eid = await createCalendarEvent(item); if(eid) item.googleEventId = eid; } } } if (status === 'calendar') { item.date = document.getElementById('calInput').value; if(item.date && config.googleClientId) { const eid = await createCalendarEvent(item); if(eid) item.googleEventId = eid; } } if (status === 'trash') items.splice(currentItemIdx, 1); if (status === 'done') { item.status = 'completed'; item.completedAt = new Date().toISOString(); } syncSave(); if (items.some(i => i.status === 'inbox')) startProcessing(); else { document.getElementById('processing-zone').style.display = 'none'; showToast("Entrada zerada!"); } }
-    
+    async function finalize(status) { 
+        if (currentItemIdx === null) return; const item = items[currentItemIdx]; item.status = status; 
+        if (status === 'waiting') { const who = document.getElementById('delInput').value; item.note = "Delegado: " + who; document.getElementById('delInput').value = ''; const d = await openDateModal(); if(d) { item.date = d; if(config.googleClientId) { const eid = await createCalendarEvent(item); if(eid) item.googleEventId = eid; } } } 
+        if (status === 'calendar') { item.date = document.getElementById('calInput').value; if(item.date && config.googleClientId) { const eid = await createCalendarEvent(item); if(eid) item.googleEventId = eid; } } 
+        if (status === 'trash') items.splice(currentItemIdx, 1);
+        if (status === 'done') { item.status = 'completed'; item.completedAt = new Date().toISOString(); } 
+        syncSave(); if (items.some(i => i.status === 'inbox')) startProcessing(); else { document.getElementById('processing-zone').style.display = 'none'; showToast("Entrada zerada!"); } 
+    }
+    async function editItem(idx) { const item = items[idx]; const newText = prompt("Editar:", item.text); if (newText && newText !== item.text) { item.text = newText; if ((item.status === 'calendar' || item.status === 'waiting') && item.googleEventId) await updateGoogleEvent(item); syncSave(); } }
+    async function completeItem(idx) { const item = items[idx]; if ((item.status === 'calendar' || item.status === 'waiting') && item.googleEventId) { if(confirm("Remover evento do Google ao concluir?")) { await deleteCalendarEvent(item.googleEventId); } } delete item.date; delete item.googleEventId; item.completedAt = new Date().toISOString(); item.status = 'completed'; syncSave(); }
+    function clearCompletedHistory() { if(confirm("Apagar histórico?")) { items = items.filter(i => i.status !== 'completed'); syncSave(); showToast("Histórico limpo."); } }
+    async function deleteItem(idx) { const item = items[idx]; if(confirm("Remover?")) { if ((item.status === 'calendar' || item.status === 'waiting') && item.googleEventId) await deleteCalendarEvent(item.googleEventId); items.splice(idx, 1); syncSave(); } }
+    function restoreItem(idx) { items[idx].status = 'next'; delete items[idx].completedAt; syncSave(); }
+
+    function resetSteps() { document.querySelectorAll('.step').forEach(e => e.classList.add('hidden')); document.getElementById('step-1').classList.remove('hidden'); }
+    function toStep(id) { document.querySelectorAll('.step').forEach(e => e.classList.add('hidden')); document.getElementById(id).classList.remove('hidden'); }
     function openConfig() { document.getElementById('cfgBinId').value = config.binId; document.getElementById('cfgApiKey').value = config.apiKey; document.getElementById('cfgGoogleClientId').value = config.googleClientId; document.getElementById('cfgGeminiKey').value = config.geminiKey; document.getElementById('configModal').style.display = 'block'; }
     function closeConfig() { document.getElementById('configModal').style.display = 'none'; }
     function saveConfig() { config.binId = document.getElementById('cfgBinId').value.trim(); config.apiKey = document.getElementById('cfgApiKey').value.trim(); config.googleClientId = document.getElementById('cfgGoogleClientId').value.trim(); config.geminiKey = document.getElementById('cfgGeminiKey').value.trim(); localStorage.setItem('gtd_config', JSON.stringify(config)); closeConfig(); location.reload(); }
