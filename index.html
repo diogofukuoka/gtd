@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>GTD Fukuoka (v5.9.1 - Fix Notion)</title>
+    <title>GTD Fukuoka (v6.1)</title>
     <script src="https://bernardo-castilho.github.io/DragDropTouch/DragDropTouch.js"></script>
     <style>
         :root { --primary: #2c3e50; --accent: #3498db; --success: #27ae60; --warning: #f39c12; --danger: #e74c3c; --light: #ecf0f1; --cloud: #8e44ad; --google: #4285f4; --gray: #95a5a6; }
@@ -70,7 +70,7 @@
         .task-text { font-weight: 400; font-size: 1rem; color: #2c3e50; pointer-events: none; }
         .meta { font-size: 0.75rem; color: #666; display: block; margin-top: 3px; pointer-events: none; }
         .google-icon { background: #e8f0fe; color: #1967d2; font-weight: bold; padding: 2px 5px; border-radius: 4px; font-size: 0.7em; margin-left: 5px; }
-        .notion-icon { background: #000; color: #fff; font-weight: bold; padding: 2px 5px; border-radius: 4px; font-size: 0.7em; margin-left: 5px; }
+        .notion-icon { background: #2f3437; color: #fff; font-weight: bold; padding: 2px 5px; border-radius: 4px; font-size: 0.7em; margin-left: 5px; }
         
         .actions-group { display: flex; gap: 5px; }
         .icon-btn { color: #bdc3c7; font-size: 1.1rem; padding: 5px; cursor: pointer; transition: 0.2s; }
@@ -253,7 +253,7 @@
         showToast("Enviando para Notion...");
         
         const dbId = formatUUID(config.notionDbId);
-        // Utilizando corsproxy.io com encoding para garantir funcionamento
+        // Usando corsproxy.io com encoding correto
         const notionUrl = "https://api.notion.com/v1/pages";
         const proxyUrl = "https://corsproxy.io/?" + encodeURIComponent(notionUrl);
         
@@ -280,12 +280,18 @@
                 showToast("Criado no Notion!");
             } else {
                 const errText = await response.text();
-                console.error("Notion Error:", errText);
-                alert("Erro Notion:\n" + errText);
+                // Verificação de Erros Comuns
+                if (response.status === 401) alert("Erro 401 Notion: Chave Secreta Inválida.");
+                else if (response.status === 404) alert("Erro 404 Notion: Database não encontrada (Verifique o ID ou se conectou o Bot).");
+                else if (response.status === 400) alert("Erro 400 Notion: Verifique se as colunas 'Name' e 'Tags' existem.");
+                else {
+                    console.error("Notion Error:", errText);
+                    alert("Erro Notion:\n" + errText);
+                }
             }
         } catch (e) {
             console.error(e);
-            alert("Erro de conexão Notion (Proxy).");
+            alert("Erro de conexão Notion (Proxy). Verifique sua internet.");
         }
     }
 
