@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>GTD Fukuoka (v6.1)</title>
+    <title>GTD Fukuoka (v6.2)</title>
     <script src="https://bernardo-castilho.github.io/DragDropTouch/DragDropTouch.js"></script>
     <style>
         :root { --primary: #2c3e50; --accent: #3498db; --success: #27ae60; --warning: #f39c12; --danger: #e74c3c; --light: #ecf0f1; --cloud: #8e44ad; --google: #4285f4; --gray: #95a5a6; }
@@ -43,24 +43,61 @@
         .btn-opt { background: var(--primary); color: white; }
         .btn-back { background: transparent; color: #777; text-decoration: underline; margin-top: 15px; width: 100%; }
 
+        /* LISTAS - ESTILO LIMPO (SEM BORDAS COLORIDAS) */
         .lists-grid { display: grid; grid-template-columns: 1fr; gap: 20px; }
         @media(min-width: 700px) { .lists-grid { grid-template-columns: 1fr 1fr; } }
         
-        .list-card { background-color: #f1f3f5; border: 1px solid #ced4da; border-radius: 8px; padding: 15px; transition: 0.2s; min-height: 100px; display: flex; flex-direction: column; box-shadow: inset 0 0 5px rgba(0,0,0,0.02); }
+        .list-card { 
+            background-color: #f8f9fa; /* Fundo levemente cinza */
+            border: 1px solid #e9ecef; /* Borda sutil */
+            border-radius: 8px; 
+            padding: 15px; 
+            transition: 0.2s; 
+            min-height: 100px; 
+            display: flex; 
+            flex-direction: column; 
+        }
         .list-card.drag-over-container { background-color: #e3f2fd; border: 2px dashed #3498db; }
-        .list-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #dee2e6; padding-bottom: 8px; margin-bottom: 10px; cursor: pointer; user-select: none; }
+
+        .list-header { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            border-bottom: 2px solid #dee2e6; 
+            padding-bottom: 8px; 
+            margin-bottom: 10px; 
+            cursor: pointer; 
+            user-select: none;
+        }
         .list-header:active { opacity: 0.6; }
-        .list-header h3 { margin: 0; font-size: 1rem; font-weight: 700; display: flex; align-items: center; gap: 5px; color: var(--primary); }
-        .badge { background: #fff; padding: 2px 8px; border-radius: 10px; font-size: 0.75rem; font-weight: bold; border: 1px solid #ccc; }
-        
-        .card-inbox { border-top: 4px solid var(--danger); }
-        .card-next { border-top: 4px solid var(--success); }
-        .card-waiting { border-top: 4px solid var(--warning); }
-        .card-projects { border-top: 4px solid var(--primary); }
-        .card-completed { border-top: 4px solid var(--gray); opacity: 0.8; }
+        /* Cores apenas no texto do título para diferenciar */
+        .card-inbox h3 { color: var(--danger); }
+        .card-next h3 { color: var(--success); }
+        .card-waiting h3 { color: var(--warning); }
+        .card-projects h3 { color: var(--primary); }
+        .card-calendar h3 { color: var(--google); }
+        .card-someday h3 { color: #f39c12; }
+        .card-reference h3 { color: #7f8c8d; }
+
+        .list-header h3 { margin: 0; font-size: 1rem; font-weight: 700; display: flex; align-items: center; gap: 5px; }
+        .badge { background: #fff; padding: 2px 8px; border-radius: 10px; font-size: 0.75rem; font-weight: bold; border: 1px solid #ccc; color: #333; }
         
         ul { list-style: none; padding: 0; margin: 0; min-height: 50px; flex-grow: 1; }
-        li { padding: 12px 10px; border: 1px solid #e9ecef; display: flex; justify-content: space-between; align-items: center; background: #ffffff; transition: background-color 0.2s, transform 0.2s; touch-action: pan-y; border-radius: 6px; margin-bottom: 6px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+        
+        /* ESTILO DO ITEM */
+        li { 
+            padding: 12px 10px; 
+            border: 1px solid #e9ecef;
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            background: #ffffff; 
+            transition: background-color 0.2s, transform 0.2s; 
+            touch-action: pan-y; 
+            border-radius: 6px; 
+            margin-bottom: 6px; 
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        }
         li:last-child { margin-bottom: 0; }
         li.ready-to-drag { background-color: #e3f2fd; border: 2px solid #3498db; transform: scale(1.02); z-index: 10; }
         li.dragging { opacity: 0.4; border: 1px dashed #999; }
@@ -70,7 +107,6 @@
         .task-text { font-weight: 400; font-size: 1rem; color: #2c3e50; pointer-events: none; }
         .meta { font-size: 0.75rem; color: #666; display: block; margin-top: 3px; pointer-events: none; }
         .google-icon { background: #e8f0fe; color: #1967d2; font-weight: bold; padding: 2px 5px; border-radius: 4px; font-size: 0.7em; margin-left: 5px; }
-        .notion-icon { background: #2f3437; color: #fff; font-weight: bold; padding: 2px 5px; border-radius: 4px; font-size: 0.7em; margin-left: 5px; }
         
         .actions-group { display: flex; gap: 5px; }
         .icon-btn { color: #bdc3c7; font-size: 1.1rem; padding: 5px; cursor: pointer; transition: 0.2s; }
@@ -81,6 +117,7 @@
         .btn-refresh { background: #fff; border: 1px solid #dadce0; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 0.75rem; color: var(--google); margin-left: 5px; }
         .btn-clear-hist { color: var(--danger); border-color: #fcc; background: #fff; }
 
+        /* Modal e Toast */
         #toast { visibility: hidden; min-width: 250px; background-color: #333; color: #fff; text-align: center; border-radius: 4px; padding: 16px; position: fixed; z-index: 9999; left: 50%; bottom: 30px; transform: translateX(-50%); font-size: 14px; }
         #toast.show { visibility: visible; -webkit-animation: fadein 0.5s, fadeout 0.5s 2.5s; animation: fadein 0.5s, fadeout 0.5s 2.5s; }
         #configModal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; overflow-y: auto; }
@@ -163,7 +200,7 @@
             </div>
             <ul id="l-project"></ul>
         </div>
-        <div class="list-card" ondrop="dropContainer(event, 'calendar')" ondragover="allowDropContainer(event)" ondragleave="leaveDropContainer(event)">
+        <div class="list-card card-calendar" ondrop="dropContainer(event, 'calendar')" ondragover="allowDropContainer(event)" ondragleave="leaveDropContainer(event)">
             <div class="list-header" onmousedown="handleHeaderPress('calendar')" ontouchstart="handleHeaderPress('calendar')" onmouseup="clearHeaderPress()" ontouchend="clearHeaderPress()">
                 <h3>📅 Calendário</h3>
                 <div><button class="btn-refresh" onclick="checkDeletedEvents(true)">🔄 Sync</button><span class="badge" id="c-calendar">0</span></div>
@@ -177,13 +214,13 @@
             </div>
             <ul id="l-waiting"></ul>
         </div>
-        <div class="list-card" ondrop="dropContainer(event, 'someday')" ondragover="allowDropContainer(event)" ondragleave="leaveDropContainer(event)">
+        <div class="list-card card-someday" ondrop="dropContainer(event, 'someday')" ondragover="allowDropContainer(event)" ondragleave="leaveDropContainer(event)">
             <div class="list-header" onmousedown="handleHeaderPress('someday')" ontouchstart="handleHeaderPress('someday')" onmouseup="clearHeaderPress()" ontouchend="clearHeaderPress()">
                 <h3>💡 Um Dia / Talvez</h3><span class="badge" id="c-someday">0</span>
             </div>
             <ul id="l-someday"></ul>
         </div>
-        <div class="list-card" ondrop="dropContainer(event, 'reference')" ondragover="allowDropContainer(event)" ondragleave="leaveDropContainer(event)">
+        <div class="list-card card-reference" ondrop="dropContainer(event, 'reference')" ondragover="allowDropContainer(event)" ondragleave="leaveDropContainer(event)">
             <div class="list-header" onmousedown="handleHeaderPress('reference')" ontouchstart="handleHeaderPress('reference')" onmouseup="clearHeaderPress()" ontouchend="clearHeaderPress()">
                 <h3>📚 Arquivo / Referência</h3><span class="badge" id="c-reference">0</span>
             </div>
@@ -202,16 +239,9 @@
         <h3>☁️ Configurações</h3>
         <label>JSONBin Bin ID:</label><input type="text" id="cfgBinId">
         <label>JSONBin API Key:</label><input type="text" id="cfgApiKey">
-        <hr style="margin:15px 0; border:0; border-top:1px dashed #ccc;">
+        <hr style="margin:20px 0; border:0; border-top:1px dashed #ccc;">
         <label>Google Client ID:</label><input type="text" id="cfgGoogleClientId">
-        <hr style="margin:15px 0; border:0; border-top:1px dashed #ccc;">
-        <label>Notion Database ID:</label><input type="text" id="cfgNotionDbId">
-        <label>Notion Integration Secret:</label><input type="password" id="cfgNotionKey">
-        <div class="modal-footer">
-            <button class="btn-no" style="margin-right:auto; color:#d9534f;" onclick="testNotion()">Testar Notion</button>
-            <button class="btn-no" onclick="closeConfig()">Cancelar</button>
-            <button class="btn-yes" onclick="saveConfig()">Salvar</button>
-        </div>
+        <div class="modal-footer"><button class="btn-no" onclick="closeConfig()">Cancelar</button><button class="btn-yes" onclick="saveConfig()">Salvar</button></div>
     </div>
 </div>
 
@@ -234,71 +264,11 @@
 <script>
     let items = JSON.parse(localStorage.getItem('gtd_data')) || [];
     let history = JSON.parse(localStorage.getItem('gtd_history')) || [];
-    let config = JSON.parse(localStorage.getItem('gtd_config')) || { binId: '', apiKey: '', googleClientId: '', notionDbId: '', notionKey: '' };
+    let config = JSON.parse(localStorage.getItem('gtd_config')) || { binId: '', apiKey: '', googleClientId: '' };
     let currentItemIdx = null;
     let gapiInited = false, gisInited = false, tokenClient, googleAccessToken;
     const DISCOVERY_DOC = 'https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest';
     let longPressTimer, longPressItem, dateResolver, headerPressTimer;
-
-    // --- HELPER: FORMAT UUID FOR NOTION ---
-    function formatUUID(id) {
-        const cleanId = id.replace(/-/g, '');
-        if (cleanId.length !== 32) return id;
-        return `${cleanId.substr(0, 8)}-${cleanId.substr(8, 4)}-${cleanId.substr(12, 4)}-${cleanId.substr(16, 4)}-${cleanId.substr(20)}`;
-    }
-
-    // --- NOTION INTEGRATION ---
-    async function createNotionPage(title, tagName) {
-        if (!config.notionDbId || !config.notionKey) return;
-        showToast("Enviando para Notion...");
-        
-        const dbId = formatUUID(config.notionDbId);
-        // Usando corsproxy.io com encoding correto
-        const notionUrl = "https://api.notion.com/v1/pages";
-        const proxyUrl = "https://corsproxy.io/?" + encodeURIComponent(notionUrl);
-        
-        const payload = {
-            parent: { database_id: dbId },
-            properties: {
-                Name: { title: [{ text: { content: title } }] },
-                Tags: { select: { name: tagName } }
-            }
-        };
-
-        try {
-            const response = await fetch(proxyUrl, {
-                method: "POST",
-                headers: {
-                    "Authorization": "Bearer " + config.notionKey,
-                    "Content-Type": "application/json",
-                    "Notion-Version": "2022-06-28"
-                },
-                body: JSON.stringify(payload)
-            });
-            
-            if (response.ok) {
-                showToast("Criado no Notion!");
-            } else {
-                const errText = await response.text();
-                // Verificação de Erros Comuns
-                if (response.status === 401) alert("Erro 401 Notion: Chave Secreta Inválida.");
-                else if (response.status === 404) alert("Erro 404 Notion: Database não encontrada (Verifique o ID ou se conectou o Bot).");
-                else if (response.status === 400) alert("Erro 400 Notion: Verifique se as colunas 'Name' e 'Tags' existem.");
-                else {
-                    console.error("Notion Error:", errText);
-                    alert("Erro Notion:\n" + errText);
-                }
-            }
-        } catch (e) {
-            console.error(e);
-            alert("Erro de conexão Notion (Proxy). Verifique sua internet.");
-        }
-    }
-
-    async function testNotion() {
-        if (!config.notionDbId || !config.notionKey) return alert("Preencha ID e Key.");
-        await createNotionPage("Teste de Conexão GTD", "Referência");
-    }
 
     // --- AUTOCOMPLETE HISTORY ---
     function updateHistory(text) {
@@ -337,11 +307,6 @@
                         }
                     } else if (status === 'calendar') return; 
                 }
-                
-                if (status === 'someday' || status === 'reference') {
-                   createNotionPage(text, status === 'someday' ? 'Talvez' : 'Referência');
-                }
-
                 items.push(newItem);
                 updateHistory(text);
                 syncSave();
@@ -395,10 +360,6 @@
         }
         if (newStatus === 'completed') { item.completedAt = new Date().toISOString(); }
         
-        if (newStatus === 'someday' || newStatus === 'reference') {
-            createNotionPage(item.text, newStatus === 'someday' ? 'Talvez' : 'Referência');
-        }
-
         if (newStatus === 'calendar') {
             const dateStr = await openDateModal(); if (!dateStr) return false; item.date = dateStr;
             if (config.googleClientId) { const eventId = await createCalendarEvent(item); if (eventId) item.googleEventId = eventId; }
@@ -441,7 +402,6 @@
         if (currentItemIdx === null) return; const item = items[currentItemIdx]; item.status = status; 
         if (status === 'waiting') { const who = document.getElementById('delInput').value; item.note = "Delegado: " + who; document.getElementById('delInput').value = ''; const d = await openDateModal(); if(d) { item.date = d; if(config.googleClientId) { const eid = await createCalendarEvent(item); if(eid) item.googleEventId = eid; } } } 
         if (status === 'calendar') { item.date = document.getElementById('calInput').value; if(item.date && config.googleClientId) { const eid = await createCalendarEvent(item); if(eid) item.googleEventId = eid; } } 
-        if (status === 'someday' || status === 'reference') createNotionPage(item.text, status === 'someday' ? 'Talvez' : 'Referência');
         if (status === 'trash') items.splice(currentItemIdx, 1);
         if (status === 'done') { item.status = 'completed'; item.completedAt = new Date().toISOString(); } 
         syncSave(); if (items.some(i => i.status === 'inbox')) startProcessing(); else { document.getElementById('processing-zone').style.display = 'none'; showToast("Entrada zerada!"); } 
@@ -454,9 +414,9 @@
 
     function resetSteps() { document.querySelectorAll('.step').forEach(e => e.classList.add('hidden')); document.getElementById('step-1').classList.remove('hidden'); }
     function toStep(id) { document.querySelectorAll('.step').forEach(e => e.classList.add('hidden')); document.getElementById(id).classList.remove('hidden'); }
-    function openConfig() { document.getElementById('cfgBinId').value = config.binId; document.getElementById('cfgApiKey').value = config.apiKey; document.getElementById('cfgGoogleClientId').value = config.googleClientId; document.getElementById('cfgNotionDbId').value = config.notionDbId; document.getElementById('cfgNotionKey').value = config.notionKey; document.getElementById('configModal').style.display = 'block'; }
+    function openConfig() { document.getElementById('cfgBinId').value = config.binId; document.getElementById('cfgApiKey').value = config.apiKey; document.getElementById('cfgGoogleClientId').value = config.googleClientId; document.getElementById('configModal').style.display = 'block'; }
     function closeConfig() { document.getElementById('configModal').style.display = 'none'; }
-    function saveConfig() { config.binId = document.getElementById('cfgBinId').value.trim(); config.apiKey = document.getElementById('cfgApiKey').value.trim(); config.googleClientId = document.getElementById('cfgGoogleClientId').value.trim(); config.notionDbId = document.getElementById('cfgNotionDbId').value.trim(); config.notionKey = document.getElementById('cfgNotionKey').value.trim(); localStorage.setItem('gtd_config', JSON.stringify(config)); closeConfig(); location.reload(); }
+    function saveConfig() { config.binId = document.getElementById('cfgBinId').value.trim(); config.apiKey = document.getElementById('cfgApiKey').value.trim(); config.googleClientId = document.getElementById('cfgGoogleClientId').value.trim(); localStorage.setItem('gtd_config', JSON.stringify(config)); closeConfig(); location.reload(); }
 
     function render() {
         const ids = ['inbox', 'next', 'project', 'waiting', 'calendar', 'someday', 'reference', 'completed'];
@@ -499,7 +459,7 @@
                 else if (listId === 'completed') buttons = `<span class="icon-btn icon-restore" onclick="restoreItem(${idx})">↩️</span><span class="icon-btn icon-del" onclick="deleteItem(${idx})">🗑️</span>`;
                 else buttons = `<span class="icon-btn icon-edit" onclick="editItem(${idx})">✏️</span><span class="icon-btn icon-check" onclick="completeItem(${idx})">✔</span><span class="icon-btn icon-del" onclick="deleteItem(${idx})">🗑️</span>`;
                 
-                li.innerHTML = `<div><span class="task-text">${item.text} ${item.status === 'someday' || item.status === 'reference' ? (config.notionDbId ? '<span class="notion-icon">N</span>' : '') : ''}</span>${extra}</div><div class="actions-group">${buttons}</div>`;
+                li.innerHTML = `<div><span class="task-text">${item.text}</span>${extra}</div><div class="actions-group">${buttons}</div>`;
                 document.getElementById('l-'+listId).appendChild(li);
             }
         });
