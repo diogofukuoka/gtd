@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>GTD Fukuoka (v5.9)</title>
+    <title>GTD Fukuoka (v6.0)</title>
     <script src="https://bernardo-castilho.github.io/DragDropTouch/DragDropTouch.js"></script>
     <style>
-        :root { --primary: #2c3e50; --accent: #3498db; --success: #27ae60; --warning: #f39c12; --danger: #e74c3c; --light: #ecf0f1; --cloud: #8e44ad; --google: #4285f4; --gray: #95a5a6; }
+        :root { --primary: #2c3e50; --accent: #3498db; --success: #27ae60; --warning: #f39c12; --danger: #e74c3c; --light: #ecf0f1; --cloud: #8e44ad; --google: #4285f4; --notion: #000; --gray: #95a5a6; }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background: #f8f9fa; color: #333; margin: 0; padding: 15px; padding-bottom: 80px; user-select: none; }
         .container { max-width: 900px; margin: 0 auto; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
@@ -70,7 +70,7 @@
         .task-text { font-weight: 400; font-size: 1rem; color: #2c3e50; pointer-events: none; }
         .meta { font-size: 0.75rem; color: #666; display: block; margin-top: 3px; pointer-events: none; }
         .google-icon { background: #e8f0fe; color: #1967d2; font-weight: bold; padding: 2px 5px; border-radius: 4px; font-size: 0.7em; margin-left: 5px; }
-        .notion-icon { background: #000; color: #fff; font-weight: bold; padding: 2px 5px; border-radius: 4px; font-size: 0.7em; margin-left: 5px; }
+        .notion-icon { background: #2f3437; color: #fff; font-weight: bold; padding: 2px 5px; border-radius: 4px; font-size: 0.7em; margin-left: 5px; }
         
         .actions-group { display: flex; gap: 5px; }
         .icon-btn { color: #bdc3c7; font-size: 1.1rem; padding: 5px; cursor: pointer; transition: 0.2s; }
@@ -242,23 +242,20 @@
 
     // --- HELPER: FORMAT UUID FOR NOTION ---
     function formatUUID(id) {
-        // Se já tem hífens e tamanho 36, assume que está certo
-        if (id.includes('-') && id.length === 36) return id;
-        // Se não tem hífens e tem 32 chars, formata
-        if (id.length === 32) {
-            return `${id.substr(0, 8)}-${id.substr(8, 4)}-${id.substr(12, 4)}-${id.substr(16, 4)}-${id.substr(20)}`;
-        }
-        return id; // Retorna original se não souber o que fazer
+        const cleanId = id.replace(/-/g, '');
+        if (cleanId.length !== 32) return id;
+        return `${cleanId.substr(0, 8)}-${cleanId.substr(8, 4)}-${cleanId.substr(12, 4)}-${cleanId.substr(16, 4)}-${cleanId.substr(20)}`;
     }
 
-    // --- NOTION INTEGRATION ---
+    // --- NOTION INTEGRATION (CORRECTED) ---
     async function createNotionPage(title, tagName) {
         if (!config.notionDbId || !config.notionKey) return;
         showToast("Enviando para Notion...");
         
-        const dbId = formatUUID(config.notionDbId); // Formata ID antes de usar
+        const dbId = formatUUID(config.notionDbId);
+        // Usando corsproxy.io com encoding
         const notionUrl = "https://api.notion.com/v1/pages";
-        const proxyUrl = "https://thingproxy.freeboard.io/fetch/" + notionUrl; // Mudança de Proxy para melhor suporte
+        const proxyUrl = "https://corsproxy.io/?" + encodeURIComponent(notionUrl);
         
         const payload = {
             parent: { database_id: dbId },
@@ -280,21 +277,20 @@
             });
             
             if (response.ok) {
-                showToast("Criado no Notion com sucesso!");
+                showToast("Criado no Notion!");
             } else {
                 const errText = await response.text();
                 console.error("Notion Error:", errText);
-                alert("Erro ao criar no Notion. \nVerifique:\n1. Se o ID da Database está correto.\n2. Se o 'GTD Bot' foi conectado na página da tabela (Menu ... > Conexões).");
+                alert("Erro Notion:\n" + errText);
             }
         } catch (e) {
             console.error(e);
-            alert("Erro de conexão com Notion (Proxy). Tente novamente.");
+            alert("Erro de conexão Notion (Proxy).");
         }
     }
-    
-    // Função de teste manual do Notion
+
     async function testNotion() {
-        if (!config.notionDbId || !config.notionKey) return alert("Preencha o ID e a Key primeiro.");
+        if (!config.notionDbId || !config.notionKey) return alert("Preencha ID e Key.");
         await createNotionPage("Teste de Conexão GTD", "Referência");
     }
 
