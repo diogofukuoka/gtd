@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>GTD Fukuoka (v5.6)</title>
+    <title>GTD Fukuoka (v5.7)</title>
     <script src="https://bernardo-castilho.github.io/DragDropTouch/DragDropTouch.js"></script>
     <style>
         :root { --primary: #2c3e50; --accent: #3498db; --success: #27ae60; --warning: #f39c12; --danger: #e74c3c; --light: #ecf0f1; --cloud: #8e44ad; --google: #4285f4; --gray: #95a5a6; }
@@ -24,12 +24,20 @@
         
         .btn-config { background: none; border: 1px solid #ccc; border-radius: 4px; padding: 5px 10px; cursor: pointer; font-size: 0.8rem; }
         
-        .input-group { display: flex; gap: 8px; margin-bottom: 20px; }
-        input[type="text"], input[type="datetime-local"] { flex: 1; padding: 12px; border: 2px solid #ddd; border-radius: 8px; font-size: 16px; }
-        button { padding: 12px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; transition: 0.2s; }
+        /* CORREÇÃO DO BOTÃO NO MOBILE */
+        .input-group { display: flex; gap: 8px; margin-bottom: 20px; width: 100%; }
+        input[type="text"], input[type="datetime-local"] { 
+            flex: 1; 
+            min-width: 0; /* Permite encolher em telas pequenas */
+            padding: 12px; 
+            border: 2px solid #ddd; 
+            border-radius: 8px; 
+            font-size: 16px; 
+        }
+        button { padding: 0 20px; height: 46px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; transition: 0.2s; flex-shrink: 0; /* Impede que o botão seja esmagado */ }
         button:active { transform: scale(0.96); }
-        .btn-add { background: var(--accent); color: white; min-width: 80px; }
-        .btn-mic { background: #607d8b; color: white; min-width: 50px; font-size: 1.2rem; }
+        .btn-add { background: var(--accent); color: white; min-width: 50px; font-size: 1.2rem; display: flex; align-items: center; justify-content: center; }
+        .btn-mic { background: #607d8b; color: white; min-width: 46px; padding: 0; font-size: 1.2rem; display: flex; align-items: center; justify-content: center; }
         .btn-mic.listening { background: #e74c3c; animation: pulse-red 1.5s infinite; }
         
         #processing-zone { background: #fff; border: 2px solid var(--accent); padding: 20px; border-radius: 12px; margin-bottom: 25px; display: none; animation: slideDown 0.3s; }
@@ -43,13 +51,13 @@
         .btn-opt { background: var(--primary); color: white; }
         .btn-back { background: transparent; color: #777; text-decoration: underline; margin-top: 15px; width: 100%; }
 
-        /* LISTAS - ESTILO ATUALIZADO */
+        /* LISTAS - ESTILO LIMPO */
         .lists-grid { display: grid; grid-template-columns: 1fr; gap: 20px; }
         @media(min-width: 700px) { .lists-grid { grid-template-columns: 1fr 1fr; } }
         
         .list-card { 
-            background-color: #f1f3f5; /* COR DE FUNDO DA CAIXA (DIFERENCIAÇÃO) */
-            border: 1px solid #ced4da; 
+            background-color: #f1f3f5; 
+            border: 1px solid #ced4da; /* Bordas normais, sem cores */
             border-radius: 8px; 
             padding: 15px; 
             transition: 0.2s; 
@@ -60,6 +68,7 @@
         }
         .list-card.drag-over-container { background-color: #e3f2fd; border: 2px dashed #3498db; }
 
+        /* Títulos interagíveis */
         .list-header { 
             display: flex; 
             justify-content: space-between; 
@@ -67,27 +76,25 @@
             border-bottom: 2px solid #dee2e6; 
             padding-bottom: 8px; 
             margin-bottom: 10px; 
+            cursor: pointer; /* Indica que é clicável */
+            user-select: none;
         }
+        .list-header:active { opacity: 0.6; }
+        
         .list-header h3 { margin: 0; font-size: 1rem; font-weight: 700; display: flex; align-items: center; gap: 5px; color: var(--primary); }
         .badge { background: #fff; padding: 2px 8px; border-radius: 10px; font-size: 0.75rem; font-weight: bold; border: 1px solid #ccc; }
         
-        /* Bordas Coloridas */
-        .card-inbox { border-top: 4px solid var(--danger); }
-        .card-next { border-top: 4px solid var(--success); }
-        .card-waiting { border-top: 4px solid var(--warning); }
-        .card-projects { border-top: 4px solid var(--primary); }
-        .card-completed { border-top: 4px solid var(--gray); opacity: 0.8; }
+        /* Sem bordas coloridas nas caixas, apenas nas tarefas se quiser, ou removido totalmente conforme pedido */
         
         ul { list-style: none; padding: 0; margin: 0; min-height: 50px; flex-grow: 1; }
         
-        /* ESTILO DA TAREFA (Fundo Branco para contraste) */
         li { 
             padding: 12px 10px; 
             border: 1px solid #e9ecef;
             display: flex; 
             justify-content: space-between; 
             align-items: center; 
-            background: #ffffff; /* TAREFA BRANCA */
+            background: #ffffff; 
             transition: background-color 0.2s, transform 0.2s; 
             touch-action: pan-y; 
             border-radius: 6px; 
@@ -111,7 +118,7 @@
         .icon-check:hover { color: var(--success); }
         .icon-restore:hover { color: var(--warning); }
         
-        .btn-refresh { background: #fff; border: 1px solid #dadce0; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 0.75rem; color: var(--google); }
+        .btn-refresh { background: #fff; border: 1px solid #dadce0; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 0.75rem; color: var(--google); margin-left: 5px; }
         .btn-clear-hist { color: var(--danger); border-color: #fcc; background: #fff; }
 
         /* Modal e Toast */
@@ -154,7 +161,10 @@
     </header>
 
     <div class="input-group">
-        <input type="text" id="inboxInput" placeholder="Coleta rápida (ou use o microfone)..." onkeypress="if(event.key==='Enter') addToInbox()">
+        <!-- DATALIST PARA HISTÓRICO -->
+        <input type="text" id="inboxInput" list="historyList" placeholder="Coleta rápida (ou use o microfone)..." onkeypress="if(event.key==='Enter') addToInbox()">
+        <datalist id="historyList"></datalist>
+        
         <button class="btn-mic" id="voiceBtn" onclick="toggleVoice()" title="Falar">🎤</button>
         <button class="btn-add" onclick="addToInbox()">+</button>
     </div>
@@ -182,26 +192,49 @@
 
     <!-- LISTAS -->
     <div class="lists-grid">
-        <div class="list-card card-inbox" ondrop="dropContainer(event, 'inbox')" ondragover="allowDropContainer(event)" ondragleave="leaveDropContainer(event)">
-            <div class="list-header"><h3>📥 Entrada</h3><span class="badge" id="c-inbox">0</span></div><ul id="l-inbox"></ul>
+        <div class="list-card" ondrop="dropContainer(event, 'inbox')" ondragover="allowDropContainer(event)" ondragleave="leaveDropContainer(event)">
+            <div class="list-header" onmousedown="handleHeaderPress('inbox')" ontouchstart="handleHeaderPress('inbox')" onmouseup="clearHeaderPress()" ontouchend="clearHeaderPress()">
+                <h3>📥 Entrada</h3><span class="badge" id="c-inbox">0</span>
+            </div>
+            <ul id="l-inbox"></ul>
         </div>
-        <div class="list-card card-next" ondrop="dropContainer(event, 'next')" ondragover="allowDropContainer(event)" ondragleave="leaveDropContainer(event)">
-            <div class="list-header"><h3>🔥 Próximas Ações</h3><span class="badge" id="c-next">0</span></div><ul id="l-next"></ul>
+        <div class="list-card" ondrop="dropContainer(event, 'next')" ondragover="allowDropContainer(event)" ondragleave="leaveDropContainer(event)">
+            <div class="list-header" onmousedown="handleHeaderPress('next')" ontouchstart="handleHeaderPress('next')" onmouseup="clearHeaderPress()" ontouchend="clearHeaderPress()">
+                <h3>🔥 Próximas Ações</h3><span class="badge" id="c-next">0</span>
+            </div>
+            <ul id="l-next"></ul>
         </div>
-        <div class="list-card card-projects" ondrop="dropContainer(event, 'project')" ondragover="allowDropContainer(event)" ondragleave="leaveDropContainer(event)">
-            <div class="list-header"><h3>📂 Projetos</h3><span class="badge" id="c-project">0</span></div><ul id="l-project"></ul>
+        <div class="list-card" ondrop="dropContainer(event, 'project')" ondragover="allowDropContainer(event)" ondragleave="leaveDropContainer(event)">
+            <div class="list-header" onmousedown="handleHeaderPress('project')" ontouchstart="handleHeaderPress('project')" onmouseup="clearHeaderPress()" ontouchend="clearHeaderPress()">
+                <h3>📂 Projetos</h3><span class="badge" id="c-project">0</span>
+            </div>
+            <ul id="l-project"></ul>
         </div>
         <div class="list-card" ondrop="dropContainer(event, 'calendar')" ondragover="allowDropContainer(event)" ondragleave="leaveDropContainer(event)">
-            <div class="list-header"><h3>📅 Calendário</h3><div><button class="btn-refresh" onclick="checkDeletedEvents(true)">🔄 Sync</button><span class="badge" id="c-calendar">0</span></div></div><ul id="l-calendar"></ul>
+            <div class="list-header" onmousedown="handleHeaderPress('calendar')" ontouchstart="handleHeaderPress('calendar')" onmouseup="clearHeaderPress()" ontouchend="clearHeaderPress()">
+                <h3>📅 Calendário</h3>
+                <div><button class="btn-refresh" onclick="checkDeletedEvents(true)">🔄 Sync</button><span class="badge" id="c-calendar">0</span></div>
+            </div>
+            <ul id="l-calendar"></ul>
         </div>
-        <div class="list-card card-waiting" ondrop="dropContainer(event, 'waiting')" ondragover="allowDropContainer(event)" ondragleave="leaveDropContainer(event)">
-            <div class="list-header"><h3>⏳ Delegar (Esperar)</h3><span class="badge" id="c-waiting">0</span></div><ul id="l-waiting"></ul>
+        <div class="list-card" ondrop="dropContainer(event, 'waiting')" ondragover="allowDropContainer(event)" ondragleave="leaveDropContainer(event)">
+            <div class="list-header" onmousedown="handleHeaderPress('waiting')" ontouchstart="handleHeaderPress('waiting')" onmouseup="clearHeaderPress()" ontouchend="clearHeaderPress()">
+                <h3>⏳ Delegar (Esperar)</h3>
+                <div><button class="btn-refresh" onclick="checkDeletedEvents(true)">🔄 Sync</button><span class="badge" id="c-waiting">0</span></div>
+            </div>
+            <ul id="l-waiting"></ul>
         </div>
         <div class="list-card" ondrop="dropContainer(event, 'someday')" ondragover="allowDropContainer(event)" ondragleave="leaveDropContainer(event)">
-            <div class="list-header"><h3>💡 Um Dia / Talvez</h3><span class="badge" id="c-someday">0</span></div><ul id="l-someday"></ul>
+            <div class="list-header" onmousedown="handleHeaderPress('someday')" ontouchstart="handleHeaderPress('someday')" onmouseup="clearHeaderPress()" ontouchend="clearHeaderPress()">
+                <h3>💡 Um Dia / Talvez</h3><span class="badge" id="c-someday">0</span>
+            </div>
+            <ul id="l-someday"></ul>
         </div>
         <div class="list-card" ondrop="dropContainer(event, 'reference')" ondragover="allowDropContainer(event)" ondragleave="leaveDropContainer(event)">
-            <div class="list-header"><h3>📚 Arquivo / Referência</h3><span class="badge" id="c-reference">0</span></div><ul id="l-reference"></ul>
+            <div class="list-header" onmousedown="handleHeaderPress('reference')" ontouchstart="handleHeaderPress('reference')" onmouseup="clearHeaderPress()" ontouchend="clearHeaderPress()">
+                <h3>📚 Arquivo / Referência</h3><span class="badge" id="c-reference">0</span>
+            </div>
+            <ul id="l-reference"></ul>
         </div>
         <div class="list-card card-completed full-width-card" ondrop="dropContainer(event, 'completed')" ondragover="allowDropContainer(event)" ondragleave="leaveDropContainer(event)">
             <div class="list-header"><h3>✅ Tarefas Concluídas</h3><div><button class="btn-refresh btn-clear-hist" onclick="clearCompletedHistory()">🗑️ Limpar</button><span class="badge" id="c-completed">0</span></div></div><ul id="l-completed"></ul>
@@ -225,7 +258,7 @@
 <!-- Date Picker Modal -->
 <div id="dateModal" class="modal-overlay">
     <div class="modal-content">
-        <h3>📅 Agendar no Google</h3>
+        <h3>📅 Agendar</h3>
         <label>Escolha a Data e Hora:</label>
         <input type="datetime-local" id="modalDateInput">
         <div class="modal-footer">
@@ -240,6 +273,7 @@
 
 <script>
     let items = JSON.parse(localStorage.getItem('gtd_data')) || [];
+    let history = JSON.parse(localStorage.getItem('gtd_history')) || [];
     let config = JSON.parse(localStorage.getItem('gtd_config')) || { binId: '', apiKey: '', googleClientId: '' };
     let currentItemIdx = null;
     let gapiInited = false, gisInited = false, tokenClient, googleAccessToken;
@@ -247,8 +281,78 @@
     let longPressTimer;
     let longPressItem = null;
     let dateResolver = null;
+    let headerPressTimer;
 
-    // --- VOICE RECOGNITION (CAPITALIZED) ---
+    // --- AUTOCOMPLETE HISTORY ---
+    function updateHistory(text) {
+        if (!text) return;
+        if (!history.includes(text)) {
+            history.push(text);
+            if (history.length > 50) history.shift(); // Manter últimos 50
+            localStorage.setItem('gtd_history', JSON.stringify(history));
+            renderHistory();
+        }
+    }
+    
+    function renderHistory() {
+        const dl = document.getElementById('historyList');
+        dl.innerHTML = '';
+        history.slice().reverse().forEach(h => {
+            const op = document.createElement('option');
+            op.value = h;
+            dl.appendChild(op);
+        });
+    }
+
+    // --- HEADER LONG PRESS (ADD DIRECTLY) ---
+    function handleHeaderPress(status) {
+        headerPressTimer = setTimeout(async () => {
+            if (navigator.vibrate) navigator.vibrate(50);
+            const text = prompt(`Adicionar em "${statusToName(status)}":`);
+            if (text) {
+                const newItem = { id: Date.now(), text: text, status: status };
+                
+                // Lógica especial para Calendário e Espera
+                if (status === 'calendar') {
+                    const dateStr = await openDateModal();
+                    if (dateStr) {
+                        newItem.date = dateStr;
+                        if (config.googleClientId) {
+                            const eid = await createCalendarEvent(newItem);
+                            if (eid) newItem.googleEventId = eid;
+                        }
+                    } else return; // Cancelou data
+                } else if (status === 'waiting') {
+                    const who = prompt("Delegar para quem?");
+                    if (who) {
+                        newItem.note = "Delegado: " + who;
+                        const dateStr = await openDateModal(); // Opcional agendar
+                        if (dateStr) {
+                            newItem.date = dateStr;
+                            if (config.googleClientId) {
+                                const eid = await createCalendarEvent(newItem);
+                                if (eid) newItem.googleEventId = eid;
+                            }
+                        }
+                    } else return;
+                }
+                
+                items.push(newItem);
+                updateHistory(text);
+                syncSave();
+                showToast("Item adicionado!");
+            }
+        }, 500);
+    }
+    
+    function clearHeaderPress() { clearTimeout(headerPressTimer); }
+    
+    function statusToName(s) {
+        const map = { 'inbox': 'Entrada', 'next': 'Próximas Ações', 'project': 'Projetos', 'waiting': 'Delegar', 'calendar': 'Calendário', 'someday': 'Talvez', 'reference': 'Referência' };
+        return map[s] || s;
+    }
+
+    // --- VOICE RECOGNITION ---
     let recognition;
     if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -339,12 +443,10 @@
         if (draggedIdx === targetIdx) return;
         const draggedItem = items[draggedIdx];
         const targetItem = items[targetIdx];
-        
         let success = true;
         if (draggedItem.status !== targetItem.status) {
             success = await handleStatusChange(draggedItem, targetItem.status);
         }
-
         if (success) {
             items.splice(draggedIdx, 1);
             let newTargetIdx = items.indexOf(targetItem);
@@ -356,18 +458,17 @@
     async function handleStatusChange(item, newStatus) {
         const oldStatus = item.status;
         
-        // Se sair do calendário, remove data e evento
-        if (oldStatus === 'calendar' && newStatus !== 'calendar') {
+        // Se sair do calendário/espera com evento Google
+        if ((oldStatus === 'calendar' || oldStatus === 'waiting') && newStatus !== 'calendar' && newStatus !== 'waiting') {
             if (item.googleEventId) {
-                if(confirm("Remover o evento correspondente do Google Agenda?")) {
+                if(confirm("Remover o evento do Google Agenda?")) {
                     await deleteCalendarEvent(item.googleEventId);
                 }
-                delete item.googleEventId; // Remove ID do evento
+                delete item.googleEventId; 
             }
-            delete item.date; // Remove Data/Hora
+            delete item.date;
         }
         
-        // Se for movido para concluído
         if (newStatus === 'completed') {
             item.completedAt = new Date().toISOString();
         }
@@ -384,13 +485,15 @@
             const who = prompt("Delegar para quem?");
             if (who) item.note = "Delegado: " + who;
             
-            // Lógica para agendar no Google também em Delegar (Esperar)
-            const dateStr = await openDateModal();
-            if (dateStr) {
-                item.date = dateStr;
-                if (config.googleClientId) {
-                    const eventId = await createCalendarEvent(item);
-                    if (eventId) item.googleEventId = eventId;
+            // Pergunta se quer agendar no Google também
+            if(confirm("Deseja agendar um lembrete na agenda?")) {
+                const dateStr = await openDateModal();
+                if (dateStr) {
+                    item.date = dateStr;
+                    if (config.googleClientId) {
+                        const eventId = await createCalendarEvent(item);
+                        if (eventId) item.googleEventId = eventId;
+                    }
                 }
             }
         }
@@ -405,15 +508,15 @@
         const today = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
         let changed = false;
         items.forEach(item => {
-            if (item.status === 'calendar' && item.date) {
+            if ((item.status === 'calendar' || item.status === 'waiting') && item.date) {
                 const taskDate = item.date.split('T')[0];
-                if (taskDate <= today) {
-                    item.status = 'next-action';
+                if (taskDate <= today && item.status === 'calendar') {
+                    item.status = 'next'; // Move calendários vencidos para Próximas
                     changed = true;
                 }
             }
         });
-        if (changed) { syncSave(); showToast("Tarefas de hoje movidas para Próximas Ações"); }
+        if (changed) { syncSave(); showToast("Tarefas vencidas movidas para Próximas Ações"); }
     }
 
     // --- GOOGLE API & SYNC ---
@@ -429,78 +532,45 @@
     function removeItemById(id) { const index = items.findIndex(i => i.id === id); if (index > -1) items.splice(index, 1); }
     
     // APP INIT
-    window.onload = () => { render(); if (config.binId && config.apiKey) syncLoad(); if (config.googleClientId) updateGoogleSyncStatus(false); checkCalendarDueDates(); };
+    window.onload = () => { 
+        render(); 
+        renderHistory();
+        if (config.binId && config.apiKey) syncLoad(); 
+        if (config.googleClientId) updateGoogleSyncStatus(false); 
+        checkCalendarDueDates(); 
+    };
 
     async function syncLoad() { if (!config.binId) return; document.getElementById('syncText').innerText = 'Sync...'; try { const res = await fetch(`https://api.jsonbin.io/v3/b/${config.binId}/latest`, { headers: { 'X-Master-Key': config.apiKey } }); if (!res.ok) throw new Error(res.status); const data = await res.json(); items = data.record.gtd_tasks || data.record || []; localStorage.setItem('gtd_data', JSON.stringify(items)); render(); document.getElementById('syncText').innerText = 'Online'; document.getElementById('syncDot').className = 'dot online'; checkCalendarDueDates(); } catch (e) { document.getElementById('syncText').innerText = 'Erro'; document.getElementById('syncDot').className = 'dot error'; } }
     async function syncSave() { localStorage.setItem('gtd_data', JSON.stringify(items)); render(); if (!config.binId) return; document.getElementById('syncText').innerText = 'Salvando...'; try { await fetch(`https://api.jsonbin.io/v3/b/${config.binId}`, { method: 'PUT', headers: { 'Content-Type': 'application/json', 'X-Master-Key': config.apiKey, 'X-Bin-Versioning': 'false' }, body: JSON.stringify({ gtd_tasks: items }) }); document.getElementById('syncText').innerText = 'Salvo'; document.getElementById('syncDot').className = 'dot online'; } catch (e) { document.getElementById('syncText').innerText = 'Erro Salvar'; document.getElementById('syncDot').className = 'dot error'; } }
     async function createCalendarEvent(item) { if (!gapi.client.getToken()) return null; try { const startDateTime = new Date(item.date); const endDateTime = new Date(startDateTime.getTime() + (30 * 60 * 1000)); if (!gapi.client.calendar) await gapi.client.load('calendar', 'v3'); const response = await gapi.client.calendar.events.insert({ 'calendarId': 'primary', 'resource': { 'summary': "GTD: " + item.text, 'start': { 'dateTime': startDateTime.toISOString(), 'timeZone': Intl.DateTimeFormat().resolvedOptions().timeZone }, 'end': { 'dateTime': endDateTime.toISOString(), 'timeZone': Intl.DateTimeFormat().resolvedOptions().timeZone } } }); showToast("Evento criado!"); return response.result.id; } catch (err) { if (err.status === 401) { localStorage.removeItem('gtd_google_token'); updateGoogleSyncStatus(false); alert("Sessão expirada."); } else alert("Erro Google: " + JSON.stringify(err)); return null; } }
     async function updateGoogleEvent(item) { if (!gapi.client.getToken() || !item.googleEventId) return; try { await gapi.client.calendar.events.patch({ 'calendarId': 'primary', 'eventId': item.googleEventId, 'resource': { 'summary': "GTD: " + item.text } }); showToast("Atualizado no Google."); } catch (e) { console.error(e); } }
     async function deleteCalendarEvent(eventId) { if (!eventId || !gapi.client.getToken()) return; try { await gapi.client.calendar.events.delete({ 'calendarId': 'primary', 'eventId': eventId }); showToast("Excluído do Google."); } catch (err) { if(err.status!==404 && err.status!==410) console.error(err); } }
-    function addToInbox() { const val = document.getElementById('inboxInput').value.trim(); if(val) { items.push({ id: Date.now(), text: val, status: 'inbox' }); document.getElementById('inboxInput').value = ''; syncSave(); } }
+    function addToInbox() { const val = document.getElementById('inboxInput').value.trim(); if(val) { items.push({ id: Date.now(), text: val, status: 'inbox' }); document.getElementById('inboxInput').value = ''; updateHistory(val); syncSave(); } }
     function startProcessing() { currentItemIdx = items.findIndex(i => i.status === 'inbox'); if (currentItemIdx === -1) return; document.getElementById('processing-zone').style.display = 'block'; document.getElementById('currentItem').innerText = items[currentItemIdx].text; resetSteps(); document.getElementById('processing-zone').scrollIntoView({behavior:'smooth'}); }
     function handleActionable(bool) { bool ? toStep('step-yes') : toStep('step-no'); }
     async function finalize(status) { 
         if (currentItemIdx === null) return; 
         const item = items[currentItemIdx]; 
-        
-        if (status === 'done') {
-            await handleStatusChange(item, 'completed');
-        } else if (status === 'waiting') {
-             // Wizard flow for waiting
-             const who = document.getElementById('delInput').value;
-             item.note = "Delegado: " + who;
-             document.getElementById('delInput').value = '';
-             
-             // Perguntar data para agenda no wizard
-             const dateStr = await openDateModal();
-             if (dateStr) {
-                item.date = dateStr;
-                if (config.googleClientId) {
-                    const eventId = await createCalendarEvent(item);
-                    if (eventId) item.googleEventId = eventId;
-                }
-             }
-             item.status = 'waiting';
-        } else if (status === 'calendar') {
-            item.date = document.getElementById('calInput').value;
-            if(item.date && config.googleClientId) { const eid = await createCalendarEvent(item); if(eid) item.googleEventId = eid; }
-             item.status = 'calendar';
-        } else {
-             item.status = status;
-        }
-        
-        if (status === 'trash') items.splice(currentItemIdx, 1);
-        
+        item.status = status; 
+        if (status === 'waiting') { 
+            item.note = "Delegado: " + document.getElementById('delInput').value; 
+            document.getElementById('delInput').value = ''; 
+            if(confirm("Agendar no Google?")) {
+                const d = await openDateModal();
+                if(d) { item.date = d; if(config.googleClientId) { const eid = await createCalendarEvent(item); if(eid) item.googleEventId = eid; } }
+            }
+        } 
+        if (status === 'calendar') { 
+            item.date = document.getElementById('calInput').value; 
+            if(item.date && config.googleClientId) { const eid = await createCalendarEvent(item); if(eid) item.googleEventId = eid; } 
+        } 
+        if (status === 'trash' || status === 'done') items.splice(currentItemIdx, 1); 
         syncSave(); 
         if (items.some(i => i.status === 'inbox')) startProcessing(); 
         else { document.getElementById('processing-zone').style.display = 'none'; showToast("Entrada zerada!"); } 
     }
-    
     async function editItem(idx) { const item = items[idx]; const newText = prompt("Editar:", item.text); if (newText && newText !== item.text) { item.text = newText; if ((item.status === 'calendar' || item.status === 'waiting') && item.googleEventId) await updateGoogleEvent(item); syncSave(); } }
-    
-    async function completeItem(idx) {
-        const item = items[idx];
-        if ((item.status === 'calendar' || item.status === 'waiting') && item.googleEventId) {
-             if(confirm("Remover evento do Google ao concluir?")) { await deleteCalendarEvent(item.googleEventId); }
-        }
-        delete item.date;
-        delete item.googleEventId;
-        item.completedAt = new Date().toISOString();
-        item.status = 'completed';
-        syncSave();
-    }
-    
-    function clearCompletedHistory() {
-        if(confirm("Deseja apagar permanentemente todas as tarefas concluídas?")) {
-            items = items.filter(i => i.status !== 'completed');
-            syncSave();
-            showToast("Histórico limpo.");
-        }
-    }
-
-    async function deleteItem(idx) { const item = items[idx]; if(confirm("Remover permanentemente?")) { if ((item.status === 'calendar' || item.status === 'waiting') && item.googleEventId) await deleteCalendarEvent(item.googleEventId); items.splice(idx, 1); syncSave(); } }
-    function restoreItem(idx) { items[idx].status = 'next-action'; delete items[idx].completedAt; syncSave(); }
-
+    async function deleteItem(idx) { const item = items[idx]; if(confirm("Remover?")) { if ((item.status === 'calendar' || item.status === 'waiting') && item.googleEventId) await deleteCalendarEvent(item.googleEventId); items.splice(idx, 1); syncSave(); } }
     function resetSteps() { document.querySelectorAll('.step').forEach(e => e.classList.add('hidden')); document.getElementById('step-1').classList.remove('hidden'); }
     function toStep(id) { document.querySelectorAll('.step').forEach(e => e.classList.add('hidden')); document.getElementById(id).classList.remove('hidden'); }
     function openConfig() { document.getElementById('cfgBinId').value = config.binId; document.getElementById('cfgApiKey').value = config.apiKey; document.getElementById('cfgGoogleClientId').value = config.googleClientId; document.getElementById('configModal').style.display = 'block'; }
