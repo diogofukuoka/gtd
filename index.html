@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>GTD Fukuoka AI (v8.1)</title>
+    <title>GTD Fukuoka (v8.2 - Fix IA)</title>
     <script src="https://bernardo-castilho.github.io/DragDropTouch/DragDropTouch.js"></script>
     <style>
         :root { --primary: #2c3e50; --accent: #3498db; --success: #27ae60; --warning: #f39c12; --danger: #e74c3c; --light: #ecf0f1; --cloud: #8e44ad; --google: #4285f4; --ai: #8e44ad; --gray: #95a5a6; }
@@ -85,7 +85,6 @@
         .btn-refresh { background: #fff; border: 1px solid #dadce0; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 0.75rem; color: var(--google); margin-left: 5px; }
         .btn-clear-hist { color: var(--danger); border-color: #fcc; background: #fff; }
 
-        /* Modal e Toast */
         #toast { visibility: hidden; min-width: 250px; background-color: #333; color: #fff; text-align: center; border-radius: 4px; padding: 16px; position: fixed; z-index: 9999; left: 50%; bottom: 30px; transform: translateX(-50%); font-size: 14px; }
         #toast.show { visibility: visible; -webkit-animation: fadein 0.5s, fadeout 0.5s 2.5s; animation: fadein 0.5s, fadeout 0.5s 2.5s; }
         #configModal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; overflow-y: auto; }
@@ -143,7 +142,7 @@
         </button>
     </div>
 
-    <!-- WIZARD -->
+    <!-- WIZARD (Omitted for brevity, logic kept) -->
     <div id="processing-zone">
         <div class="processing-header"><div style="text-align:center; color:#888; font-size:0.8rem; text-transform:uppercase;">Processando Item:</div><div id="currentItem" class="current-item"></div></div>
         <div id="step-1" class="step"><h3 style="text-align:center">É passível de ação?</h3><div class="decision-grid"><button class="btn-no" onclick="handleActionable(false)">NÃO</button><button class="btn-yes" onclick="handleActionable(true)">SIM</button></div></div>
@@ -263,35 +262,20 @@
     const DISCOVERY_DOC = 'https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest';
     let longPressTimer, longPressItem, dateResolver, headerPressTimer;
 
-    // --- AI INTEGRATION (GEMINI - FIXED) ---
+    // --- AI INTEGRATION (GEMINI - FIXED MODEL) ---
     async function callGemini(prompt) {
-        if (!config.geminiKey) {
-            alert("Configure a chave do Gemini em Configurações para usar IA.");
-            return null;
-        }
+        if (!config.geminiKey) { alert("Configure a chave do Gemini em Configurações."); return null; }
         document.getElementById('loadingOverlay').style.display = 'flex';
         try {
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${config.geminiKey}`;
-            
+            // USANDO GEMINI-PRO (Model mais estável)
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${config.geminiKey}`;
             const response = await fetch(url, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ 
-                    contents: [{ parts: [{ text: prompt }] }]
-                })
+                body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
             });
-
             const data = await response.json();
-            
-            if (data.error) {
-                console.error("Gemini Error:", data.error);
-                throw new Error(data.error.message);
-            }
-            
-            if (!data.candidates || !data.candidates[0] || !data.candidates[0].content) {
-                throw new Error("Resposta da IA vazia ou bloqueada.");
-            }
-
+            if (data.error) throw new Error(data.error.message);
             return data.candidates[0].content.parts[0].text;
         } catch (e) {
             console.error(e);
@@ -307,17 +291,10 @@
         if (inboxItems.length === 0) return alert("Caixa de entrada vazia.");
         
         const tasksText = inboxItems.map(i => `- ${i.text} (ID: ${i.id})`).join('\n');
-        const prompt = `
-            Act as a GTD expert. I have these inbox items:
+        const prompt = `Act as a GTD expert. Inbox items:
             ${tasksText}
-            
-            For each item, decide the best GTD list (next, project, waiting, calendar, someday, reference, trash).
-            Return ONLY a valid JSON array. Each object must have: 
-            "id" (string from input), 
-            "status" (one of: next, project, waiting, calendar, someday, reference, trash),
-            "note" (string, suggested context or delegation).
-            Do not use markdown code blocks. Just raw JSON.
-        `;
+            For each, decide the list (next, project, waiting, calendar, someday, reference, trash).
+            Return ONLY a valid JSON array. Example: [{"id": "123", "status": "next", "note": "context"}]. No markdown.`;
 
         const result = await callGemini(prompt);
         if (!result) return;
@@ -325,7 +302,6 @@
         try {
             const cleanJson = result.replace(/```json/g, '').replace(/```/g, '').trim();
             const decisions = JSON.parse(cleanJson);
-            
             let count = 0;
             decisions.forEach(d => {
                 const item = items.find(i => i.id == d.id);
@@ -338,22 +314,18 @@
             });
             syncSave();
             showToast(`${count} itens processados! ✨`);
-        } catch (e) {
-            alert("Erro ao ler resposta da IA. Tente novamente.");
-        }
+        } catch (e) { alert("Erro ao ler resposta da IA."); }
     }
 
     async function breakdownProject(idx) {
         const project = items[idx];
-        const prompt = `I have a project: "${project.text}". List 3 to 5 concrete next actions. Return ONLY a JSON array of strings. No markdown.`;
+        const prompt = `Project: "${project.text}". List 3 to 5 concrete next actions. Return ONLY a JSON array of strings. No markdown.`;
         const result = await callGemini(prompt);
         if (!result) return;
         try {
             const cleanJson = result.replace(/```json/g, '').replace(/```/g, '').trim();
             const actions = JSON.parse(cleanJson);
-            actions.forEach(actionText => {
-                items.push({ id: Date.now() + Math.random(), text: actionText, status: 'next', note: `De: ${project.text}` });
-            });
+            actions.forEach(actionText => { items.push({ id: Date.now() + Math.random(), text: actionText, status: 'next', note: `De: ${project.text}` }); });
             syncSave();
             showToast("Ações geradas! ⚡");
         } catch (e) { alert("Erro ao quebrar projeto."); }
@@ -363,7 +335,7 @@
         const completed = items.filter(i => i.status === 'completed');
         if (completed.length === 0) return alert("Nada concluído para analisar.");
         const tasks = completed.map(i => i.text).join(', ');
-        const prompt = `Completed tasks: ${tasks}. Give a short motivating summary in Portuguese and 1 suggestion.`;
+        const prompt = `Tarefas concluídas: ${tasks}. Dê um resumo motivacional curto em Português e 1 sugestão.`;
         const feedback = await callGemini(prompt);
         if (feedback) alert("🤖 Relatório da IA:\n\n" + feedback);
     }
@@ -413,6 +385,8 @@
         }
         if (newStatus === 'completed') { item.completedAt = new Date().toISOString(); }
         
+        // Notion Hook Removed
+
         if (newStatus === 'calendar') {
             const dateStr = await openDateModal(); if (!dateStr) return false; item.date = dateStr;
             if (config.googleClientId) { const eventId = await createCalendarEvent(item); if (eventId) item.googleEventId = eventId; }
