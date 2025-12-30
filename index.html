@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>GTD Sync (Final v4.9 - Reordenar)</title>
+    <title>GTD Fukuoka (v5.1)</title>
     <!-- Script para permitir Drag & Drop em Celulares -->
     <script src="https://bernardo-castilho.github.io/DragDropTouch/DragDropTouch.js"></script>
     <style>
@@ -48,8 +48,6 @@
         @media(min-width: 700px) { .lists-grid { grid-template-columns: 1fr 1fr; } }
         
         .list-card { background: white; border: 1px solid #eee; border-radius: 8px; padding: 15px; transition: 0.2s; min-height: 100px; display: flex; flex-direction: column; }
-        
-        /* Highlight da caixa ao arrastar */
         .list-card.drag-over-container { background-color: #f0faff; border: 2px dashed #3498db; }
 
         .list-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #f0f0f0; padding-bottom: 8px; margin-bottom: 10px; }
@@ -75,23 +73,12 @@
             border-radius: 4px;
             margin-bottom: 2px;
         }
+        li:last-child { border-bottom: none; }
         
-        /* Highlight do item alvo ao arrastar por cima */
-        li.drag-over-item {
-            border-top: 3px solid #27ae60;
-            background-color: #e8f8f5;
-            transform: scale(0.98);
-        }
-
-        li.ready-to-drag {
-            background-color: #e3f2fd;
-            border: 1px solid #3498db;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-            z-index: 10;
-        }
-        
+        li.ready-to-drag { background-color: #e3f2fd; border: 2px solid #3498db; transform: scale(1.02); z-index: 10; }
         li.dragging { opacity: 0.4; background: #ddd; border: 1px dashed #999; }
-        
+        li.drag-over-item { border-top: 3px solid #27ae60; background-color: #e8f8f5; }
+
         .task-text { font-weight: 400; font-size: 1rem; color: #2c3e50; pointer-events: none; }
         .meta { font-size: 0.75rem; color: #666; display: block; margin-top: 3px; pointer-events: none; }
         .google-icon { background: #e8f0fe; color: #1967d2; font-weight: bold; padding: 2px 5px; border-radius: 4px; font-size: 0.7em; margin-left: 5px; }
@@ -213,6 +200,7 @@
     let gapiInited = false, gisInited = false, tokenClient, googleAccessToken;
     const DISCOVERY_DOC = 'https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest';
     let longPressTimer;
+    let longPressItem = null;
 
     // --- VOICE RECOGNITION (CAPITALIZED) ---
     let recognition;
@@ -232,27 +220,38 @@
     } else { document.getElementById('voiceBtn').style.display = 'none'; }
     function toggleVoice() { if (!recognition) return alert("Sem suporte voz."); try { recognition.start(); } catch(e) { recognition.stop(); } }
 
-    // --- DRAG AND DROP (REORDER LOGIC) ---
+    // --- DRAG AND DROP (SAFE LONG PRESS) ---
+    function allowDropContainer(ev) { ev.preventDefault(); ev.currentTarget.classList.add('drag-over-container'); }
+    function leaveDropContainer(ev) { ev.currentTarget.classList.remove('drag-over-container'); }
     
-    // Configura drag no item
     function handleTouchStart(e, idx) {
-        const li = e.currentTarget;
+        longPressItem = e.currentTarget;
         longPressTimer = setTimeout(() => {
-            li.setAttribute('draggable', 'true');
-            li.classList.add('ready-to-drag');
-            if (navigator.vibrate) navigator.vibrate(50);
+            if (longPressItem) {
+                longPressItem.setAttribute('draggable', 'true');
+                longPressItem.classList.add('ready-to-drag');
+                if (navigator.vibrate) navigator.vibrate(50);
+            }
         }, 500); 
     }
     function handleTouchEnd(e) {
         clearTimeout(longPressTimer);
         const li = e.currentTarget;
-        if (!li.classList.contains('dragging')) {
-            li.removeAttribute('draggable');
+        if (li && !li.classList.contains('dragging')) {
+            li.setAttribute('draggable', 'false');
             li.classList.remove('ready-to-drag');
         }
+        longPressItem = null;
     }
-    function handleTouchMove(e) { clearTimeout(longPressTimer); }
-    
+    function handleTouchMove(e) {
+        if (longPressTimer) {
+            clearTimeout(longPressTimer);
+            if (longPressItem) {
+                longPressItem.classList.remove('ready-to-drag');
+                longPressItem.setAttribute('draggable', 'false');
+            }
+        }
+    }
     function drag(ev, index) {
         ev.dataTransfer.setData("text/plain", index);
         ev.target.classList.add('dragging');
@@ -260,108 +259,70 @@
     }
     function dragEnd(ev) {
         ev.target.classList.remove('dragging');
-        ev.target.removeAttribute('draggable');
+        ev.target.setAttribute('draggable', 'false');
     }
-
-    // Drop no CONTAINER (Fim da lista)
-    function allowDropContainer(ev) { ev.preventDefault(); ev.currentTarget.classList.add('drag-over-container'); }
-    function leaveDropContainer(ev) { ev.currentTarget.classList.remove('drag-over-container'); }
     async function dropContainer(ev, newStatus) {
         ev.preventDefault();
         ev.stopPropagation();
         ev.currentTarget.classList.remove('drag-over-container');
-        
         const index = ev.dataTransfer.getData("text/plain");
         const item = items[index];
         if(!item) return;
-
-        // Se soltar na mesma lista, mas na área vazia, move para o final
-        if (item.status === newStatus) {
-            items.splice(index, 1);
-            items.push(item);
-            syncSave();
-            return;
-        }
-
+        if (item.status === newStatus) { items.splice(index, 1); items.push(item); syncSave(); return; }
         await handleStatusChange(item, newStatus);
-        
-        // Move para o final do array (mas visualmente no final da lista)
         items.splice(index, 1);
         items.push(item);
         syncSave();
     }
-
-    // Drop no ITEM (Reordenar / Inserir antes)
-    function allowDropItem(ev) { 
-        ev.preventDefault(); 
-        ev.stopPropagation();
-        ev.currentTarget.classList.add('drag-over-item'); 
-    }
-    function leaveDropItem(ev) { 
-        ev.currentTarget.classList.remove('drag-over-item'); 
-    }
+    function allowDropItem(ev) { ev.preventDefault(); ev.stopPropagation(); ev.currentTarget.classList.add('drag-over-item'); }
+    function leaveDropItem(ev) { ev.currentTarget.classList.remove('drag-over-item'); }
     async function dropOnItem(ev, targetIdx) {
         ev.preventDefault();
         ev.stopPropagation();
         ev.currentTarget.classList.remove('drag-over-item');
-
         const draggedIdx = parseInt(ev.dataTransfer.getData("text/plain"));
         if (draggedIdx === targetIdx) return;
-
         const draggedItem = items[draggedIdx];
-        const targetItem = items[targetIdx]; // Item onde soltou
-
-        // Se mudou de status, processa a lógica de mudança
-        if (draggedItem.status !== targetItem.status) {
-            await handleStatusChange(draggedItem, targetItem.status);
-        }
-
-        // Lógica de Reordenação no Array
-        // Remove o item da posição antiga
+        const targetItem = items[targetIdx];
+        if (draggedItem.status !== targetItem.status) await handleStatusChange(draggedItem, targetItem.status);
         items.splice(draggedIdx, 1);
-        
-        // Precisamos recalcular o índice de destino, pois o array mudou se arrastamos de cima para baixo
-        // Mas como pegamos o targetItem por referência antes, precisamos achar seu novo índice
         let newTargetIdx = items.indexOf(targetItem);
-        
-        // Insere ANTES do item alvo
-        if (newTargetIdx === -1) {
-            // Fallback: se algo deu errado, joga no fim
-            items.push(draggedItem);
-        } else {
-            items.splice(newTargetIdx, 0, draggedItem);
-        }
-
+        if (newTargetIdx === -1) items.push(draggedItem); else items.splice(newTargetIdx, 0, draggedItem);
         syncSave();
     }
-
-    // Lógica comum de mudança de status (Data, Delegação, etc)
     async function handleStatusChange(item, newStatus) {
         const oldStatus = item.status;
-
         if (newStatus === 'calendar') {
             const dateStr = prompt("Data e Hora (AAAA-MM-DD HH:MM)", new Date().toISOString().slice(0,16).replace('T', ' '));
             if (!dateStr) return; 
             item.date = dateStr.includes('T') ? dateStr : dateStr.replace(' ', 'T');
-            if (config.googleClientId) {
-                const eventId = await createCalendarEvent(item);
-                if (eventId) item.googleEventId = eventId;
-            }
+            if (config.googleClientId) { const eventId = await createCalendarEvent(item); if (eventId) item.googleEventId = eventId; }
         } else if (newStatus === 'waiting') {
             const who = prompt("Delegar para quem?");
             if (who) item.note = "Delegado: " + who;
         }
-
         if (oldStatus === 'calendar' && newStatus !== 'calendar' && item.googleEventId) {
-            if(confirm("Remover do Google Agenda?")) {
-                await deleteCalendarEvent(item.googleEventId);
-                delete item.googleEventId;
-                delete item.date;
-            }
+            if(confirm("Remover do Google Agenda?")) { await deleteCalendarEvent(item.googleEventId); delete item.googleEventId; delete item.date; }
         }
         item.status = newStatus;
     }
 
+    // --- AUTO-MOVE CALENDAR TO NEXT ACTION ---
+    function checkCalendarDueDates() {
+        const now = new Date();
+        const today = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
+        let changed = false;
+        items.forEach(item => {
+            if (item.status === 'calendar' && item.date) {
+                const taskDate = item.date.split('T')[0];
+                if (taskDate <= today) {
+                    item.status = 'next-action';
+                    changed = true;
+                }
+            }
+        });
+        if (changed) { syncSave(); showToast("Tarefas de hoje movidas para Próximas Ações"); }
+    }
 
     // --- GOOGLE API & SYNC ---
     function gapiLoaded() { gapi.load('client', intializeGapiClient); }
@@ -374,8 +335,11 @@
     function showToast(msg) { const t = document.getElementById("toast"); t.textContent = msg; t.className = "show"; setTimeout(() => { t.className = t.className.replace("show", ""); }, 3000); }
     async function checkDeletedEvents(manual = false) { if (!gapi.client.getToken()) { if(manual) showToast("Google Off."); return; } const calendarItems = items.filter(i => i.status === 'calendar' && i.googleEventId); if (calendarItems.length === 0) { if(manual) showToast("Nada para verificar."); return; } if(manual) showToast("Verificando agenda..."); let deletedCount = 0; await Promise.all(calendarItems.map(async (item) => { try { const res = await gapi.client.calendar.events.get({ 'calendarId': 'primary', 'eventId': item.googleEventId }); if (res.result.status === 'cancelled') { removeItemById(item.id); deletedCount++; } } catch (err) { if (err.status === 404 || err.status === 410) { removeItemById(item.id); deletedCount++; } } })); if (deletedCount > 0) { syncSave(); showToast(`${deletedCount} evento(s) deletados sync.`); } else if (manual) showToast("Tudo ok."); }
     function removeItemById(id) { const index = items.findIndex(i => i.id === id); if (index > -1) items.splice(index, 1); }
-    window.onload = () => { render(); if (config.binId && config.apiKey) syncLoad(); if (config.googleClientId) updateGoogleSyncStatus(false); };
-    async function syncLoad() { if (!config.binId) return; document.getElementById('syncText').innerText = 'Sync...'; try { const res = await fetch(`https://api.jsonbin.io/v3/b/${config.binId}/latest`, { headers: { 'X-Master-Key': config.apiKey } }); if (!res.ok) throw new Error(res.status); const data = await res.json(); items = data.record.gtd_tasks || data.record || []; localStorage.setItem('gtd_data', JSON.stringify(items)); render(); document.getElementById('syncText').innerText = 'Online'; document.getElementById('syncDot').className = 'dot online'; } catch (e) { document.getElementById('syncText').innerText = 'Erro'; document.getElementById('syncDot').className = 'dot error'; } }
+    
+    // APP INIT
+    window.onload = () => { render(); if (config.binId && config.apiKey) syncLoad(); if (config.googleClientId) updateGoogleSyncStatus(false); checkCalendarDueDates(); };
+
+    async function syncLoad() { if (!config.binId) return; document.getElementById('syncText').innerText = 'Sync...'; try { const res = await fetch(`https://api.jsonbin.io/v3/b/${config.binId}/latest`, { headers: { 'X-Master-Key': config.apiKey } }); if (!res.ok) throw new Error(res.status); const data = await res.json(); items = data.record.gtd_tasks || data.record || []; localStorage.setItem('gtd_data', JSON.stringify(items)); render(); document.getElementById('syncText').innerText = 'Online'; document.getElementById('syncDot').className = 'dot online'; checkCalendarDueDates(); } catch (e) { document.getElementById('syncText').innerText = 'Erro'; document.getElementById('syncDot').className = 'dot error'; } }
     async function syncSave() { localStorage.setItem('gtd_data', JSON.stringify(items)); render(); if (!config.binId) return; document.getElementById('syncText').innerText = 'Salvando...'; try { await fetch(`https://api.jsonbin.io/v3/b/${config.binId}`, { method: 'PUT', headers: { 'Content-Type': 'application/json', 'X-Master-Key': config.apiKey, 'X-Bin-Versioning': 'false' }, body: JSON.stringify({ gtd_tasks: items }) }); document.getElementById('syncText').innerText = 'Salvo'; document.getElementById('syncDot').className = 'dot online'; } catch (e) { document.getElementById('syncText').innerText = 'Erro Salvar'; document.getElementById('syncDot').className = 'dot error'; } }
     async function createCalendarEvent(item) { if (!gapi.client.getToken()) return null; try { const startDateTime = new Date(item.date); const endDateTime = new Date(startDateTime.getTime() + (60 * 60 * 1000)); if (!gapi.client.calendar) await gapi.client.load('calendar', 'v3'); const response = await gapi.client.calendar.events.insert({ 'calendarId': 'primary', 'resource': { 'summary': "GTD: " + item.text, 'start': { 'dateTime': startDateTime.toISOString(), 'timeZone': Intl.DateTimeFormat().resolvedOptions().timeZone }, 'end': { 'dateTime': endDateTime.toISOString(), 'timeZone': Intl.DateTimeFormat().resolvedOptions().timeZone } } }); showToast("Evento criado!"); return response.result.id; } catch (err) { if (err.status === 401) { localStorage.removeItem('gtd_google_token'); updateGoogleSyncStatus(false); alert("Sessão expirada."); } else alert("Erro Google: " + JSON.stringify(err)); return null; } }
     async function updateGoogleEvent(item) { if (!gapi.client.getToken() || !item.googleEventId) return; try { await gapi.client.calendar.events.patch({ 'calendarId': 'primary', 'eventId': item.googleEventId, 'resource': { 'summary': "GTD: " + item.text } }); showToast("Atualizado no Google."); } catch (e) { console.error(e); } }
@@ -402,22 +366,17 @@
             if(document.getElementById('l-'+listId)) {
                 counts[listId]++;
                 const li = document.createElement('li');
-                // DRAG: Configurações para o item
                 li.setAttribute('onmousedown', `handleTouchStart(event, ${idx})`);
                 li.setAttribute('ontouchstart', `handleTouchStart(event, ${idx})`);
                 li.setAttribute('onmouseup', `handleTouchEnd(event)`);
                 li.setAttribute('ontouchend', `handleTouchEnd(event)`);
                 li.setAttribute('ontouchmove', `handleTouchMove(event)`);
-                
-                li.setAttribute('draggable', true);
+                li.setAttribute('draggable', 'false'); // Inicialmente falso
                 li.setAttribute('ondragstart', `drag(event, ${idx})`);
                 li.setAttribute('ondragend', `dragEnd(event)`);
-                
-                // EVENTOS PARA DROP NO ITEM (REORDENAR)
                 li.setAttribute('ondrop', `dropOnItem(event, ${idx})`);
                 li.setAttribute('ondragover', `allowDropItem(event)`);
                 li.setAttribute('ondragleave', `leaveDropItem(event)`);
-                
                 let extra = '';
                 if(item.note) extra += `<span class="meta">${item.note}</span>`;
                 let googleIcon = '';
