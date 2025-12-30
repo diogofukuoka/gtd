@@ -271,7 +271,7 @@
         document.getElementById('loadingOverlay').style.display = 'flex';
         try {
             // USANDO GEMINI-1.5-PRO (Estável)
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.0-pro:generateContent?key=${config.geminiKey}`;
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${config.geminiKey}`;
             
             const response = await fetch(url, {
                 method: 'POST',
