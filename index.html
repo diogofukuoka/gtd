@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>GTD Fukuoka (v6.0 - Notion)</title>
+    <title>GTD Fukuoka (v5.8 - Notion Fix)</title>
     <script src="https://bernardo-castilho.github.io/DragDropTouch/DragDropTouch.js"></script>
     <style>
-        :root { --primary: #2c3e50; --accent: #3498db; --success: #27ae60; --warning: #f39c12; --danger: #e74c3c; --light: #ecf0f1; --cloud: #8e44ad; --google: #4285f4; --notion: #000000; --gray: #95a5a6; }
+        :root { --primary: #2c3e50; --accent: #3498db; --success: #27ae60; --warning: #f39c12; --danger: #e74c3c; --light: #ecf0f1; --cloud: #8e44ad; --google: #4285f4; --gray: #95a5a6; }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background: #f8f9fa; color: #333; margin: 0; padding: 15px; padding-bottom: 80px; user-select: none; }
         .container { max-width: 900px; margin: 0 auto; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
@@ -239,23 +239,22 @@
     // --- NOTION INTEGRATION ---
     async function createNotionPage(title, tagName) {
         if (!config.notionDbId || !config.notionKey) return;
-        
         showToast("Enviando para Notion...");
         
-        // Usando corsproxy.io para contornar CORS no navegador
-        const proxyUrl = "https://corsproxy.io/?";
+        // Usando corsproxy.io com encoding correto da URL do Notion
         const notionUrl = "https://api.notion.com/v1/pages";
+        const proxyUrl = "https://corsproxy.io/?" + encodeURIComponent(notionUrl);
         
         const payload = {
             parent: { database_id: config.notionDbId },
             properties: {
                 Name: { title: [{ text: { content: title } }] },
-                Tags: { select: { name: tagName } } // 'Talvez' ou 'Referência'
+                Tags: { select: { name: tagName } }
             }
         };
 
         try {
-            const response = await fetch(proxyUrl + notionUrl, {
+            const response = await fetch(proxyUrl, {
                 method: "POST",
                 headers: {
                     "Authorization": "Bearer " + config.notionKey,
@@ -268,12 +267,13 @@
             if (response.ok) {
                 showToast("Criado no Notion com sucesso!");
             } else {
-                console.error("Notion Error:", await response.text());
-                alert("Erro ao criar no Notion. Verifique ID/Key.");
+                const errText = await response.text();
+                console.error("Notion Error:", errText);
+                alert("Erro Notion (Verifique ID/Secret/Permissões): " + errText);
             }
         } catch (e) {
             console.error(e);
-            alert("Erro de conexão com Notion.");
+            alert("Erro de conexão Notion: " + e.message);
         }
     }
 
@@ -312,10 +312,9 @@
                             const eid = await createCalendarEvent(newItem);
                             if (eid) newItem.googleEventId = eid;
                         }
-                    } else if (status === 'calendar') return; // Cancelou calendar
+                    } else if (status === 'calendar') return; 
                 }
                 
-                // Notion Check
                 if (status === 'someday' || status === 'reference') {
                    createNotionPage(text, status === 'someday' ? 'Talvez' : 'Referência');
                 }
@@ -373,7 +372,6 @@
         }
         if (newStatus === 'completed') { item.completedAt = new Date().toISOString(); }
         
-        // Notion Hook
         if (newStatus === 'someday' || newStatus === 'reference') {
             createNotionPage(item.text, newStatus === 'someday' ? 'Talvez' : 'Referência');
         }
@@ -408,15 +406,11 @@
     async function checkDeletedEvents(manual = false) { if (!gapi.client.getToken()) { if(manual) showToast("Google Off."); return; } const calendarItems = items.filter(i => (i.status === 'calendar' || i.status === 'waiting') && i.googleEventId); if (calendarItems.length === 0) { if(manual) showToast("Nada para verificar."); return; } if(manual) showToast("Verificando agenda..."); let deletedCount = 0; await Promise.all(calendarItems.map(async (item) => { try { const res = await gapi.client.calendar.events.get({ 'calendarId': 'primary', 'eventId': item.googleEventId }); if (res.result.status === 'cancelled') { removeItemById(item.id); deletedCount++; } } catch (err) { if (err.status === 404 || err.status === 410) { removeItemById(item.id); deletedCount++; } } })); if (deletedCount > 0) { syncSave(); showToast(`${deletedCount} evento(s) deletados sync.`); } else if (manual) showToast("Tudo ok."); }
     function removeItemById(id) { const index = items.findIndex(i => i.id === id); if (index > -1) items.splice(index, 1); }
     window.onload = () => { render(); renderHistory(); if (config.binId && config.apiKey) syncLoad(); if (config.googleClientId) updateGoogleSyncStatus(false); checkCalendarDueDates(); };
-    async function syncLoad() { if (!config.binId) return; document.getElementById('syncText').innerText = 'Sync...'; try { const res = await fetch(`https://api.jsonbin.io/v3/b/${config.binId}/latest`, { headers: { 'X-Master-Key': config.apiKey } }); if (!res.ok) throw new Error(res.status); const data = await res.json(); items = data.record.gtd_tasks || data.record || []; localStorage.setItem('gtd_data', JSON.stringify(items)); render(); document.getElementById('syncText').innerText = 'Online'; document.getElementById('syncDot').className = 'dot online'; checkCalendarDueDates(); } catch (e) { document.getElementById('syncText').innerText = 'Erro'; document.getElementById('syncDot').className = 'dot error'; } }
+    async function syncLoad() { if (!config.binId) return; document.getElementById('syncText').innerText = 'Sync...'; try { const res = await fetch(`https://api.jsonbin.io/v3/b/${config.binId}/latest`, { headers: { 'X-Master-Key': config.apiKey } }); if (!res.ok) throw new Error(res.status); const data = await res.json(); items = data.record.gtd_tasks || data.record || []; localStorage.setItem('gtd_data', JSON.stringify(items)); render(); document.getElementById('syncText').innerText = 'Online'; document.getElementById('syncDot').className = 'dot online'; checkCalendarDueDates(); } catch (e) { document.getElementById('syncText').innerText = 'Erro'; document.getElementById('syncDot').className = 'dot error'; document.getElementById('syncText').title = e.message; } }
     async function syncSave() { localStorage.setItem('gtd_data', JSON.stringify(items)); render(); if (!config.binId) return; document.getElementById('syncText').innerText = 'Salvando...'; try { await fetch(`https://api.jsonbin.io/v3/b/${config.binId}`, { method: 'PUT', headers: { 'Content-Type': 'application/json', 'X-Master-Key': config.apiKey, 'X-Bin-Versioning': 'false' }, body: JSON.stringify({ gtd_tasks: items }) }); document.getElementById('syncText').innerText = 'Salvo'; document.getElementById('syncDot').className = 'dot online'; } catch (e) { document.getElementById('syncText').innerText = 'Erro Salvar'; document.getElementById('syncDot').className = 'dot error'; } }
-    
-    // GOOGLE EVENTS
     async function createCalendarEvent(item) { if (!gapi.client.getToken()) return null; try { const startDateTime = new Date(item.date); const endDateTime = new Date(startDateTime.getTime() + (30 * 60 * 1000)); if (!gapi.client.calendar) await gapi.client.load('calendar', 'v3'); const response = await gapi.client.calendar.events.insert({ 'calendarId': 'primary', 'resource': { 'summary': "GTD: " + item.text, 'start': { 'dateTime': startDateTime.toISOString(), 'timeZone': Intl.DateTimeFormat().resolvedOptions().timeZone }, 'end': { 'dateTime': endDateTime.toISOString(), 'timeZone': Intl.DateTimeFormat().resolvedOptions().timeZone } } }); showToast("Evento criado!"); return response.result.id; } catch (err) { if (err.status === 401) { localStorage.removeItem('gtd_google_token'); updateGoogleSyncStatus(false); alert("Sessão expirada."); } else alert("Erro Google: " + JSON.stringify(err)); return null; } }
     async function updateGoogleEvent(item) { if (!gapi.client.getToken() || !item.googleEventId) return; try { await gapi.client.calendar.events.patch({ 'calendarId': 'primary', 'eventId': item.googleEventId, 'resource': { 'summary': "GTD: " + item.text } }); showToast("Atualizado no Google."); } catch (e) { console.error(e); } }
     async function deleteCalendarEvent(eventId) { if (!eventId || !gapi.client.getToken()) return; try { await gapi.client.calendar.events.delete({ 'calendarId': 'primary', 'eventId': eventId }); showToast("Excluído do Google."); } catch (err) { if(err.status!==404 && err.status!==410) console.error(err); } }
-    
-    // CORE
     function addToInbox() { const val = document.getElementById('inboxInput').value.trim(); if(val) { items.push({ id: Date.now(), text: val, status: 'inbox' }); document.getElementById('inboxInput').value = ''; updateHistory(val); syncSave(); } }
     function startProcessing() { currentItemIdx = items.findIndex(i => i.status === 'inbox'); if (currentItemIdx === -1) return; document.getElementById('processing-zone').style.display = 'block'; document.getElementById('currentItem').innerText = items[currentItemIdx].text; resetSteps(); document.getElementById('processing-zone').scrollIntoView({behavior:'smooth'}); }
     function handleActionable(bool) { bool ? toStep('step-yes') : toStep('step-no'); }
