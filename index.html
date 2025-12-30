@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>GTD Fukuoka (v5.6.1)</title>
+    <title>GTD Fukuoka (v6.4)</title>
     <script src="https://bernardo-castilho.github.io/DragDropTouch/DragDropTouch.js"></script>
     <style>
         :root { --primary: #2c3e50; --accent: #3498db; --success: #27ae60; --warning: #f39c12; --danger: #e74c3c; --light: #ecf0f1; --cloud: #8e44ad; --google: #4285f4; --gray: #95a5a6; }
@@ -42,8 +42,8 @@
         .btn-no { background: var(--danger); color: white; }
         .btn-opt { background: var(--primary); color: white; }
         .btn-back { background: transparent; color: #777; text-decoration: underline; margin-top: 15px; width: 100%; }
+        .btn-ai-magic { background: linear-gradient(135deg, #8e44ad, #3498db); color: white; border: none; font-weight: bold; animation: glow 2s infinite; }
 
-        /* LISTAS - ESTILO LIMPO */
         .lists-grid { display: grid; grid-template-columns: 1fr; gap: 20px; }
         @media(min-width: 700px) { .lists-grid { grid-template-columns: 1fr 1fr; } }
         
@@ -72,7 +72,6 @@
         }
         .list-header:active { opacity: 0.6; }
         
-        /* TÍTULOS PRETOS E NEGRITO */
         .list-header h3 { margin: 0; font-size: 1rem; font-weight: 800; display: flex; align-items: center; gap: 5px; color: #000; }
         .badge { background: #fff; padding: 2px 8px; border-radius: 10px; font-size: 0.75rem; font-weight: bold; border: 1px solid #ccc; color: #333; }
         
@@ -81,21 +80,7 @@
         .card-do-now h3 { color: #856404; }
 
         ul { list-style: none; padding: 0; margin: 0; min-height: 50px; flex-grow: 1; }
-        
-        /* ESTILO DO ITEM */
-        li { 
-            padding: 12px 10px; 
-            border: 1px solid #e9ecef;
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-            background: #ffffff; 
-            transition: background-color 0.2s, transform 0.2s; 
-            touch-action: pan-y; 
-            border-radius: 6px; 
-            margin-bottom: 6px; 
-            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
-        }
+        li { padding: 12px 10px; border: 1px solid #e9ecef; display: flex; justify-content: space-between; align-items: center; background: #ffffff; transition: background-color 0.2s, transform 0.2s; touch-action: pan-y; border-radius: 6px; margin-bottom: 6px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
         li:last-child { margin-bottom: 0; }
         li.ready-to-drag { background-color: #e3f2fd; border: 2px solid #3498db; transform: scale(1.02); z-index: 1000; }
         li.dragging { opacity: 0.4; border: 1px dashed #999; }
@@ -112,7 +97,9 @@
         .icon-edit:hover { color: var(--accent); }
         .icon-check:hover { color: var(--success); }
         .icon-restore:hover { color: var(--warning); }
-        
+        .icon-ai { color: var(--ai); }
+        .icon-ai:hover { color: #9b59b6; transform: scale(1.2); }
+
         .btn-refresh { background: #fff; border: 1px solid #dadce0; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 0.75rem; color: var(--google); margin-left: 5px; }
         .btn-clear-hist { color: var(--danger); border-color: #fcc; background: #fff; }
 
@@ -125,12 +112,16 @@
         .modal-content input { width: 100%; padding: 10px; margin: 5px 0 15px; border: 1px solid #ddd; border-radius: 4px; font-size: 1rem; }
         .modal-footer { text-align: right; margin-top: 20px; display: flex; justify-content: flex-end; gap: 10px; }
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; }
+        #loadingOverlay { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.8); z-index: 9999; align-items: center; justify-content: center; flex-direction: column; }
+        .spinner { border: 4px solid #f3f3f3; border-top: 4px solid var(--accent); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; }
 
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         @keyframes fadein { from {bottom: 0; opacity: 0;} to {bottom: 30px; opacity: 1;} }
         @keyframes fadeout { from {bottom: 30px; opacity: 1;} to {bottom: 0; opacity: 0;} }
         @keyframes pulse-red { 0% { background: #c0392b; box-shadow: 0 0 0 0 rgba(192, 57, 43, 0.7); } 70% { background: #e74c3c; box-shadow: 0 0 0 10px rgba(192, 57, 43, 0); } 100% { background: #c0392b; box-shadow: 0 0 0 0 rgba(192, 57, 43, 0); } }
         @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes glow { 0% { box-shadow: 0 0 5px #8e44ad; } 50% { box-shadow: 0 0 15px #8e44ad; } 100% { box-shadow: 0 0 5px #8e44ad; } }
         .hidden { display: none !important; }
         .lists-grid .full-width-card { grid-column: 1 / -1; }
     </style>
@@ -161,9 +152,14 @@
         <button class="btn-add" onclick="addToInbox()">+</button>
     </div>
 
-    <button onclick="startProcessing()" id="btnProcess" class="btn-opt hidden" style="width:100%; margin-bottom:20px;">
-        ⚡ Processar Caixa de Entrada (<span id="inboxCount">0</span>)
-    </button>
+    <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+        <button onclick="startProcessing()" id="btnProcess" class="btn-opt hidden" style="flex: 1;">
+            ⚡ Processar Manual (<span id="inboxCount">0</span>)
+        </button>
+        <button onclick="magicProcess()" id="btnMagic" class="btn-ai-magic hidden" style="flex: 1;">
+            ✨ Auto-Processar IA
+        </button>
+    </div>
 
     <!-- WIZARD -->
     <div id="processing-zone">
@@ -235,9 +231,23 @@
             <ul id="l-reference"></ul>
         </div>
         <div class="list-card card-completed full-width-card" ondrop="dropContainer(event, 'completed')" ondragover="allowDropContainer(event)" ondragleave="leaveDropContainer(event)">
-            <div class="list-header"><h3>✅ Tarefas Concluídas</h3><div><button class="btn-refresh btn-clear-hist" onclick="clearCompletedHistory()">🗑️ Limpar</button><span class="badge" id="c-completed">0</span></div></div><ul id="l-completed"></ul>
+            <div class="list-header">
+                <h3>✅ Tarefas Concluídas</h3>
+                <div>
+                    <button class="btn-refresh" style="color:var(--ai);" onclick="aiReview()">🤖 Analisar</button>
+                    <button class="btn-refresh btn-clear-hist" onclick="clearCompletedHistory()">🗑️ Limpar</button>
+                    <span class="badge" id="c-completed">0</span>
+                </div>
+            </div>
+            <ul id="l-completed"></ul>
         </div>
     </div>
+</div>
+
+<!-- Loading -->
+<div id="loadingOverlay">
+    <div class="spinner"></div>
+    <p style="margin-top:15px; font-weight:bold; color:#555;">IA Pensando...</p>
 </div>
 
 <!-- Modal / Toast -->
@@ -249,6 +259,8 @@
         <label>JSONBin API Key:</label><input type="text" id="cfgApiKey">
         <hr style="margin:15px 0; border:0; border-top:1px dashed #ccc;">
         <label>Google Client ID:</label><input type="text" id="cfgGoogleClientId">
+        <hr style="margin:15px 0; border:0; border-top:1px dashed #ccc;">
+        <label>Gemini API Key (IA):</label><input type="password" id="cfgGeminiKey">
         <div class="modal-footer"><button class="btn-no" onclick="closeConfig()">Cancelar</button><button class="btn-yes" onclick="saveConfig()">Salvar</button></div>
     </div>
 </div>
@@ -272,106 +284,175 @@
 <script>
     let items = JSON.parse(localStorage.getItem('gtd_data')) || [];
     let history = JSON.parse(localStorage.getItem('gtd_history')) || [];
-    let config = JSON.parse(localStorage.getItem('gtd_config')) || { binId: '', apiKey: '', googleClientId: '' };
+    let config = JSON.parse(localStorage.getItem('gtd_config')) || { binId: '', apiKey: '', googleClientId: '', geminiKey: '' };
     let currentItemIdx = null;
     let gapiInited = false, gisInited = false, tokenClient, googleAccessToken;
     const DISCOVERY_DOC = 'https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest';
     let longPressTimer, longPressItem, dateResolver, headerPressTimer;
 
-    // --- AUTOCOMPLETE HISTORY ---
-    function updateHistory(text) {
-        if (!text) return;
-        if (!history.includes(text)) {
-            history.push(text);
-            if (history.length > 50) history.shift();
-            localStorage.setItem('gtd_history', JSON.stringify(history));
-            renderHistory();
+    // --- AI INTEGRATION (GEMINI - FIXED) ---
+    async function callGemini(prompt) {
+        if (!config.geminiKey) {
+            alert("Configure a chave do Gemini em Configurações para usar IA.");
+            return null;
+        }
+        document.getElementById('loadingOverlay').style.display = 'flex';
+        try {
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${config.geminiKey}`;
+            
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    contents: [{ parts: [{ text: prompt }] }]
+                })
+            });
+
+            const data = await response.json();
+            
+            if (data.error) {
+                console.error("Gemini Error:", data.error);
+                throw new Error(data.error.message);
+            }
+            
+            if (!data.candidates || !data.candidates[0] || !data.candidates[0].content) {
+                throw new Error("Resposta da IA vazia ou bloqueada.");
+            }
+
+            return data.candidates[0].content.parts[0].text;
+        } catch (e) {
+            console.error(e);
+            alert("Erro na IA: " + e.message);
+            return null;
+        } finally {
+            document.getElementById('loadingOverlay').style.display = 'none';
         }
     }
-    function renderHistory() {
-        const dl = document.getElementById('historyList');
-        dl.innerHTML = '';
-        history.slice().reverse().forEach(h => { const op = document.createElement('option'); op.value = h; dl.appendChild(op); });
+
+    async function magicProcess() {
+        const inboxItems = items.filter(i => i.status === 'inbox');
+        if (inboxItems.length === 0) return alert("Caixa de entrada vazia.");
+        
+        const tasksText = inboxItems.map(i => `- ${i.text} (ID: ${i.id})`).join('\n');
+        
+        const now = new Date();
+        const dateStr = now.toLocaleDateString('pt-BR') + " " + now.toLocaleTimeString('pt-BR');
+
+        // PROMPT ATUALIZADO (Contexto + Tempo + Delegação)
+        const prompt = `
+            Hoje é: ${dateStr}.
+            Você é um assistente GTD expert. Analise estes itens da caixa de entrada:
+            ${tasksText}
+            
+            Regras de Processamento (RIGOROSAS):
+            
+            1. **PRIORIDADE 1: DELEGAÇÃO**
+               Se a tarefa começa explicitamente com nome de pessoa ou apelido (ex: "Je ver...", "João enviar", "Mãe ligar"), O STATUS É 'waiting'.
+               No campo 'note', coloque APENAS: "Delegado: [Nome da Pessoa]".
+               Se houver data/hora na frase, extraia para 'date' (ISO).
+            
+            2. **PRIORIDADE 2: CALENDÁRIO**
+               Se NÃO for delegação, mas tiver data ou hora específica (ex: "Agendar médico", "Reunião amanhã 14h"), status: 'calendar'.
+               Extraia a data futura correta para o campo 'date' (ISO format YYYY-MM-DDTHH:MM).
+            
+            3. **PRIORIDADE 3: FAZER AGORA (< 2 min)**
+               Se for uma ação muito rápida e não depender de local específico (ex: "Responder email", "Pagar boleto", "Ligar para X"), status: 'do-now'.
+               IMPORTANTE: Se a ação rápida depender de estar em casa ou outro local (ex: "Ligar a TV quando chegar"), ENTÃO É 'next', com note: "Casa".
+            
+            4. **OUTROS**
+               - Material de leitura/arquivo -> status: 'reference'
+               - Ideia vaga/sonho -> status: 'someday'
+               - Projeto complexo -> status: 'project'
+               - Ação física sem data -> status: 'next'
+            
+            Retorne APENAS um array JSON válido.
+            Formato: [{"id": "...", "status": "...", "note": "...", "date": "..."}]
+        `;
+
+        const result = await callGemini(prompt);
+        if (!result) return;
+
+        try {
+            const cleanJson = result.replace(/```json/g, '').replace(/```/g, '').trim();
+            const decisions = JSON.parse(cleanJson);
+            
+            let count = 0;
+            for (const d of decisions) {
+                const item = items.find(i => i.id == d.id);
+                if (item) {
+                    item.status = d.status;
+                    if (d.note) item.note = d.note;
+                    
+                    // AUTO-AGENDAMENTO VIA IA
+                    if ((d.status === 'calendar' || d.status === 'waiting') && d.date && config.googleClientId) {
+                        item.date = d.date;
+                        try {
+                            const eid = await createCalendarEvent(item);
+                            if (eid) item.googleEventId = eid;
+                        } catch(e) { console.error("Erro auto-agendamento IA", e); }
+                    }
+
+                    if (d.status === 'trash') items = items.filter(i => i.id != d.id);
+                    count++;
+                }
+            }
+            syncSave();
+            showToast(`${count} itens processados pela IA! 🧠`);
+        } catch (e) {
+            console.error(e);
+            alert("Erro ao processar resposta da IA. Verifique o console.");
+        }
     }
 
-    // --- HEADER LONG PRESS ---
-    function handleHeaderPress(status) {
-        headerPressTimer = setTimeout(async () => {
-            if (navigator.vibrate) navigator.vibrate(50);
-            const text = prompt(`Adicionar em "${statusToName(status)}":`);
-            if (text) {
-                const newItem = { id: Date.now(), text: text, status: status };
-                if (status === 'calendar' || status === 'waiting') {
-                    if (status === 'waiting') {
-                        const who = prompt("Delegar para quem?");
-                        if (who) newItem.note = "Delegado: " + who; else return;
-                    }
-                    const dateStr = await openDateModal();
-                    if (dateStr) {
-                        newItem.date = dateStr;
-                        if (config.googleClientId) {
-                            const eid = await createCalendarEvent(newItem);
-                            if (eid) newItem.googleEventId = eid;
-                        }
-                    } else if (status === 'calendar') return; 
-                }
-                
-                items.push(newItem);
-                updateHistory(text);
-                syncSave();
-                showToast("Item adicionado!");
-            }
-        }, 500);
+    async function breakdownProject(idx) {
+        const project = items[idx];
+        const prompt = `Projeto: "${project.text}". Liste 3 a 5 próximas ações físicas concretas. Responda em Português. Retorne APENAS um array JSON de strings. Sem markdown.`;
+        const result = await callGemini(prompt);
+        if (!result) return;
+        try {
+            const cleanJson = result.replace(/```json/g, '').replace(/```/g, '').trim();
+            const actions = JSON.parse(cleanJson);
+            actions.forEach(actionText => {
+                items.push({ id: Date.now() + Math.random(), text: actionText, status: 'next', note: `De: ${project.text}` });
+            });
+            syncSave();
+            showToast("Ações geradas! ⚡");
+        } catch (e) { alert("Erro ao quebrar projeto."); }
     }
+
+    async function aiReview() {
+        const completed = items.filter(i => i.status === 'completed');
+        if (completed.length === 0) return alert("Nada concluído para analisar.");
+        const tasks = completed.map(i => i.text).join(', ');
+        const prompt = `Tarefas concluídas: ${tasks}. Dê um resumo motivacional curto em Português e 1 sugestão.`;
+        const feedback = await callGemini(prompt);
+        if (feedback) alert("🤖 Relatório da IA:\n\n" + feedback);
+    }
+
+    // --- STANDARD FUNCTIONS ---
+    function updateHistory(text) { if (!text) return; if (!history.includes(text)) { history.push(text); if (history.length > 50) history.shift(); localStorage.setItem('gtd_history', JSON.stringify(history)); renderHistory(); } }
+    function renderHistory() { const dl = document.getElementById('historyList'); dl.innerHTML = ''; history.slice().reverse().forEach(h => { const op = document.createElement('option'); op.value = h; dl.appendChild(op); }); }
+    function handleHeaderPress(status) { headerPressTimer = setTimeout(async () => { if (navigator.vibrate) navigator.vibrate(50); const text = prompt(`Adicionar em "${statusToName(status)}":`); if (text) { const newItem = { id: Date.now(), text: text, status: status }; if (status === 'calendar' || status === 'waiting') { if (status === 'waiting') { const who = prompt("Delegar para quem?"); if (who) newItem.note = "Delegado: " + who; else return; } const dateStr = await openDateModal(); if (dateStr) { newItem.date = dateStr; if (config.googleClientId) { const eid = await createCalendarEvent(newItem); if (eid) newItem.googleEventId = eid; } } else if (status === 'calendar') return; } items.push(newItem); updateHistory(text); syncSave(); showToast("Item adicionado!"); } }, 500); }
     function clearHeaderPress() { clearTimeout(headerPressTimer); }
     function statusToName(s) { const map = { 'inbox': 'Entrada', 'do-now': 'Fazer Agora', 'next': 'Próximas Ações', 'project': 'Projetos', 'waiting': 'Delegar', 'calendar': 'Calendário', 'someday': 'Talvez', 'reference': 'Referência' }; return map[s] || s; }
-
-    // --- VOICE ---
+    
+    // Voice
     let recognition;
     if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-        recognition = new SpeechRecognition();
-        recognition.lang = 'pt-BR';
-        recognition.continuous = true;
-        recognition.interimResults = true;
-
-        recognition.onstart = function() { 
-            document.getElementById('voiceBtn').classList.add('listening'); 
-            document.getElementById('inboxInput').placeholder = "Ouvindo...";
-        };
-        recognition.onend = function() { 
-            document.getElementById('voiceBtn').classList.remove('listening'); 
-            document.getElementById('inboxInput').placeholder = "Coleta rápida...";
-        };
-        
-        // Voice fix
-        recognition.onresult = function(event) {
-            let finalTranscript = '';
-            for (let i = event.resultIndex; i < event.results.length; ++i) {
-                if (event.results[i].isFinal) {
-                    finalTranscript += event.results[i][0].transcript;
-                }
-            }
-            if (finalTranscript) {
-                finalTranscript = finalTranscript.trim();
-                finalTranscript = finalTranscript.charAt(0).toUpperCase() + finalTranscript.slice(1);
-                const input = document.getElementById('inboxInput');
-                input.value = input.value ? input.value + ' ' + finalTranscript : finalTranscript;
-            }
-        };
+        recognition = new SpeechRecognition(); recognition.lang = 'pt-BR';
+        recognition.onstart = function() { document.getElementById('voiceBtn').classList.add('listening'); };
+        recognition.onend = function() { document.getElementById('voiceBtn').classList.remove('listening'); };
+        recognition.onresult = function(event) { let t = event.results[0][0].transcript; t = t.charAt(0).toUpperCase() + t.slice(1); document.getElementById('inboxInput').value = t; };
     } else { document.getElementById('voiceBtn').style.display = 'none'; }
-    
-    function toggleVoice() { 
-        if (!recognition) return alert("Sem suporte voz."); 
-        try { recognition.start(); } catch(e) { recognition.stop(); } 
-    }
+    function toggleVoice() { if (!recognition) return alert("Sem suporte voz."); try { recognition.start(); } catch(e) { recognition.stop(); } }
 
-    // --- DATE PICKER ---
+    // Date Picker
     function openDateModal() { return new Promise((resolve) => { const now = new Date(); const offset = now.getTimezoneOffset() * 60000; const localISOTime = (new Date(now - offset)).toISOString().slice(0, 16); document.getElementById('modalDateInput').value = localISOTime; document.getElementById('dateModal').style.display = 'flex'; dateResolver = resolve; }); }
     function closeDateModal() { document.getElementById('dateModal').style.display = 'none'; if (dateResolver) { dateResolver(null); dateResolver = null; } }
     function confirmDate() { const date = document.getElementById('modalDateInput').value; if (dateResolver) { dateResolver(date); dateResolver = null; } document.getElementById('dateModal').style.display = 'none'; }
 
-    // --- DRAG AND DROP ---
+    // Drag
     function handleTouchStart(e, idx) { longPressItem = e.currentTarget; longPressTimer = setTimeout(() => { if (longPressItem) { longPressItem.setAttribute('draggable', 'true'); longPressItem.classList.add('ready-to-drag'); if (navigator.vibrate) navigator.vibrate(50); } }, 500); }
     function handleTouchEnd(e) { clearTimeout(longPressTimer); const li = e.currentTarget; if (li && !li.classList.contains('dragging')) { li.setAttribute('draggable', 'false'); li.classList.remove('ready-to-drag'); } longPressItem = null; }
     function handleTouchMove(e) { if (longPressTimer) { clearTimeout(longPressTimer); if (longPressItem) { longPressItem.classList.remove('ready-to-drag'); longPressItem.setAttribute('draggable', 'false'); } } const touch = e.touches[0]; autoScroll(touch.clientY); }
@@ -392,21 +473,13 @@
             delete item.date;
         }
         if (newStatus === 'completed') { item.completedAt = new Date().toISOString(); }
-        
+
         if (newStatus === 'calendar') {
             const dateStr = await openDateModal(); if (!dateStr) return false; item.date = dateStr;
             if (config.googleClientId) { const eventId = await createCalendarEvent(item); if (eventId) item.googleEventId = eventId; }
         } else if (newStatus === 'waiting') {
             const who = prompt("Delegar para quem?"); if (who) item.note = "Delegado: " + who;
-            
-            // Pergunta para agendar no Google
-            if(confirm("Agendar lembrete no Google?")) {
-                const dateStr = await openDateModal(); 
-                if (dateStr) { 
-                    item.date = dateStr; 
-                    if (config.googleClientId) { const eventId = await createCalendarEvent(item); if (eventId) item.googleEventId = eventId; } 
-                }
-            }
+            const dateStr = await openDateModal(); if (dateStr) { item.date = dateStr; if (config.googleClientId) { const eventId = await createCalendarEvent(item); if (eventId) item.googleEventId = eventId; } }
         }
         item.status = newStatus; return true;
     }
@@ -441,9 +514,7 @@
     function handleActionable(bool) { bool ? toStep('step-yes') : toStep('step-no'); }
     async function finalize(status) { 
         if (currentItemIdx === null) return; const item = items[currentItemIdx]; item.status = status; 
-        if (status === 'waiting') { const who = document.getElementById('delInput').value; item.note = "Delegado: " + who; document.getElementById('delInput').value = ''; 
-            if(confirm("Agendar no Google?")) { const d = await openDateModal(); if(d) { item.date = d; if(config.googleClientId) { const eid = await createCalendarEvent(item); if(eid) item.googleEventId = eid; } } }
-        } 
+        if (status === 'waiting') { const who = document.getElementById('delInput').value; item.note = "Delegado: " + who; document.getElementById('delInput').value = ''; const d = await openDateModal(); if(d) { item.date = d; if(config.googleClientId) { const eid = await createCalendarEvent(item); if(eid) item.googleEventId = eid; } } } 
         if (status === 'calendar') { item.date = document.getElementById('calInput').value; if(item.date && config.googleClientId) { const eid = await createCalendarEvent(item); if(eid) item.googleEventId = eid; } } 
         if (status === 'trash') items.splice(currentItemIdx, 1);
         if (status === 'done') { item.status = 'completed'; item.completedAt = new Date().toISOString(); } 
@@ -457,9 +528,9 @@
 
     function resetSteps() { document.querySelectorAll('.step').forEach(e => e.classList.add('hidden')); document.getElementById('step-1').classList.remove('hidden'); }
     function toStep(id) { document.querySelectorAll('.step').forEach(e => e.classList.add('hidden')); document.getElementById(id).classList.remove('hidden'); }
-    function openConfig() { document.getElementById('cfgBinId').value = config.binId; document.getElementById('cfgApiKey').value = config.apiKey; document.getElementById('cfgGoogleClientId').value = config.googleClientId; document.getElementById('configModal').style.display = 'block'; }
+    function openConfig() { document.getElementById('cfgBinId').value = config.binId; document.getElementById('cfgApiKey').value = config.apiKey; document.getElementById('cfgGoogleClientId').value = config.googleClientId; document.getElementById('cfgGeminiKey').value = config.geminiKey; document.getElementById('configModal').style.display = 'block'; }
     function closeConfig() { document.getElementById('configModal').style.display = 'none'; }
-    function saveConfig() { config.binId = document.getElementById('cfgBinId').value.trim(); config.apiKey = document.getElementById('cfgApiKey').value.trim(); config.googleClientId = document.getElementById('cfgGoogleClientId').value.trim(); localStorage.setItem('gtd_config', JSON.stringify(config)); closeConfig(); location.reload(); }
+    function saveConfig() { config.binId = document.getElementById('cfgBinId').value.trim(); config.apiKey = document.getElementById('cfgApiKey').value.trim(); config.googleClientId = document.getElementById('cfgGoogleClientId').value.trim(); config.geminiKey = document.getElementById('cfgGeminiKey').value.trim(); localStorage.setItem('gtd_config', JSON.stringify(config)); closeConfig(); location.reload(); }
 
     function render() {
         const ids = ['inbox', 'do-now', 'next', 'project', 'waiting', 'calendar', 'someday', 'reference', 'completed'];
@@ -486,15 +557,16 @@
                 let buttons = '';
                 if (listId === 'inbox') buttons = `<span class="icon-btn icon-del" onclick="deleteItem(${idx})" title="Excluir">✖</span>`;
                 else if (listId === 'completed') buttons = `<span class="icon-btn icon-restore" onclick="restoreItem(${idx})">↩️</span><span class="icon-btn icon-del" onclick="deleteItem(${idx})">🗑️</span>`;
-                else buttons = `<span class="icon-btn icon-edit" onclick="editItem(${idx})">✏️</span><span class="icon-btn icon-check" onclick="completeItem(${idx})">✔</span><span class="icon-btn icon-del" onclick="deleteItem(${idx})">🗑️</span>`;
+                else buttons = `<span class="icon-btn icon-ai" onclick="breakdownProject(${idx})" title="IA: Quebrar em passos">⚡</span><span class="icon-btn icon-edit" onclick="editItem(${idx})">✏️</span><span class="icon-btn icon-check" onclick="completeItem(${idx})">✔</span><span class="icon-btn icon-del" onclick="deleteItem(${idx})">🗑️</span>`;
                 li.innerHTML = `<div><span class="task-text">${item.text} ${item.status === 'someday' || item.status === 'reference' ? '' : ''}</span>${extra}</div><div class="actions-group">${buttons}</div>`;
                 document.getElementById('l-'+listId).appendChild(li);
             }
         });
         ids.forEach(id => { const el = document.getElementById('c-'+id); if(el) el.innerText = counts[id]; });
         const btn = document.getElementById('btnProcess');
+        const btnMagic = document.getElementById('btnMagic');
         document.getElementById('inboxCount').innerText = counts['inbox'];
-        if (counts['inbox'] > 0) { btn.classList.remove('hidden'); } else { btn.classList.add('hidden'); document.getElementById('processing-zone').style.display = 'none'; }
+        if (counts['inbox'] > 0) { btn.classList.remove('hidden'); btnMagic.classList.remove('hidden'); } else { btn.classList.add('hidden'); btnMagic.classList.add('hidden'); document.getElementById('processing-zone').style.display = 'none'; }
     }
 </script>
 </body>
