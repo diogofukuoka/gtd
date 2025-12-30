@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>GTD Fukuoka (v5.4)</title>
+    <title>GTD Fukuoka (v5.5)</title>
     <script src="https://bernardo-castilho.github.io/DragDropTouch/DragDropTouch.js"></script>
     <style>
         :root { --primary: #2c3e50; --accent: #3498db; --success: #27ae60; --warning: #f39c12; --danger: #e74c3c; --light: #ecf0f1; --cloud: #8e44ad; --google: #4285f4; --gray: #95a5a6; }
@@ -14,7 +14,7 @@
         header { text-align: center; margin-bottom: 20px; }
         h1 { margin: 0; color: var(--primary); font-size: 1.5rem; }
         .status-bar { background: #f8f9fa; border: 1px solid #e9ecef; padding: 10px; border-radius: 8px; margin-top: 15px; font-size: 0.85rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
-        .status-indicator { display: flex; align-items: center; gap: 6px; font-weight: 600; }
+        .status-indicator { display: flex; align-items: center; gap: 6px; font-weight: 600; cursor: pointer; } /* Cursor pointer para ver erro */
         .dot { width: 10px; height: 10px; border-radius: 50%; background: #ccc; transition: 0.3s; }
         .dot.online { background: var(--success); box-shadow: 0 0 5px var(--success); }
         .dot.syncing { background: var(--warning); animation: pulse 1s infinite; }
@@ -58,7 +58,7 @@
         .card-next { border-left: 4px solid var(--success); }
         .card-waiting { border-left: 4px solid var(--warning); }
         .card-projects { border-left: 4px solid var(--primary); }
-        .card-completed { border-left: 4px solid var(--gray); background-color: #f9f9f9; opacity: 0.9; }
+        .card-completed { border-left: 4px solid var(--gray); background-color: #f9f9f9; }
         
         ul { list-style: none; padding: 0; margin: 0; min-height: 50px; flex-grow: 1; }
         
@@ -70,7 +70,7 @@
         li.drag-over-item { border-top: 3px solid #27ae60; background-color: #e8f8f5; }
 
         /* Estilo para itens concluídos */
-        li.item-completed .task-text { text-decoration: line-through; color: #7f8c8d; }
+        li.item-completed .task-text { text-decoration: line-through; color: #95a5a6; }
 
         .task-text { font-weight: 400; font-size: 1rem; color: #2c3e50; pointer-events: none; }
         .meta { font-size: 0.75rem; color: #666; display: block; margin-top: 3px; pointer-events: none; }
@@ -80,11 +80,11 @@
         .icon-btn { color: #bdc3c7; font-size: 1.1rem; padding: 5px; cursor: pointer; transition: 0.2s; }
         .icon-del:hover { color: var(--danger); }
         .icon-edit:hover { color: var(--accent); }
-        .icon-check { color: #bdc3c7; }
         .icon-check:hover { color: var(--success); }
         .icon-restore:hover { color: var(--warning); }
         
         .btn-refresh { background: #f1f3f4; border: 1px solid #dadce0; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 0.75rem; color: var(--google); }
+        .btn-clear-hist { background: #fee; border: 1px solid #fcc; color: var(--danger); }
 
         /* Modal e Toast */
         #toast { visibility: hidden; min-width: 250px; background-color: #333; color: #fff; text-align: center; border-radius: 4px; padding: 16px; position: fixed; z-index: 9999; left: 50%; bottom: 30px; transform: translateX(-50%); font-size: 14px; }
@@ -112,9 +112,10 @@
     <header>
         <h1>GTD Fukuoka</h1>
         <div class="status-bar">
-            <div class="status-indicator">
+            <!-- Clique no texto do Sync para ver o erro se estiver vermelho -->
+            <div class="status-indicator" onclick="alert(document.getElementById('syncText').title || 'Status Normal')">
                 <div id="syncDot" class="dot"></div>
-                <span id="syncText">Offline</span>
+                <span id="syncText" title="">Offline</span>
             </div>
             <div>
                 <span id="googleSyncStatus" style="margin-right:10px;">
@@ -180,7 +181,10 @@
         <div class="list-card card-completed full-width-card" ondrop="dropContainer(event, 'completed')" ondragover="allowDropContainer(event)" ondragleave="leaveDropContainer(event)">
             <div class="list-header">
                 <h3>✅ Tarefas Concluídas</h3>
-                <span class="badge" id="c-completed">0</span>
+                <div>
+                    <button class="btn-refresh btn-clear-hist" onclick="clearCompletedHistory()">🗑️ Limpar</button>
+                    <span class="badge" id="c-completed">0</span>
+                </div>
             </div>
             <ul id="l-completed"></ul>
         </div>
@@ -226,7 +230,7 @@
     let longPressItem = null;
     let dateResolver = null;
 
-    // --- VOICE RECOGNITION ---
+    // --- VOICE RECOGNITION (CAPITALIZED) ---
     let recognition;
     if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -258,7 +262,7 @@
     function closeDateModal() { document.getElementById('dateModal').style.display = 'none'; if (dateResolver) { dateResolver(null); dateResolver = null; } }
     function confirmDate() { const date = document.getElementById('modalDateInput').value; if (dateResolver) { dateResolver(date); dateResolver = null; } document.getElementById('dateModal').style.display = 'none'; }
 
-    // --- DRAG AND DROP ---
+    // --- DRAG AND DROP (SAFE LONG PRESS) ---
     function handleTouchStart(e, idx) {
         longPressItem = e.currentTarget;
         longPressTimer = setTimeout(() => {
@@ -344,6 +348,11 @@
             }
             delete item.date; // Remove Data/Hora
         }
+        
+        // Se for movido para concluído
+        if (newStatus === 'completed') {
+            item.completedAt = new Date().toISOString();
+        }
 
         if (newStatus === 'calendar') {
             const dateStr = await openDateModal();
@@ -362,6 +371,23 @@
         return true;
     }
 
+    // --- AUTO-MOVE ---
+    function checkCalendarDueDates() {
+        const now = new Date();
+        const today = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
+        let changed = false;
+        items.forEach(item => {
+            if (item.status === 'calendar' && item.date) {
+                const taskDate = item.date.split('T')[0];
+                if (taskDate <= today) {
+                    item.status = 'next-action';
+                    changed = true;
+                }
+            }
+        });
+        if (changed) { syncSave(); showToast("Tarefas de hoje movidas para Próximas Ações"); }
+    }
+
     // --- GOOGLE API & SYNC ---
     function gapiLoaded() { gapi.load('client', intializeGapiClient); }
     async function intializeGapiClient() { await gapi.client.init({ discoveryDocs: [DISCOVERY_DOC] }); gapiInited = true; restoreGoogleSession(); maybeEnableGoogleSignIn(); }
@@ -373,13 +399,76 @@
     function showToast(msg) { const t = document.getElementById("toast"); t.textContent = msg; t.className = "show"; setTimeout(() => { t.className = t.className.replace("show", ""); }, 3000); }
     async function checkDeletedEvents(manual = false) { if (!gapi.client.getToken()) { if(manual) showToast("Google Off."); return; } const calendarItems = items.filter(i => i.status === 'calendar' && i.googleEventId); if (calendarItems.length === 0) { if(manual) showToast("Nada para verificar."); return; } if(manual) showToast("Verificando agenda..."); let deletedCount = 0; await Promise.all(calendarItems.map(async (item) => { try { const res = await gapi.client.calendar.events.get({ 'calendarId': 'primary', 'eventId': item.googleEventId }); if (res.result.status === 'cancelled') { removeItemById(item.id); deletedCount++; } } catch (err) { if (err.status === 404 || err.status === 410) { removeItemById(item.id); deletedCount++; } } })); if (deletedCount > 0) { syncSave(); showToast(`${deletedCount} evento(s) deletados sync.`); } else if (manual) showToast("Tudo ok."); }
     function removeItemById(id) { const index = items.findIndex(i => i.id === id); if (index > -1) items.splice(index, 1); }
-    
-    // --- APP INIT ---
     window.onload = () => { render(); if (config.binId && config.apiKey) syncLoad(); if (config.googleClientId) updateGoogleSyncStatus(false); checkCalendarDueDates(); };
+    
+    // SYNC JSONBIN.IO (Robust Error Handling)
+    async function syncLoad() { 
+        if (!config.binId) return; 
+        document.getElementById('syncText').innerText = 'Sync...'; 
+        try { 
+            const res = await fetch(`https://api.jsonbin.io/v3/b/${config.binId}/latest`, { headers: { 'X-Master-Key': config.apiKey } }); 
+            if (!res.ok) throw new Error(res.status + " " + res.statusText); 
+            const data = await res.json(); 
+            // Handle both legacy array and new object formats
+            items = data.record.gtd_tasks || (Array.isArray(data.record) ? data.record : []) || []; 
+            localStorage.setItem('gtd_data', JSON.stringify(items)); 
+            render(); 
+            document.getElementById('syncText').innerText = 'Online'; 
+            document.getElementById('syncDot').className = 'dot online'; 
+            checkCalendarDueDates(); 
+        } catch (e) { 
+            console.error(e);
+            document.getElementById('syncText').innerText = 'Erro';
+            document.getElementById('syncText').title = e.message; // Tooltip error
+            document.getElementById('syncDot').className = 'dot error'; 
+        } 
+    }
+    
+    async function syncSave() { 
+        localStorage.setItem('gtd_data', JSON.stringify(items)); 
+        render(); 
+        if (!config.binId) return; 
+        document.getElementById('syncText').innerText = 'Salvando...'; 
+        try { 
+            const payload = { gtd_tasks: items, last_updated: new Date().toISOString() };
+            await fetch(`https://api.jsonbin.io/v3/b/${config.binId}`, { 
+                method: 'PUT', 
+                headers: { 'Content-Type': 'application/json', 'X-Master-Key': config.apiKey, 'X-Bin-Versioning': 'false' }, 
+                body: JSON.stringify(payload) 
+            }); 
+            document.getElementById('syncText').innerText = 'Salvo'; 
+            document.getElementById('syncDot').className = 'dot online'; 
+        } catch (e) { 
+            document.getElementById('syncText').innerText = 'Erro Salvar'; 
+            document.getElementById('syncDot').className = 'dot error'; 
+        } 
+    }
 
-    async function syncLoad() { if (!config.binId) return; document.getElementById('syncText').innerText = 'Sync...'; try { const res = await fetch(`https://api.jsonbin.io/v3/b/${config.binId}/latest`, { headers: { 'X-Master-Key': config.apiKey } }); if (!res.ok) throw new Error(res.status); const data = await res.json(); items = data.record.gtd_tasks || data.record || []; localStorage.setItem('gtd_data', JSON.stringify(items)); render(); document.getElementById('syncText').innerText = 'Online'; document.getElementById('syncDot').className = 'dot online'; checkCalendarDueDates(); } catch (e) { document.getElementById('syncText').innerText = 'Erro'; document.getElementById('syncDot').className = 'dot error'; } }
-    async function syncSave() { localStorage.setItem('gtd_data', JSON.stringify(items)); render(); if (!config.binId) return; document.getElementById('syncText').innerText = 'Salvando...'; try { await fetch(`https://api.jsonbin.io/v3/b/${config.binId}`, { method: 'PUT', headers: { 'Content-Type': 'application/json', 'X-Master-Key': config.apiKey, 'X-Bin-Versioning': 'false' }, body: JSON.stringify({ gtd_tasks: items }) }); document.getElementById('syncText').innerText = 'Salvo'; document.getElementById('syncDot').className = 'dot online'; } catch (e) { document.getElementById('syncText').innerText = 'Erro Salvar'; document.getElementById('syncDot').className = 'dot error'; } }
-    async function createCalendarEvent(item) { if (!gapi.client.getToken()) return null; try { const startDateTime = new Date(item.date); const endDateTime = new Date(startDateTime.getTime() + (60 * 60 * 1000)); if (!gapi.client.calendar) await gapi.client.load('calendar', 'v3'); const response = await gapi.client.calendar.events.insert({ 'calendarId': 'primary', 'resource': { 'summary': "GTD: " + item.text, 'start': { 'dateTime': startDateTime.toISOString(), 'timeZone': Intl.DateTimeFormat().resolvedOptions().timeZone }, 'end': { 'dateTime': endDateTime.toISOString(), 'timeZone': Intl.DateTimeFormat().resolvedOptions().timeZone } } }); showToast("Evento criado!"); return response.result.id; } catch (err) { if (err.status === 401) { localStorage.removeItem('gtd_google_token'); updateGoogleSyncStatus(false); alert("Sessão expirada."); } else alert("Erro Google: " + JSON.stringify(err)); return null; } }
+    // --- GOOGLE ACTIONS ---
+    async function createCalendarEvent(item) { 
+        if (!gapi.client.getToken()) return null; 
+        try { 
+            const startDateTime = new Date(item.date); 
+            // 30 MINUTOS DE DURAÇÃO
+            const endDateTime = new Date(startDateTime.getTime() + (30 * 60 * 1000)); 
+            if (!gapi.client.calendar) await gapi.client.load('calendar', 'v3'); 
+            const response = await gapi.client.calendar.events.insert({ 
+                'calendarId': 'primary', 
+                'resource': { 
+                    'summary': "GTD: " + item.text, 
+                    'start': { 'dateTime': startDateTime.toISOString(), 'timeZone': Intl.DateTimeFormat().resolvedOptions().timeZone }, 
+                    'end': { 'dateTime': endDateTime.toISOString(), 'timeZone': Intl.DateTimeFormat().resolvedOptions().timeZone } 
+                } 
+            }); 
+            showToast("Evento criado!"); 
+            return response.result.id; 
+        } catch (err) { 
+            if (err.status === 401) { localStorage.removeItem('gtd_google_token'); updateGoogleSyncStatus(false); alert("Sessão expirada."); } 
+            else alert("Erro Google: " + JSON.stringify(err)); 
+            return null; 
+        } 
+    }
+    
     async function updateGoogleEvent(item) { if (!gapi.client.getToken() || !item.googleEventId) return; try { await gapi.client.calendar.events.patch({ 'calendarId': 'primary', 'eventId': item.googleEventId, 'resource': { 'summary': "GTD: " + item.text } }); showToast("Atualizado no Google."); } catch (e) { console.error(e); } }
     async function deleteCalendarEvent(eventId) { if (!eventId || !gapi.client.getToken()) return; try { await gapi.client.calendar.events.delete({ 'calendarId': 'primary', 'eventId': eventId }); showToast("Excluído do Google."); } catch (err) { if(err.status!==404 && err.status!==410) console.error(err); } }
     
@@ -388,19 +477,16 @@
     function startProcessing() { currentItemIdx = items.findIndex(i => i.status === 'inbox'); if (currentItemIdx === -1) return; document.getElementById('processing-zone').style.display = 'block'; document.getElementById('currentItem').innerText = items[currentItemIdx].text; resetSteps(); document.getElementById('processing-zone').scrollIntoView({behavior:'smooth'}); }
     function handleActionable(bool) { bool ? toStep('step-yes') : toStep('step-no'); }
     
-    // FINALIZAR PROCESSAMENTO (WIZARD)
     async function finalize(status) { 
         if (currentItemIdx === null) return; 
         const item = items[currentItemIdx]; 
         
-        // Se for conclusão via wizard
         if (status === 'done') {
             await handleStatusChange(item, 'completed');
         } else {
             await handleStatusChange(item, status);
         }
         
-        // Se foi lixo, remove de verdade
         if (status === 'trash') items.splice(currentItemIdx, 1);
         
         syncSave(); 
@@ -410,28 +496,32 @@
 
     async function editItem(idx) { const item = items[idx]; const newText = prompt("Editar:", item.text); if (newText && newText !== item.text) { item.text = newText; if (item.status === 'calendar' && item.googleEventId) await updateGoogleEvent(item); syncSave(); } }
     
-    // COMPLETE (MOVER PARA CONCLUÍDOS)
     async function completeItem(idx) {
         const item = items[idx];
-        await handleStatusChange(item, 'completed');
+        // Se era calendário, pergunta se apaga do Google ao concluir
+        if (item.status === 'calendar' && item.googleEventId) {
+             if(confirm("Remover evento do Google ao concluir?")) {
+                await deleteCalendarEvent(item.googleEventId);
+             }
+        }
+        // Remove dados de agenda e marca data de conclusão
+        delete item.date;
+        delete item.googleEventId;
+        item.completedAt = new Date().toISOString();
+        item.status = 'completed';
         syncSave();
     }
     
-    // DELETE (REMOVER PERMANENTEMENTE)
-    async function deleteItem(idx) { 
-        const item = items[idx]; 
-        if(confirm("Excluir permanentemente?")) { 
-            if (item.status === 'calendar' && item.googleEventId) await deleteCalendarEvent(item.googleEventId); 
-            items.splice(idx, 1); 
-            syncSave(); 
-        } 
+    function clearCompletedHistory() {
+        if(confirm("Deseja apagar permanentemente todas as tarefas concluídas?")) {
+            items = items.filter(i => i.status !== 'completed');
+            syncSave();
+            showToast("Histórico limpo.");
+        }
     }
-    
-    // RESTORE (VOLTAR PARA NEXT ACTIONS)
-    function restoreItem(idx) {
-        items[idx].status = 'next';
-        syncSave();
-    }
+
+    async function deleteItem(idx) { const item = items[idx]; if(confirm("Remover permanentemente?")) { if (item.status === 'calendar' && item.googleEventId) await deleteCalendarEvent(item.googleEventId); items.splice(idx, 1); syncSave(); } }
+    function restoreItem(idx) { items[idx].status = 'next-action'; delete items[idx].completedAt; syncSave(); }
 
     function resetSteps() { document.querySelectorAll('.step').forEach(e => e.classList.add('hidden')); document.getElementById('step-1').classList.remove('hidden'); }
     function toStep(id) { document.querySelectorAll('.step').forEach(e => e.classList.add('hidden')); document.getElementById(id).classList.remove('hidden'); }
@@ -446,12 +536,12 @@
         
         items.forEach((item, idx) => {
             let listId = item.status;
-            if(listId === 'next-action') listId = 'next'; // legacy fix
+            if(listId === 'next-action') listId = 'next';
             
             if(document.getElementById('l-'+listId)) {
                 counts[listId]++;
                 const li = document.createElement('li');
-                // Drag attributes
+                // Drag setup
                 li.setAttribute('onmousedown', `handleTouchStart(event, ${idx})`);
                 li.setAttribute('ontouchstart', `handleTouchStart(event, ${idx})`);
                 li.setAttribute('onmouseup', `handleTouchEnd(event)`);
@@ -468,14 +558,17 @@
                 
                 let extra = '';
                 if(item.note) extra += `<span class="meta">${item.note}</span>`;
-                let googleIcon = '';
+                
+                // Data de Agenda ou Data de Conclusão
                 if(item.date && listId === 'calendar') {
                     const d = new Date(item.date);
-                    extra += `<span class="meta">📅 ${d.toLocaleDateString('pt-BR')} ${d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}</span>`;
-                    if (item.googleEventId) googleIcon = '<span class="google-icon">G</span>';
+                    const googleIcon = item.googleEventId ? '<span class="google-icon">G</span>' : '';
+                    extra += `<span class="meta">📅 ${d.toLocaleDateString('pt-BR')} ${d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})} ${googleIcon}</span>`;
+                } else if (listId === 'completed' && item.completedAt) {
+                    const d = new Date(item.completedAt);
+                    extra += `<span class="meta" style="color:var(--success)">Concluído: ${d.toLocaleDateString('pt-BR')} às ${d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}</span>`;
                 }
                 
-                // Botões Dinâmicos
                 let buttons = '';
                 if (listId === 'inbox') {
                     buttons = `<span class="icon-btn icon-del" onclick="deleteItem(${idx})" title="Excluir">✖</span>`;
@@ -490,7 +583,7 @@
                         <span class="icon-btn icon-del" onclick="deleteItem(${idx})" title="Excluir">🗑️</span>`;
                 }
                 
-                li.innerHTML = `<div><span class="task-text">${item.text} ${googleIcon}</span>${extra}</div><div class="actions-group">${buttons}</div>`;
+                li.innerHTML = `<div><span class="task-text">${item.text}</span>${extra}</div><div class="actions-group">${buttons}</div>`;
                 document.getElementById('l-'+listId).appendChild(li);
             }
         });
