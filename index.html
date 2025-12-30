@@ -75,6 +75,7 @@
         .list-header h3 { margin: 0; font-size: 1rem; font-weight: 800; display: flex; align-items: center; gap: 5px; color: #000; }
         .badge { background: #fff; padding: 2px 8px; border-radius: 10px; font-size: 0.75rem; font-weight: bold; border: 1px solid #ccc; color: #333; }
         
+        /* CAIXA FAZER AGORA (ESPECIAL) */
         .card-do-now { background-color: #fff3cd !important; border: 1px solid #ffeeba !important; }
         .card-do-now h3 { color: #856404; }
 
@@ -102,6 +103,7 @@
         .btn-refresh { background: #fff; border: 1px solid #dadce0; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 0.75rem; color: var(--google); margin-left: 5px; }
         .btn-clear-hist { color: var(--danger); border-color: #fcc; background: #fff; }
 
+        /* Modal e Toast */
         #toast { visibility: hidden; min-width: 250px; background-color: #333; color: #fff; text-align: center; border-radius: 4px; padding: 16px; position: fixed; z-index: 9999; left: 50%; bottom: 30px; transform: translateX(-50%); font-size: 14px; }
         #toast.show { visibility: visible; -webkit-animation: fadein 0.5s, fadeout 0.5s 2.5s; animation: fadein 0.5s, fadeout 0.5s 2.5s; }
         #configModal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; overflow-y: auto; }
@@ -182,7 +184,7 @@
             <ul id="l-inbox"></ul>
         </div>
         
-        <!-- NOVA CAIXA: FAZER AGORA (Amarela) -->
+        <!-- NOVA CAIXA: FAZER AGORA -->
         <div class="list-card card-do-now" ondrop="dropContainer(event, 'do-now')" ondragover="allowDropContainer(event)" ondragleave="leaveDropContainer(event)">
             <div class="list-header" onmousedown="handleHeaderPress('do-now')" ontouchstart="handleHeaderPress('do-now')" onmouseup="clearHeaderPress()" ontouchend="clearHeaderPress()">
                 <h3>⚡ Fazer Agora (&lt; 2 min)</h3><span class="badge" id="c-do-now">0</span>
@@ -288,7 +290,7 @@
     const DISCOVERY_DOC = 'https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest';
     let longPressTimer, longPressItem, dateResolver, headerPressTimer;
 
-    // --- AI INTEGRATION (GEMINI - FIXED MODEL) ---
+    // --- AI INTEGRATION (GEMINI - FIXED) ---
     async function callGemini(prompt) {
         if (!config.geminiKey) {
             alert("Configure a chave do Gemini em Configurações para usar IA.");
@@ -297,14 +299,26 @@
         document.getElementById('loadingOverlay').style.display = 'flex';
         try {
             const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${config.geminiKey}`;
+            
             const response = await fetch(url, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+                body: JSON.stringify({ 
+                    contents: [{ parts: [{ text: prompt }] }]
+                })
             });
+
             const data = await response.json();
-            if (data.error) throw new Error(data.error.message);
-            if (!data.candidates || !data.candidates[0] || !data.candidates[0].content) throw new Error("Resposta da IA vazia.");
+            
+            if (data.error) {
+                console.error("Gemini Error:", data.error);
+                throw new Error(data.error.message);
+            }
+            
+            if (!data.candidates || !data.candidates[0] || !data.candidates[0].content) {
+                throw new Error("Resposta da IA vazia ou bloqueada.");
+            }
+
             return data.candidates[0].content.parts[0].text;
         } catch (e) {
             console.error(e);
@@ -321,28 +335,38 @@
         
         const tasksText = inboxItems.map(i => `- ${i.text} (ID: ${i.id})`).join('\n');
         
-        // DATA ATUAL PARA REFERÊNCIA DA IA
         const now = new Date();
         const dateStr = now.toLocaleDateString('pt-BR') + " " + now.toLocaleTimeString('pt-BR');
 
-        // PROMPT AVANÇADO (LÓGICA GTD + AGENTE)
+        // PROMPT ATUALIZADO (Contexto + Tempo + Delegação)
         const prompt = `
             Hoje é: ${dateStr}.
             Você é um assistente GTD expert. Analise estes itens da caixa de entrada:
             ${tasksText}
             
-            Regras de Processamento (OBRIGATÓRIO):
-            1. **Prioridade Máxima:** Se a tarefa começa com nome/apelido de pessoa (ex: "Je", "João", "Maria", "Paulo") seguido de uma ação, isso é DELEGAÇÃO. Status: 'waiting'. Coloque o nome em 'note' (ex: "Delegado: Je"). Se tiver data/hora, extraia para o campo 'date' (ISO).
-               Exemplo: "Je ver a marca" -> waiting, note: "Delegado: Je".
+            Regras de Processamento (RIGOROSAS):
             
-            2. Se começar com "Agendar" ou tiver data/hora (e NÃO tiver nome de pessoa no início), status: 'calendar'. Extraia data ISO.
+            1. **PRIORIDADE 1: DELEGAÇÃO**
+               Se a tarefa começa explicitamente com nome de pessoa ou apelido (ex: "Je ver...", "João enviar", "Mãe ligar"), O STATUS É 'waiting'.
+               No campo 'note', coloque APENAS: "Delegado: [Nome da Pessoa]".
+               Se houver data/hora na frase, extraia para 'date' (ISO).
             
-            3. Se levar MENOS de 2 minutos, status: 'do-now'.
+            2. **PRIORIDADE 2: CALENDÁRIO**
+               Se NÃO for delegação, mas tiver data ou hora específica (ex: "Agendar médico", "Reunião amanhã 14h"), status: 'calendar'.
+               Extraia a data futura correta para o campo 'date' (ISO format YYYY-MM-DDTHH:MM).
             
-            4. Outros: 'next', 'project', 'reference' ou 'trash'.
+            3. **PRIORIDADE 3: FAZER AGORA (< 2 min)**
+               Se for uma ação muito rápida e não depender de local específico (ex: "Responder email", "Pagar boleto", "Ligar para X"), status: 'do-now'.
+               IMPORTANTE: Se a ação rápida depender de estar em casa ou outro local (ex: "Ligar a TV quando chegar"), ENTÃO É 'next', com note: "Casa".
             
-            Retorne APENAS JSON válido:
-            [{"id": "...", "status": "...", "note": "...", "date": "..."}]
+            4. **OUTROS**
+               - Material de leitura/arquivo -> status: 'reference'
+               - Ideia vaga/sonho -> status: 'someday'
+               - Projeto complexo -> status: 'project'
+               - Ação física sem data -> status: 'next'
+            
+            Retorne APENAS um array JSON válido.
+            Formato: [{"id": "...", "status": "...", "note": "...", "date": "..."}]
         `;
 
         const result = await callGemini(prompt);
@@ -362,7 +386,6 @@
                     // AUTO-AGENDAMENTO VIA IA
                     if ((d.status === 'calendar' || d.status === 'waiting') && d.date && config.googleClientId) {
                         item.date = d.date;
-                        // Tenta criar no Google (assíncrono)
                         try {
                             const eid = await createCalendarEvent(item);
                             if (eid) item.googleEventId = eid;
@@ -535,7 +558,7 @@
                 if (listId === 'inbox') buttons = `<span class="icon-btn icon-del" onclick="deleteItem(${idx})" title="Excluir">✖</span>`;
                 else if (listId === 'completed') buttons = `<span class="icon-btn icon-restore" onclick="restoreItem(${idx})">↩️</span><span class="icon-btn icon-del" onclick="deleteItem(${idx})">🗑️</span>`;
                 else buttons = `<span class="icon-btn icon-ai" onclick="breakdownProject(${idx})" title="IA: Quebrar em passos">⚡</span><span class="icon-btn icon-edit" onclick="editItem(${idx})">✏️</span><span class="icon-btn icon-check" onclick="completeItem(${idx})">✔</span><span class="icon-btn icon-del" onclick="deleteItem(${idx})">🗑️</span>`;
-                li.innerHTML = `<div><span class="task-text">${item.text}</span>${extra}</div><div class="actions-group">${buttons}</div>`;
+                li.innerHTML = `<div><span class="task-text">${item.text} ${item.status === 'someday' || item.status === 'reference' ? '' : ''}</span>${extra}</div><div class="actions-group">${buttons}</div>`;
                 document.getElementById('l-'+listId).appendChild(li);
             }
         });
