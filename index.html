@@ -3,7 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>GTD Fukuoka (v8.15)</title>
+    <title>GTD Fukuoka (v8.16)</title>
+    <!-- DragDropTouch não é mais necessário, mas mantido se quiser reativar no futuro -->
+    <script src="https://bernardo-castilho.github.io/DragDropTouch/DragDropTouch.js"></script>
     <style>
         :root { --primary: #2c3e50; --accent: #3498db; --success: #27ae60; --warning: #f39c12; --danger: #e74c3c; --google: #4285f4; --gray: #95a5a6; --ai: #8e44ad; }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -260,14 +262,15 @@
             if(ul) {
                 counts[item.status]++;
                 const li = document.createElement('li');
+                li.draggable = true;
+                li.ondragstart = (e) => e.dataTransfer.setData("text", idx);
                 
-                // EVENTOS DE TOQUE E MOUSE
+                li.onmousedown = (e) => startMovePress(e, idx, 'mouse');
                 li.ontouchstart = (e) => startMovePress(e, idx, 'touch');
+                li.onmouseup = cancelPress; 
+                li.ontouchend = cancelPress; 
+                li.onmouseleave = cancelPress; 
                 li.ontouchmove = (e) => cancelPressOnMove(e);
-                li.ontouchend = cancelPress;
-                li.ontouchcancel = cancelPress;
-                
-                li.onmousedown = (e) => { if(!e.touches) startMovePress(e, idx, 'mouse'); };
                 li.oncontextmenu = (e) => e.preventDefault(); 
 
                 let meta = "";
@@ -309,6 +312,7 @@
     function updateDashboard(inboxCount) {
         const btnContainer = document.getElementById('processButtons');
         const processingZone = document.getElementById('processing-zone');
+        
         if(inboxCount > 0) {
             btnContainer.classList.remove('hidden');
             btnContainer.style.display = 'flex'; 
@@ -388,8 +392,8 @@
     function askDate() { return new Promise(r => { document.getElementById('dateModal').style.display='flex'; dateRes = r; }); }
     function resolveDate(val) { document.getElementById('dateModal').style.display='none'; dateRes(val); }
     
-    // CORREÇÃO CRÍTICA: Se tocar em botão, não inicia timer
     function startMovePress(e, idx, type) {
+        // SEGURANÇA: Se tocar em botão, não abre menu de mover
         if (e.target.tagName === 'BUTTON' || e.target.closest('button')) return;
 
         if(type === 'touch' && e.touches && e.touches[0]) {
@@ -446,7 +450,7 @@
     
     function startListTitlePress(e, listKey, type) {
         if (e.target.tagName === 'BUTTON' || e.target.closest('button')) return;
-
+        
         if(type === 'touch' && e.touches && e.touches[0]) {
             touchStartX = e.touches[0].clientX;
             touchStartY = e.touches[0].clientY;
@@ -474,6 +478,7 @@
     }
     function clearCompletedHistory() { if(confirm("Limpar histórico?")) { items = items.filter(i=>i.status!=='completed'); if(window.sync) window.sync(); else render(); } }
     
+    // --- MANUAL PROCESSING LOGIC (FIXED) ---
     let procIdx = null;
     function startProcessing() {
         procIdx = items.findIndex(i => i.status === 'inbox');
@@ -485,13 +490,24 @@
         }
     }
     function toStep(stepId) { document.querySelectorAll('.step').forEach(s => s.classList.remove('active')); document.getElementById(stepId).classList.add('active'); }
-    function finalizeProc(newStatus) {
-        changeItemStatus(items[procIdx], newStatus);
+    
+    // CORREÇÃO AQUI: finalizeProc agora é async para esperar o usuário
+    async function finalizeProc(newStatus) {
+        await changeItemStatus(items[procIdx], newStatus);
+        
+        // Verifica se a tarefa saiu da inbox (ou seja, se a data foi confirmada)
+        // Se o usuário cancelou a data, a tarefa continua na inbox no index 'procIdx'
+        // Se moveu, o próximo item da inbox assumirá o lugar (ou o array diminui)
         setTimeout(() => {
-            if (items.some(i => i.status === 'inbox')) startProcessing();
-            else { document.getElementById('processing-zone').style.display = 'none'; showToast("Entrada zerada!"); }
-        }, 500); 
+            if (items.some(i => i.status === 'inbox')) {
+                startProcessing(); // Recarrega o próximo (ou o mesmo se cancelou)
+            } else {
+                document.getElementById('processing-zone').style.display = 'none';
+                showToast("Entrada zerada!");
+            }
+        }, 300); 
     }
+    
     window.checkDueDates = function() {
         const now = new Date();
         let changed = false;
