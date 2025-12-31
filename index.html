@@ -3,38 +3,34 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>GTD Fukuoka (v7.1 - Histórico Ativo)</title>
+    <title>GTD Fukuoka (v7.3 - Drive Sync)</title>
     <script src="https://bernardo-castilho.github.io/DragDropTouch/DragDropTouch.js"></script>
     <style>
-        :root { --primary: #2c3e50; --accent: #3498db; --success: #27ae60; --warning: #f39c12; --danger: #e74c3c; --light: #ecf0f1; --cloud: #8e44ad; --google: #4285f4; --gray: #95a5a6; }
+        :root { --primary: #2c3e50; --accent: #3498db; --success: #27ae60; --warning: #f39c12; --danger: #e74c3c; --google: #4285f4; --gray: #95a5a6; }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background: #f8f9fa; color: #333; margin: 0; padding: 15px; padding-bottom: 80px; user-select: none; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f8f9fa; color: #333; margin: 0; padding: 15px; padding-bottom: 80px; user-select: none; }
         .container { max-width: 900px; margin: 0 auto; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
         
         header { text-align: center; margin-bottom: 20px; }
         h1 { margin: 0; color: var(--primary); font-size: 1.5rem; }
         .status-bar { background: #f8f9fa; border: 1px solid #e9ecef; padding: 10px; border-radius: 8px; margin-top: 15px; font-size: 0.85rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
-        .status-indicator { display: flex; align-items: center; gap: 6px; font-weight: 600; cursor: pointer; }
-        .dot { width: 10px; height: 10px; border-radius: 50%; background: #ccc; transition: 0.3s; }
+        .dot { width: 10px; height: 10px; border-radius: 50%; background: #ccc; transition: 0.3s; display:inline-block; margin-right:5px; }
         .dot.online { background: var(--success); box-shadow: 0 0 5px var(--success); }
         .dot.syncing { background: var(--warning); animation: pulse 1s infinite; }
         .dot.error { background: var(--danger); }
-        .dot.google-connected { background: var(--google); box-shadow: 0 0 5px var(--google); }
-        .dot.google-disconnected { background: #ccc; }
         
         .btn-config { background: none; border: 1px solid #ccc; border-radius: 4px; padding: 5px 10px; cursor: pointer; font-size: 0.8rem; }
-        
         .input-group { display: flex; gap: 8px; margin-bottom: 20px; width: 100%; }
         input[type="text"], input[type="datetime-local"] { flex: 1; min-width: 0; padding: 12px; border: 2px solid #ddd; border-radius: 8px; font-size: 16px; }
         button { padding: 0 20px; height: 46px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; transition: 0.2s; flex-shrink: 0; }
         button:active { transform: scale(0.96); }
-        .btn-add { background: var(--accent); color: white; min-width: 50px; font-size: 1.2rem; display: flex; align-items: center; justify-content: center; }
-        .btn-mic { background: #607d8b; color: white; min-width: 46px; padding: 0; font-size: 1.2rem; display: flex; align-items: center; justify-content: center; }
+        .btn-add { background: var(--accent); color: white; min-width: 50px; font-size: 1.2rem; }
+        .btn-mic { background: #607d8b; color: white; min-width: 46px; font-size: 1.2rem; }
         .btn-mic.listening { background: #e74c3c; animation: pulse-red 1.5s infinite; }
         
-        #processing-zone { background: #fff; border: 2px solid var(--accent); padding: 20px; border-radius: 12px; margin-bottom: 25px; display: none; animation: slideDown 0.3s; }
-        .processing-header { margin-bottom: 20px; padding-bottom: 10px; border-bottom: 1px solid #eee; }
-        .current-item { font-size: 1.3rem; font-weight: bold; background: #fff8e1; padding: 15px; border-radius: 6px; margin-top: 5px; border-left: 5px solid var(--warning); color: #333; word-wrap: break-word; }
+        /* Wizard & Lists */
+        #processing-zone { background: #fff; border: 2px solid var(--accent); padding: 20px; border-radius: 12px; margin-bottom: 25px; display: none; }
+        .current-item { font-size: 1.3rem; font-weight: bold; background: #fff8e1; padding: 15px; border-radius: 6px; margin-top: 5px; border-left: 5px solid var(--warning); word-wrap: break-word; }
         .step { animation: fadeIn 0.3s; }
         .decision-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
         .full-width { grid-column: span 2; }
@@ -42,67 +38,42 @@
         .btn-no { background: var(--danger); color: white; }
         .btn-opt { background: var(--primary); color: white; }
         .btn-back { background: transparent; color: #777; text-decoration: underline; margin-top: 15px; width: 100%; }
-        .btn-ai-magic { background: linear-gradient(135deg, #8e44ad, #3498db); color: white; border: none; font-weight: bold; animation: glow 2s infinite; }
-
+        .btn-ai-magic { background: linear-gradient(135deg, #8e44ad, #3498db); color: white; border: none; font-weight: bold; }
+        
         .lists-grid { display: grid; grid-template-columns: 1fr; gap: 20px; }
         @media(min-width: 700px) { .lists-grid { grid-template-columns: 1fr 1fr; } }
-        
-        .list-card { 
-            background-color: #f1f3f5; 
-            border: 1px solid #ced4da; 
-            border-radius: 8px; 
-            padding: 15px; 
-            transition: 0.2s; 
-            min-height: 100px; 
-            display: flex; 
-            flex-direction: column; 
-            box-shadow: inset 0 0 5px rgba(0,0,0,0.02);
-        }
+        .list-card { background-color: #f1f3f5; border: 1px solid #ced4da; border-radius: 8px; padding: 15px; min-height: 100px; display: flex; flex-direction: column; }
         .list-card.drag-over-container { background-color: #e3f2fd; border: 2px dashed #3498db; }
-        .list-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #dee2e6; padding-bottom: 8px; margin-bottom: 10px; cursor: pointer; user-select: none; }
-        .list-header:active { opacity: 0.6; }
-        .list-header h3 { margin: 0; font-size: 1rem; font-weight: 800; display: flex; align-items: center; gap: 5px; color: #000; }
-        .badge { background: #fff; padding: 2px 8px; border-radius: 10px; font-size: 0.75rem; font-weight: bold; border: 1px solid #ccc; color: #333; }
+        .list-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #dee2e6; padding-bottom: 8px; margin-bottom: 10px; cursor: pointer; }
+        .badge { background: #fff; padding: 2px 8px; border-radius: 10px; font-size: 0.75rem; font-weight: bold; border: 1px solid #ccc; }
         
         .card-inbox { border-top: 4px solid var(--danger); }
         .card-next { border-top: 4px solid var(--success); }
         .card-waiting { border-top: 4px solid var(--warning); }
         .card-projects { border-top: 4px solid var(--primary); }
+        .card-calendar { border-top: 4px solid var(--google); }
         .card-completed { border-top: 4px solid var(--gray); opacity: 0.8; }
         .card-do-now { background-color: #fff3cd !important; border: 1px solid #ffeeba !important; }
-        .card-do-now h3 { color: #856404; }
 
         ul { list-style: none; padding: 0; margin: 0; min-height: 50px; flex-grow: 1; }
-        li { padding: 12px 10px; border: 1px solid #e9ecef; display: flex; justify-content: space-between; align-items: center; background: #ffffff; transition: background-color 0.2s, transform 0.2s; touch-action: pan-y; border-radius: 6px; margin-bottom: 6px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
-        li:last-child { margin-bottom: 0; }
-        li.ready-to-drag { background-color: #e3f2fd; border: 2px solid #3498db; transform: scale(1.02); z-index: 1000; }
-        li.dragging { opacity: 0.4; border: 1px dashed #999; }
-        li.drag-over-item { border-top: 3px solid #27ae60; }
-        li.item-completed .task-text { text-decoration: line-through; color: #95a5a6; }
-
+        li { padding: 12px 10px; border: 1px solid #e9ecef; display: flex; justify-content: space-between; align-items: center; background: #ffffff; border-radius: 6px; margin-bottom: 6px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); touch-action: pan-y; }
+        li.ready-to-drag { background-color: #e3f2fd; border: 2px solid #3498db; transform: scale(1.02); }
+        li.dragging { opacity: 0.4; }
         .task-text { font-weight: 400; font-size: 1rem; color: #2c3e50; pointer-events: none; }
         .meta { font-size: 0.75rem; color: #666; display: block; margin-top: 3px; pointer-events: none; }
-        .google-icon { background: #e8f0fe; color: #1967d2; font-weight: bold; padding: 2px 5px; border-radius: 4px; font-size: 0.7em; margin-left: 5px; }
         
         .actions-group { display: flex; gap: 5px; }
-        .icon-btn { color: #bdc3c7; font-size: 1.1rem; padding: 5px; cursor: pointer; transition: 0.2s; }
-        .icon-del:hover { color: var(--danger); }
-        .icon-edit:hover { color: var(--accent); }
-        .icon-check:hover { color: var(--success); }
-        .icon-restore:hover { color: var(--warning); }
-        .icon-ai { color: var(--ai); }
-        .icon-ai:hover { color: #9b59b6; transform: scale(1.2); }
-
+        .icon-btn { color: #bdc3c7; font-size: 1.1rem; padding: 5px; cursor: pointer; }
+        .icon-btn:hover { color: var(--accent); }
+        
         .btn-refresh { background: #fff; border: 1px solid #dadce0; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 0.75rem; color: var(--google); margin-left: 5px; }
-        .btn-clear-hist { color: var(--danger); border-color: #fcc; background: #fff; }
 
-        /* Modal e Toast */
-        #toast { visibility: hidden; min-width: 250px; background-color: #333; color: #fff; text-align: center; border-radius: 4px; padding: 16px; position: fixed; z-index: 9999; left: 50%; bottom: 30px; transform: translateX(-50%); font-size: 14px; }
-        #toast.show { visibility: visible; -webkit-animation: fadein 0.5s, fadeout 0.5s 2.5s; animation: fadein 0.5s, fadeout 0.5s 2.5s; }
+        /* Modal/Toast */
+        #toast { visibility: hidden; min-width: 250px; background-color: #333; color: #fff; text-align: center; border-radius: 4px; padding: 16px; position: fixed; z-index: 9999; left: 50%; bottom: 30px; transform: translateX(-50%); }
+        #toast.show { visibility: visible; animation: fadein 0.5s, fadeout 0.5s 2.5s; }
         #configModal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; overflow-y: auto; }
-        .modal-content { background: white; width: 90%; max-width: 500px; margin: 5% auto; padding: 20px; border-radius: 10px; box-shadow: 0 5px 20px rgba(0,0,0,0.2); }
-        .modal-content label { display: block; margin-top: 10px; font-size: 0.9rem; font-weight: 600; color: var(--primary); }
-        .modal-content input { width: 100%; padding: 10px; margin: 5px 0 15px; border: 1px solid #ddd; border-radius: 4px; font-size: 1rem; }
+        .modal-content { background: white; width: 90%; max-width: 500px; margin: 5% auto; padding: 20px; border-radius: 10px; }
+        .modal-content input { width: 100%; padding: 10px; margin: 5px 0 15px; border: 1px solid #ddd; }
         .modal-footer { text-align: right; margin-top: 20px; display: flex; justify-content: flex-end; gap: 10px; }
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; }
         #loadingOverlay { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.8); z-index: 9999; align-items: center; justify-content: center; flex-direction: column; }
@@ -111,10 +82,9 @@
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         @keyframes fadein { from {bottom: 0; opacity: 0;} to {bottom: 30px; opacity: 1;} }
         @keyframes fadeout { from {bottom: 30px; opacity: 1;} to {bottom: 0; opacity: 0;} }
-        @keyframes pulse-red { 0% { background: #c0392b; box-shadow: 0 0 0 0 rgba(192, 57, 43, 0.7); } 70% { background: #e74c3c; box-shadow: 0 0 0 10px rgba(192, 57, 43, 0); } 100% { background: #c0392b; box-shadow: 0 0 0 0 rgba(192, 57, 43, 0); } }
-        @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes pulse-red { 0% { background: #c0392b; } 50% { background: #e74c3c; } 100% { background: #c0392b; } }
+        @keyframes pulse { 0% { opacity: 0.5; } 50% { opacity: 1; } 100% { opacity: 0.5; } }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        @keyframes glow { 0% { box-shadow: 0 0 5px #8e44ad; } 50% { box-shadow: 0 0 15px #8e44ad; } 100% { box-shadow: 0 0 5px #8e44ad; } }
         .hidden { display: none !important; }
         .lists-grid .full-width-card { grid-column: 1 / -1; }
     </style>
@@ -125,47 +95,41 @@
     <header>
         <h1>GTD Fukuoka</h1>
         <div class="status-bar">
-            <div class="status-indicator" onclick="alert(document.getElementById('syncText').title || 'Status Normal')">
-                <div id="syncDot" class="dot"></div>
-                <span id="syncText" title="">Offline</span>
+            <div class="status-indicator">
+                <div id="driveDot" class="dot"></div>
+                <span id="driveStatus">Drive: Off</span>
             </div>
             <div>
-                <span id="googleSyncStatus" style="margin-right:10px;">
-                    <span id="googleDot" class="dot google-disconnected"></span> Agenda: Off
-                </span>
+                <button class="btn-refresh" onclick="driveSync(true)">☁️ Forçar Sync</button>
                 <button class="btn-config" onclick="openConfig()">⚙️ Config</button>
             </div>
         </div>
     </header>
 
     <div class="input-group">
-        <input type="text" id="inboxInput" list="historyList" placeholder="Coleta rápida (ou use o microfone)..." onkeypress="if(event.key==='Enter') addToInbox()">
+        <input type="text" id="inboxInput" list="historyList" placeholder="Coleta rápida..." onkeypress="if(event.key==='Enter') addToInbox()">
         <datalist id="historyList"></datalist>
         <button class="btn-mic" id="voiceBtn" onclick="toggleVoice()" title="Falar">🎤</button>
         <button class="btn-add" onclick="addToInbox()">+</button>
     </div>
 
     <div style="display: flex; gap: 10px; margin-bottom: 20px;">
-        <button onclick="startProcessing()" id="btnProcess" class="btn-opt hidden" style="flex: 1;">
-            ⚡ Processar Manual (<span id="inboxCount">0</span>)
-        </button>
-        <button onclick="magicProcess()" id="btnMagic" class="btn-ai-magic hidden" style="flex: 1;">
-            ✨ Auto-Processar IA
-        </button>
+        <button onclick="startProcessing()" id="btnProcess" class="btn-opt hidden" style="flex: 1;">⚡ Processar (<span id="inboxCount">0</span>)</button>
+        <button onclick="magicProcess()" id="btnMagic" class="btn-ai-magic hidden" style="flex: 1;">✨ Auto-IA</button>
     </div>
 
-    <!-- WIZARD -->
+    <!-- WIZARD DE PROCESSAMENTO -->
     <div id="processing-zone">
-        <div class="processing-header"><div style="text-align:center; color:#888; font-size:0.8rem; text-transform:uppercase;">Processando Item:</div><div id="currentItem" class="current-item"></div></div>
+        <div class="processing-header"><div style="text-align:center; color:#888; font-size:0.8rem;">PROCESSANDO:</div><div id="currentItem" class="current-item"></div></div>
         <div id="step-1" class="step"><h3 style="text-align:center">É passível de ação?</h3><div class="decision-grid"><button class="btn-no" onclick="handleActionable(false)">NÃO</button><button class="btn-yes" onclick="handleActionable(true)">SIM</button></div></div>
-        <div id="step-no" class="step hidden"><h3 style="text-align:center">O que é isso?</h3><div class="decision-grid"><button class="btn-no" onclick="finalize('trash')">Lixo</button><button class="btn-opt" onclick="finalize('someday')">Um Dia/Talvez</button><button class="btn-opt full-width" onclick="finalize('reference')">Referência</button></div><button class="btn-back" onclick="resetSteps()">Voltar</button></div>
-        <div id="step-yes" class="step hidden"><h3 style="text-align:center">É um projeto?</h3><div class="decision-grid"><button class="btn-opt" onclick="finalize('project')">Sim (Planejar)</button><button class="btn-yes" onclick="toStep('step-2min')">Não (Ação Única)</button></div><button class="btn-back" onclick="resetSteps()">Voltar</button></div>
-        <div id="step-2min" class="step hidden"><h3 style="text-align:center">Leva < 2 minutos?</h3><div class="decision-grid"><button class="btn-yes" onclick="toStep('step-do')">SIM</button><button class="btn-no" onclick="toStep('step-del')">NÃO</button></div><button class="btn-back" onclick="toStep('step-yes')">Voltar</button></div>
+        <div id="step-no" class="step hidden"><h3 style="text-align:center">O que é isso?</h3><div class="decision-grid"><button class="btn-no" onclick="finalize('trash')">Lixo</button><button class="btn-opt" onclick="finalize('someday')">Talvez</button><button class="btn-opt full-width" onclick="finalize('reference')">Referência</button></div><button class="btn-back" onclick="resetSteps()">Voltar</button></div>
+        <div id="step-yes" class="step hidden"><h3 style="text-align:center">É complexo (Projeto)?</h3><div class="decision-grid"><button class="btn-opt" onclick="finalize('project')">Sim</button><button class="btn-yes" onclick="toStep('step-2min')">Não (Ação)</button></div><button class="btn-back" onclick="resetSteps()">Voltar</button></div>
+        <div id="step-2min" class="step hidden"><h3 style="text-align:center">Menos de 2 minutos?</h3><div class="decision-grid"><button class="btn-yes" onclick="toStep('step-do')">SIM</button><button class="btn-no" onclick="toStep('step-del')">NÃO</button></div><button class="btn-back" onclick="toStep('step-yes')">Voltar</button></div>
         <div id="step-do" class="step hidden"><h2 style="text-align:center; color:var(--success)">FAÇA AGORA!</h2><button class="btn-yes" style="width:100%" onclick="finalize('done')">✅ Já fiz!</button><button class="btn-back" onclick="toStep('step-2min')">Voltar</button></div>
-        <div id="step-del" class="step hidden"><h3 style="text-align:center">Quem faz?</h3><div class="decision-grid"><button class="btn-no" onclick="toStep('input-waiting')">Outro (Delegar)</button><button class="btn-yes" onclick="toStep('input-defer')">Eu (Adiar)</button></div><button class="btn-back" onclick="toStep('step-2min')">Voltar</button></div>
-        <div id="input-waiting" class="step hidden"><h3 style="text-align:center">Delegar para quem?</h3><input type="text" id="delInput" placeholder="Nome..."><button class="btn-yes" style="width:100%; margin-top:10px;" onclick="finalize('waiting')">Confirmar</button><button class="btn-back" onclick="toStep('step-del')">Voltar</button></div>
+        <div id="step-del" class="step hidden"><h3 style="text-align:center">Quem faz?</h3><div class="decision-grid"><button class="btn-no" onclick="toStep('input-waiting')">Delegar</button><button class="btn-yes" onclick="toStep('input-defer')">Eu (Agendar)</button></div><button class="btn-back" onclick="toStep('step-2min')">Voltar</button></div>
+        <div id="input-waiting" class="step hidden"><h3 style="text-align:center">Para quem?</h3><input type="text" id="delInput" placeholder="Nome..."><button class="btn-yes" style="width:100%; margin-top:10px;" onclick="finalize('waiting')">Salvar</button><button class="btn-back" onclick="toStep('step-del')">Voltar</button></div>
         <div id="input-defer" class="step hidden"><h3 style="text-align:center">Quando?</h3><div class="decision-grid"><button class="btn-opt" onclick="toStep('input-cal')">📅 Data Certa</button><button class="btn-opt" onclick="finalize('next')">🔥 Assim que der</button></div><button class="btn-back" onclick="toStep('step-del')">Voltar</button></div>
-        <div id="input-cal" class="step hidden"><h3 style="text-align:center">Escolha a Data e Hora</h3><input type="datetime-local" id="calInput"><button class="btn-yes" style="width:100%; margin-top:10px;" onclick="finalize('calendar')">Agendar no Google</button><button class="btn-back" onclick="toStep('input-defer')">Voltar</button></div>
+        <div id="input-cal" class="step hidden"><h3 style="text-align:center">Data e Hora</h3><input type="datetime-local" id="calInput"><button class="btn-yes" style="width:100%; margin-top:10px;" onclick="finalize('calendar')">Agendar</button><button class="btn-back" onclick="toStep('input-defer')">Voltar</button></div>
     </div>
 
     <!-- LISTAS -->
@@ -176,15 +140,12 @@
             </div>
             <ul id="l-inbox"></ul>
         </div>
-        
-        <!-- NOVA CAIXA: FAZER AGORA -->
         <div class="list-card card-do-now" ondrop="dropContainer(event, 'do-now')" ondragover="allowDropContainer(event)" ondragleave="leaveDropContainer(event)">
             <div class="list-header" onmousedown="handleHeaderPress('do-now')" ontouchstart="handleHeaderPress('do-now')" onmouseup="clearHeaderPress()" ontouchend="clearHeaderPress()">
-                <h3>⚡ Fazer Agora (&lt; 2 min)</h3><span class="badge" id="c-do-now">0</span>
+                <h3>⚡ Fazer Agora</h3><span class="badge" id="c-do-now">0</span>
             </div>
             <ul id="l-do-now"></ul>
         </div>
-
         <div class="list-card card-next" ondrop="dropContainer(event, 'next')" ondragover="allowDropContainer(event)" ondragleave="leaveDropContainer(event)">
             <div class="list-header" onmousedown="handleHeaderPress('next')" ontouchstart="handleHeaderPress('next')" onmouseup="clearHeaderPress()" ontouchend="clearHeaderPress()">
                 <h3>🔥 Próximas Ações</h3><span class="badge" id="c-next">0</span>
@@ -200,35 +161,35 @@
         <div class="list-card card-calendar" ondrop="dropContainer(event, 'calendar')" ondragover="allowDropContainer(event)" ondragleave="leaveDropContainer(event)">
             <div class="list-header" onmousedown="handleHeaderPress('calendar')" ontouchstart="handleHeaderPress('calendar')" onmouseup="clearHeaderPress()" ontouchend="clearHeaderPress()">
                 <h3>📅 Calendário</h3>
-                <div><button class="btn-refresh" onclick="checkDeletedEvents(true)">🔄 Sync</button><span class="badge" id="c-calendar">0</span></div>
+                <div><button class="btn-refresh" onclick="checkDeletedEvents(true)">🔄</button><span class="badge" id="c-calendar">0</span></div>
             </div>
             <ul id="l-calendar"></ul>
         </div>
         <div class="list-card card-waiting" ondrop="dropContainer(event, 'waiting')" ondragover="allowDropContainer(event)" ondragleave="leaveDropContainer(event)">
             <div class="list-header" onmousedown="handleHeaderPress('waiting')" ontouchstart="handleHeaderPress('waiting')" onmouseup="clearHeaderPress()" ontouchend="clearHeaderPress()">
-                <h3>⏳ Delegar (Esperar)</h3>
-                <div><button class="btn-refresh" onclick="checkDeletedEvents(true)">🔄 Sync</button><span class="badge" id="c-waiting">0</span></div>
+                <h3>⏳ Delegar</h3>
+                <div><button class="btn-refresh" onclick="checkDeletedEvents(true)">🔄</button><span class="badge" id="c-waiting">0</span></div>
             </div>
             <ul id="l-waiting"></ul>
         </div>
         <div class="list-card card-someday" ondrop="dropContainer(event, 'someday')" ondragover="allowDropContainer(event)" ondragleave="leaveDropContainer(event)">
             <div class="list-header" onmousedown="handleHeaderPress('someday')" ontouchstart="handleHeaderPress('someday')" onmouseup="clearHeaderPress()" ontouchend="clearHeaderPress()">
-                <h3>💡 Um Dia / Talvez</h3><span class="badge" id="c-someday">0</span>
+                <h3>💡 Um Dia/Talvez</h3><span class="badge" id="c-someday">0</span>
             </div>
             <ul id="l-someday"></ul>
         </div>
         <div class="list-card card-reference" ondrop="dropContainer(event, 'reference')" ondragover="allowDropContainer(event)" ondragleave="leaveDropContainer(event)">
             <div class="list-header" onmousedown="handleHeaderPress('reference')" ontouchstart="handleHeaderPress('reference')" onmouseup="clearHeaderPress()" ontouchend="clearHeaderPress()">
-                <h3>📚 Arquivo / Referência</h3><span class="badge" id="c-reference">0</span>
+                <h3>📚 Referência</h3><span class="badge" id="c-reference">0</span>
             </div>
             <ul id="l-reference"></ul>
         </div>
         <div class="list-card card-completed full-width-card" ondrop="dropContainer(event, 'completed')" ondragover="allowDropContainer(event)" ondragleave="leaveDropContainer(event)">
             <div class="list-header">
-                <h3>✅ Tarefas Concluídas</h3>
+                <h3>✅ Concluídas</h3>
                 <div>
-                    <button class="btn-refresh" style="color:var(--ai);" onclick="aiReview()">🤖 Analisar</button>
-                    <button class="btn-refresh btn-clear-hist" onclick="clearCompletedHistory()">🗑️ Limpar</button>
+                    <button class="btn-refresh" style="color:var(--ai);" onclick="aiReview()">🤖 IA</button>
+                    <button class="btn-refresh" onclick="clearCompletedHistory()" style="color:var(--danger)">🗑️</button>
                     <span class="badge" id="c-completed">0</span>
                 </div>
             </div>
@@ -237,329 +198,259 @@
     </div>
 </div>
 
-<!-- Loading -->
-<div id="loadingOverlay">
-    <div class="spinner"></div>
-    <p style="margin-top:15px; font-weight:bold; color:#555;">IA Pensando...</p>
-</div>
-
-<!-- Modal / Toast -->
+<div id="loadingOverlay"><div class="spinner"></div><p style="margin-top:15px;">Carregando...</p></div>
 <div id="toast">Notificação</div>
+
+<!-- Config Modal -->
 <div id="configModal">
     <div class="modal-content">
         <h3>☁️ Configurações</h3>
-        <label>JSONBin Bin ID:</label><input type="text" id="cfgBinId">
-        <label>JSONBin API Key:</label><input type="text" id="cfgApiKey">
-        <hr style="margin:15px 0; border:0; border-top:1px dashed #ccc;">
-        <label>Google Client ID:</label><input type="text" id="cfgGoogleClientId">
+        <p style="font-size:0.8rem; color:#666;">Para sincronizar entre Computador, Celular e Tablet, faça login no Google. Os dados serão salvos no seu <b>Google Drive</b> (arquivo oculto).</p>
+        
+        <label>Google Client ID:</label>
+        <input type="text" id="cfgGoogleClientId" placeholder="Cole seu Client ID aqui">
+        
+        <div id="loginSection" style="margin-bottom:20px; text-align:center;">
+             <button id="authBtn" onclick="handleAuthClick()" style="background:var(--google); color:white; width:100%;">Conectar Google Drive</button>
+        </div>
+
         <hr style="margin:15px 0; border:0; border-top:1px dashed #ccc;">
         <label>Gemini API Key (IA):</label><input type="password" id="cfgGeminiKey">
-        <div class="modal-footer"><button class="btn-no" onclick="closeConfig()">Cancelar</button><button class="btn-yes" onclick="saveConfig()">Salvar</button></div>
-    </div>
-</div>
-
-<!-- Date Picker Modal -->
-<div id="dateModal" class="modal-overlay">
-    <div class="modal-content">
-        <h3>📅 Agendar</h3>
-        <label>Escolha a Data e Hora:</label>
-        <input type="datetime-local" id="modalDateInput">
+        
         <div class="modal-footer">
-            <button class="btn-no" onclick="closeDateModal()">Cancelar</button>
-            <button class="btn-yes" onclick="confirmDate()">Agendar</button>
+            <button class="btn-no" onclick="closeConfig()">Fechar</button>
+            <button class="btn-yes" onclick="saveConfig()">Salvar</button>
         </div>
     </div>
 </div>
 
+<div id="dateModal" class="modal-overlay">
+    <div class="modal-content">
+        <h3>📅 Agendar</h3>
+        <input type="datetime-local" id="modalDateInput">
+        <div class="modal-footer">
+            <button class="btn-no" onclick="closeDateModal()">Cancelar</button>
+            <button class="btn-yes" onclick="confirmDate()">Confirmar</button>
+        </div>
+    </div>
+</div>
+
+<!-- SCRIPTS -->
 <script async defer src="https://apis.google.com/js/api.js" onload="gapiLoaded()"></script>
 <script async defer src="https://accounts.google.com/gsi/client" onload="gisLoaded()"></script>
 
 <script>
+    // --- ESTADO GLOBAL ---
     let items = JSON.parse(localStorage.getItem('gtd_data')) || [];
     let history = JSON.parse(localStorage.getItem('gtd_history')) || [];
-    let config = JSON.parse(localStorage.getItem('gtd_config')) || { binId: '', apiKey: '', googleClientId: '', geminiKey: '' };
-    let currentItemIdx = null;
-    let gapiInited = false, gisInited = false, tokenClient, googleAccessToken;
-    const DISCOVERY_DOC = 'https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest';
-    let longPressTimer, longPressItem, dateResolver, headerPressTimer;
+    let config = JSON.parse(localStorage.getItem('gtd_config')) || { googleClientId: '', geminiKey: '' };
+    
+    // Google API Vars
+    let tokenClient;
+    let gapiInited = false, gisInited = false;
+    let driveFileId = localStorage.getItem('gtd_drive_file_id') || null;
+    const DISCOVERY_DOCS = [
+        'https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest',
+        'https://www.googleapis.com/discovery/v1/apis/drive/v3/rest'
+    ];
+    // Escopo: Agenda + Drive (appDataFolder guarda o arquivo oculto)
+    const SCOPES = 'https://www.googleapis.com/auth/calendar.events https://www.googleapis.com/auth/drive.appdata';
 
-    // --- AI INTEGRATION (GEMINI - FIXED) ---
-    async function callGemini(prompt) {
-        if (!config.geminiKey) {
-            alert("Configure a chave do Gemini em Configurações para usar IA.");
-            return null;
+    // --- GOOGLE DRIVE SYNC ENGINE ---
+    function gapiLoaded() { gapi.load('client', initializeGapiClient); }
+    async function initializeGapiClient() { 
+        await gapi.client.init({ discoveryDocs: DISCOVERY_DOCS }); 
+        gapiInited = true; 
+        restoreSession(); 
+    }
+    function gisLoaded() { 
+        gisInited = true; 
+        if(config.googleClientId) enableGoogleAuth();
+    }
+    
+    function enableGoogleAuth() {
+        tokenClient = google.accounts.oauth2.initTokenClient({
+            client_id: config.googleClientId,
+            scope: SCOPES,
+            callback: async (resp) => {
+                if (resp.error) return console.error(resp);
+                const expiresAt = Date.now() + (resp.expires_in * 1000);
+                localStorage.setItem('gtd_google_token', JSON.stringify({ access_token: resp.access_token, expires_at: expiresAt }));
+                gapi.client.setToken(resp);
+                updateDriveStatus(true);
+                // Após login, tenta buscar/criar arquivo e baixar
+                await findOrCreateDriveFile();
+                await driveSync(true); // Força download inicial
+            },
+        });
+    }
+
+    function restoreSession() {
+        const stored = localStorage.getItem('gtd_google_token');
+        if (stored) {
+            const tokenData = JSON.parse(stored);
+            if (Date.now() < (tokenData.expires_at - 60 * 1000)) {
+                gapi.client.setToken({ access_token: tokenData.access_token });
+                updateDriveStatus(true);
+                if(config.googleClientId) {
+                    // Sync silencioso no inicio
+                    setTimeout(() => driveSync(false), 1000); 
+                }
+            } else {
+                localStorage.removeItem('gtd_google_token');
+                updateDriveStatus(false);
+            }
         }
+    }
+
+    function handleAuthClick() {
+        if (!config.googleClientId) return alert("Configure o Client ID primeiro.");
+        if (!tokenClient) enableGoogleAuth();
+        tokenClient.requestAccessToken({prompt: ''});
+    }
+
+    function updateDriveStatus(online) {
+        const el = document.getElementById('driveStatus');
+        const dot = document.getElementById('driveDot');
+        const btn = document.getElementById('authBtn');
+        if(online) {
+            el.innerText = 'Drive: Conectado';
+            dot.className = 'dot online';
+            btn.innerText = 'Conectado (Clique para Renovar)';
+            btn.style.background = 'var(--success)';
+        } else {
+            el.innerText = 'Drive: Off';
+            dot.className = 'dot';
+            btn.innerText = 'Conectar Google Drive';
+            btn.style.background = 'var(--google)';
+        }
+    }
+
+    // --- CORE DRIVE LOGIC ---
+    const DB_FILENAME = 'gtd_fukuoka_db.json';
+
+    async function findOrCreateDriveFile() {
+        if(!gapi.client.getToken()) return;
+        try {
+            // Procura arquivo na pasta oculta appDataFolder
+            const res = await gapi.client.drive.files.list({
+                spaces: 'appDataFolder',
+                q: `name = '${DB_FILENAME}' and trashed = false`,
+                fields: 'files(id, name)'
+            });
+            
+            if (res.result.files && res.result.files.length > 0) {
+                driveFileId = res.result.files[0].id;
+                localStorage.setItem('gtd_drive_file_id', driveFileId);
+                console.log("Arquivo Drive Encontrado:", driveFileId);
+            } else {
+                console.log("Criando novo arquivo no Drive...");
+                const createRes = await gapi.client.drive.files.create({
+                    resource: {
+                        name: DB_FILENAME,
+                        parents: ['appDataFolder']
+                    },
+                    media: {
+                        mimeType: 'application/json',
+                        body: JSON.stringify({ gtd_tasks: items })
+                    },
+                    fields: 'id'
+                });
+                driveFileId = createRes.result.id;
+                localStorage.setItem('gtd_drive_file_id', driveFileId);
+            }
+        } catch (e) {
+            console.error("Erro Drive Init:", e);
+            showToast("Erro ao iniciar Drive.");
+        }
+    }
+
+    async function driveSync(forceDownload = false) {
+        if (!gapi.client.getToken() || !driveFileId) return;
+        
+        document.getElementById('driveDot').className = 'dot syncing';
+        document.getElementById('driveStatus').innerText = 'Sync...';
+
+        try {
+            if (forceDownload) {
+                // DOWNLOAD
+                const res = await gapi.client.drive.files.get({
+                    fileId: driveFileId,
+                    alt: 'media'
+                });
+                // Verifica se o resultado é válido
+                const data = res.result || res.body; 
+                let remoteItems = typeof data === 'string' ? JSON.parse(data) : data;
+                
+                if (remoteItems.gtd_tasks) remoteItems = remoteItems.gtd_tasks;
+                
+                if (Array.isArray(remoteItems)) {
+                    // Estrategia simples: Última versão vence (para simplicidade)
+                    // Num uso real, faríamos merge. Aqui, assumimos que se baixou, é o mais novo.
+                    items = remoteItems;
+                    localStorage.setItem('gtd_data', JSON.stringify(items));
+                    render();
+                    checkDeletedEvents(); // Check calendar sync
+                    showToast("Dados baixados do Drive!");
+                }
+            } else {
+                // UPLOAD (SAVE)
+                // Para update via GAPI JS Client simples, o endpoint 'upload' é chato.
+                // Usamos fetch direto com o token para facilitar o PATCH
+                const token = gapi.client.getToken().access_token;
+                const metadata = { name: DB_FILENAME, mimeType: 'application/json' };
+                const fileContent = JSON.stringify({ gtd_tasks: items });
+                
+                const form = new FormData();
+                form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
+                form.append('file', new Blob([fileContent], { type: 'application/json' }));
+
+                const updateUrl = `https://www.googleapis.com/upload/drive/v3/files/${driveFileId}?uploadType=multipart`;
+                
+                await fetch(updateUrl, {
+                    method: 'PATCH',
+                    headers: new Headers({ 'Authorization': 'Bearer ' + token }),
+                    body: form
+                });
+                console.log("Salvo no Drive.");
+            }
+            updateDriveStatus(true);
+        } catch (e) {
+            console.error("Erro Sync:", e);
+            document.getElementById('driveDot').className = 'dot error';
+            document.getElementById('driveStatus').innerText = 'Erro Sync';
+        }
+    }
+
+    // Salva Local e Tenta Sync na Nuvem
+    function syncSave() {
+        localStorage.setItem('gtd_data', JSON.stringify(items));
+        render();
+        // Debounce simples para não flodar a API
+        if(window.saveTimer) clearTimeout(window.saveTimer);
+        window.saveTimer = setTimeout(() => {
+            driveSync(false); // Upload
+        }, 2000);
+    }
+
+    // --- FUNÇÕES GTD (Mantidas e Otimizadas) ---
+    // (Mesma lógica de antes, apenas chamando syncSave())
+    function addToInbox() { const val = document.getElementById('inboxInput').value.trim(); if(val) { items.push({ id: Date.now(), text: val, status: 'inbox' }); document.getElementById('inboxInput').value = ''; syncSave(); } }
+    
+    // AI Integration
+    async function callGemini(prompt) {
+        if (!config.geminiKey) return alert("Configure a Key do Gemini.");
         document.getElementById('loadingOverlay').style.display = 'flex';
         try {
             const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${config.geminiKey}`;
-            
-            const response = await fetch(url, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ 
-                    contents: [{ parts: [{ text: prompt }] }]
-                })
-            });
-
+            const response = await fetch(url, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }) });
             const data = await response.json();
-            
-            if (data.error) {
-                console.error("Gemini Error:", data.error);
-                throw new Error(data.error.message);
-            }
-            
-            if (!data.candidates || !data.candidates[0] || !data.candidates[0].content) {
-                throw new Error("Resposta da IA vazia ou bloqueada.");
-            }
-
             return data.candidates[0].content.parts[0].text;
-        } catch (e) {
-            console.error(e);
-            alert("Erro na IA: " + e.message);
-            return null;
-        } finally {
-            document.getElementById('loadingOverlay').style.display = 'none';
-        }
+        } catch (e) { alert("Erro IA: " + e.message); return null; } finally { document.getElementById('loadingOverlay').style.display = 'none'; }
     }
-
-    async function magicProcess() {
-        const inboxItems = items.filter(i => i.status === 'inbox');
-        if (inboxItems.length === 0) return alert("Caixa de entrada vazia.");
-        
-        const tasksText = inboxItems.map(i => `- ${i.text} (ID: ${i.id})`).join('\n');
-        const now = new Date();
-        const dateStr = now.toLocaleDateString('pt-BR') + " " + now.toLocaleTimeString('pt-BR');
-
-        const prompt = `
-            Hoje é: ${dateStr}.
-            Você é um assistente GTD expert. Analise estes itens da caixa de entrada:
-            ${tasksText}
-            
-            Regras de Processamento (RIGOROSAS):
-            
-            1. **PRIORIDADE 1: DELEGAÇÃO**
-               Se a tarefa começa com nome/apelido (ex: "Je ver...", "João enviar", "Maria ligar"), O STATUS É 'waiting'.
-               No campo 'note', coloque APENAS: "Delegado: [Nome da Pessoa]".
-               Se houver data/hora na frase, extraia para 'date' (ISO).
-            
-            2. **PRIORIDADE 2: CALENDÁRIO**
-               Se NÃO for delegação, mas tiver data ou hora específica (ex: "Agendar médico", "Reunião amanhã 14h"), status: 'calendar'.
-               Extraia a data futura correta para o campo 'date' (ISO format YYYY-MM-DDTHH:MM).
-            
-            3. **PRIORIDADE 3: FAZER AGORA (< 2 min)**
-               Se for uma ação muito rápida e não depender de local específico (ex: "Responder email", "Pagar boleto", "Ligar para X"), status: 'do-now'.
-               IMPORTANTE: Se a ação rápida depender de estar em casa ou outro local (ex: "Ligar a TV quando chegar"), ENTÃO É 'next', com note: "Casa".
-            
-            4. **OUTROS**
-               - Material de leitura/arquivo -> status: 'reference'
-               - Ideia vaga/sonho -> status: 'someday'
-               - Projeto complexo -> status: 'project'
-               - Ação física sem data -> status: 'next'
-            
-            Retorne APENAS um array JSON válido.
-            Formato: [{"id": "...", "status": "...", "note": "...", "date": "..."}]
-        `;
-
-        const result = await callGemini(prompt);
-        if (!result) return;
-
-        try {
-            const cleanJson = result.replace(/```json/g, '').replace(/```/g, '').trim();
-            const decisions = JSON.parse(cleanJson);
-            
-            let count = 0;
-            for (const d of decisions) {
-                const item = items.find(i => i.id == d.id);
-                if (item) {
-                    item.status = d.status;
-                    if (d.note) item.note = d.note;
-                    
-                    // AUTO-AGENDAMENTO VIA IA
-                    if ((d.status === 'calendar' || d.status === 'waiting') && d.date && config.googleClientId) {
-                        item.date = d.date;
-                        // Tenta criar no Google (assíncrono)
-                        try {
-                            const eid = await createCalendarEvent(item);
-                            if (eid) item.googleEventId = eid;
-                        } catch(e) { console.error("Erro auto-agendamento IA", e); }
-                    }
-
-                    if (d.status === 'trash') items = items.filter(i => i.id != d.id);
-                    count++;
-                }
-            }
-            syncSave();
-            showToast(`${count} itens processados pela IA! 🧠`);
-        } catch (e) {
-            console.error(e);
-            alert("Erro ao processar resposta da IA. Verifique o console.");
-        }
-    }
-
-    async function breakdownProject(idx) {
-        const project = items[idx];
-        const prompt = `Projeto: "${project.text}". Liste 3 a 5 próximas ações físicas concretas. Responda em Português. Retorne APENAS um array JSON de strings. Sem markdown.`;
-        const result = await callGemini(prompt);
-        if (!result) return;
-        try {
-            const cleanJson = result.replace(/```json/g, '').replace(/```/g, '').trim();
-            const actions = JSON.parse(cleanJson);
-            actions.forEach(actionText => {
-                items.push({ id: Date.now() + Math.random(), text: actionText, status: 'next', note: `De: ${project.text}` });
-            });
-            syncSave();
-            showToast("Ações geradas! ⚡");
-        } catch (e) { alert("Erro ao quebrar projeto."); }
-    }
-
-    async function aiReview() {
-        const completed = items.filter(i => i.status === 'completed');
-        if (completed.length === 0) return alert("Nada concluído para analisar.");
-        const tasks = completed.map(i => i.text).join(', ');
-        const prompt = `Tarefas concluídas: ${tasks}. Dê um resumo motivacional curto em Português e 1 sugestão.`;
-        const feedback = await callGemini(prompt);
-        if (feedback) alert("🤖 Relatório da IA:\n\n" + feedback);
-    }
-
-    // --- STANDARD FUNCTIONS ---
-    function updateHistory(text) { if (!text) return; if (!history.includes(text)) { history.push(text); if (history.length > 50) history.shift(); localStorage.setItem('gtd_history', JSON.stringify(history)); renderHistory(); } }
-    function renderHistory() { const dl = document.getElementById('historyList'); dl.innerHTML = ''; history.slice().reverse().forEach(h => { const op = document.createElement('option'); op.value = h; dl.appendChild(op); }); }
-    function handleHeaderPress(status) { headerPressTimer = setTimeout(async () => { if (navigator.vibrate) navigator.vibrate(50); const text = prompt(`Adicionar em "${statusToName(status)}":`); if (text) { const newItem = { id: Date.now(), text: text, status: status }; if (status === 'calendar' || status === 'waiting') { if (status === 'waiting') { const who = prompt("Delegar para quem?"); if (who) newItem.note = "Delegado: " + who; else return; } const dateStr = await openDateModal(); if (dateStr) { newItem.date = dateStr; if (config.googleClientId) { const eid = await createCalendarEvent(newItem); if (eid) newItem.googleEventId = eid; } } else if (status === 'calendar') return; } items.push(newItem); updateHistory(text); syncSave(); showToast("Item adicionado!"); } }, 500); }
-    function clearHeaderPress() { clearTimeout(headerPressTimer); }
-    function statusToName(s) { const map = { 'inbox': 'Entrada', 'do-now': 'Fazer Agora', 'next': 'Próximas Ações', 'project': 'Projetos', 'waiting': 'Delegar', 'calendar': 'Calendário', 'someday': 'Talvez', 'reference': 'Referência' }; return map[s] || s; }
     
-    // Voice
-    let recognition;
-    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
-        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-        recognition = new SpeechRecognition(); recognition.lang = 'pt-BR';
-        recognition.onstart = function() { document.getElementById('voiceBtn').classList.add('listening'); };
-        recognition.onend = function() { document.getElementById('voiceBtn').classList.remove('listening'); };
-        recognition.onresult = function(event) { let t = event.results[0][0].transcript; t = t.charAt(0).toUpperCase() + t.slice(1); document.getElementById('inboxInput').value = t; };
-    } else { document.getElementById('voiceBtn').style.display = 'none'; }
-    function toggleVoice() { if (!recognition) return alert("Sem suporte voz."); try { recognition.start(); } catch(e) { recognition.stop(); } }
-
-    // Date Picker
-    function openDateModal() { return new Promise((resolve) => { const now = new Date(); const offset = now.getTimezoneOffset() * 60000; const localISOTime = (new Date(now - offset)).toISOString().slice(0, 16); document.getElementById('modalDateInput').value = localISOTime; document.getElementById('dateModal').style.display = 'flex'; dateResolver = resolve; }); }
-    function closeDateModal() { document.getElementById('dateModal').style.display = 'none'; if (dateResolver) { dateResolver(null); dateResolver = null; } }
-    function confirmDate() { const date = document.getElementById('modalDateInput').value; if (dateResolver) { dateResolver(date); dateResolver = null; } document.getElementById('dateModal').style.display = 'none'; }
-
-    // Drag
-    function handleTouchStart(e, idx) { longPressItem = e.currentTarget; longPressTimer = setTimeout(() => { if (longPressItem) { longPressItem.setAttribute('draggable', 'true'); longPressItem.classList.add('ready-to-drag'); if (navigator.vibrate) navigator.vibrate(50); } }, 500); }
-    function handleTouchEnd(e) { clearTimeout(longPressTimer); const li = e.currentTarget; if (li && !li.classList.contains('dragging')) { li.setAttribute('draggable', 'false'); li.classList.remove('ready-to-drag'); } longPressItem = null; }
-    function handleTouchMove(e) { if (longPressTimer) { clearTimeout(longPressTimer); if (longPressItem) { longPressItem.classList.remove('ready-to-drag'); longPressItem.setAttribute('draggable', 'false'); } } const touch = e.touches[0]; autoScroll(touch.clientY); }
-    function autoScroll(y) { const threshold = 100; const speed = 10; if (y < threshold) window.scrollBy(0, -speed); else if (y > window.innerHeight - threshold) window.scrollBy(0, speed); }
-    function drag(ev, index) { ev.dataTransfer.setData("text/plain", index); ev.target.classList.add('dragging'); ev.target.classList.remove('ready-to-drag'); }
-    function dragEnd(ev) { ev.target.classList.remove('dragging'); ev.target.setAttribute('draggable', 'false'); }
-    function allowDropContainer(ev) { ev.preventDefault(); ev.currentTarget.classList.add('drag-over-container'); autoScroll(ev.clientY); }
-    function leaveDropContainer(ev) { ev.currentTarget.classList.remove('drag-over-container'); }
-    async function dropContainer(ev, newStatus) { ev.preventDefault(); ev.stopPropagation(); ev.currentTarget.classList.remove('drag-over-container'); const index = ev.dataTransfer.getData("text/plain"); const item = items[index]; if(!item) return; if (item.status === newStatus) { items.splice(index, 1); items.push(item); syncSave(); return; } const success = await handleStatusChange(item, newStatus); if (success) { items.splice(index, 1); items.push(item); syncSave(); } }
-    function allowDropItem(ev) { ev.preventDefault(); ev.stopPropagation(); ev.currentTarget.classList.add('drag-over-item'); autoScroll(ev.clientY); }
-    function leaveDropItem(ev) { ev.currentTarget.classList.remove('drag-over-item'); }
-    async function dropOnItem(ev, targetIdx) { ev.preventDefault(); ev.stopPropagation(); ev.currentTarget.classList.remove('drag-over-item'); const draggedIdx = parseInt(ev.dataTransfer.getData("text/plain")); if (draggedIdx === targetIdx) return; const draggedItem = items[draggedIdx]; const targetItem = items[targetIdx]; let success = true; if (draggedItem.status !== targetItem.status) { success = await handleStatusChange(draggedItem, targetItem.status); } if (success) { items.splice(draggedIdx, 1); let newTargetIdx = items.indexOf(targetItem); if (newTargetIdx === -1) items.push(draggedItem); else items.splice(newTargetIdx, 0, draggedItem); syncSave(); } }
-
-    async function handleStatusChange(item, newStatus) {
-        const oldStatus = item.status;
-        if ((oldStatus === 'calendar' || oldStatus === 'waiting') && newStatus !== 'calendar' && newStatus !== 'waiting') {
-            if (item.googleEventId) { if(confirm("Remover do Google Agenda?")) { await deleteCalendarEvent(item.googleEventId); } delete item.googleEventId; }
-            delete item.date;
-        }
-        if (newStatus === 'completed') { item.completedAt = new Date().toISOString(); }
-
-        if (newStatus === 'calendar') {
-            const dateStr = await openDateModal(); if (!dateStr) return false; item.date = dateStr;
-            if (config.googleClientId) { const eventId = await createCalendarEvent(item); if (eventId) item.googleEventId = eventId; }
-        } else if (newStatus === 'waiting') {
-            const who = prompt("Delegar para quem?"); if (who) item.note = "Delegado: " + who;
-            const dateStr = await openDateModal(); if (dateStr) { item.date = dateStr; if (config.googleClientId) { const eventId = await createCalendarEvent(item); if (eventId) item.googleEventId = eventId; } }
-        }
-        item.status = newStatus; return true;
-    }
-
-    // --- AUTO-MOVE ---
-    function checkCalendarDueDates() {
-        const now = new Date(); const today = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
-        let changed = false;
-        items.forEach(item => { if ((item.status === 'calendar' || item.status === 'waiting') && item.date) { const taskDate = item.date.split('T')[0]; if (taskDate <= today && item.status === 'calendar') { item.status = 'next'; changed = true; } } });
-        if (changed) { syncSave(); showToast("Tarefas vencidas movidas para Próximas Ações"); }
-    }
-
-    // --- GOOGLE API & SYNC ---
-    function gapiLoaded() { gapi.load('client', intializeGapiClient); }
-    async function intializeGapiClient() { await gapi.client.init({ discoveryDocs: [DISCOVERY_DOC] }); gapiInited = true; restoreGoogleSession(); maybeEnableGoogleSignIn(); }
-    function gisLoaded() { gisInited = true; maybeEnableGoogleSignIn(); }
-    function maybeEnableGoogleSignIn() { if (gapiInited && gisInited && config.googleClientId) { tokenClient = google.accounts.oauth2.initTokenClient({ client_id: config.googleClientId, scope: 'https://www.googleapis.com/auth/calendar.events', callback: (resp) => { if (resp.error) throw (resp); const expiresAt = Date.now() + (resp.expires_in * 1000); localStorage.setItem('gtd_google_token', JSON.stringify({ access_token: resp.access_token, expires_at: expiresAt })); googleAccessToken = resp.access_token; updateGoogleSyncStatus(true); checkDeletedEvents(); }, }); } }
-    function restoreGoogleSession() { const stored = localStorage.getItem('gtd_google_token'); if (stored) { const tokenData = JSON.parse(stored); if (Date.now() < (tokenData.expires_at - 60000)) { googleAccessToken = tokenData.access_token; gapi.client.setToken({ access_token: googleAccessToken }); updateGoogleSyncStatus(true); setTimeout(() => checkDeletedEvents(), 1500); } else { localStorage.removeItem('gtd_google_token'); updateGoogleSyncStatus(false); } } }
-    function handleAuthClick() { if (!tokenClient) return alert("Google API não iniciada."); tokenClient.requestAccessToken({prompt: ''}); }
-    function updateGoogleSyncStatus(isConnected) { const el = document.getElementById('googleSyncStatus'); el.innerHTML = isConnected ? `<span class="dot google-connected"></span> Agenda: OK` : `<span class="dot google-disconnected"></span> Agenda: <a href="#" onclick="handleAuthClick()">Conectar</a>`; }
-    function showToast(msg) { const t = document.getElementById("toast"); t.textContent = msg; t.className = "show"; setTimeout(() => { t.className = t.className.replace("show", ""); }, 3000); }
-    async function checkDeletedEvents(manual = false) { if (!gapi.client.getToken()) { if(manual) showToast("Google Off."); return; } const calendarItems = items.filter(i => (i.status === 'calendar' || i.status === 'waiting') && i.googleEventId); if (calendarItems.length === 0) { if(manual) showToast("Nada para verificar."); return; } if(manual) showToast("Verificando agenda..."); let deletedCount = 0; await Promise.all(calendarItems.map(async (item) => { try { const res = await gapi.client.calendar.events.get({ 'calendarId': 'primary', 'eventId': item.googleEventId }); if (res.result.status === 'cancelled') { removeItemById(item.id); deletedCount++; } } catch (err) { if (err.status === 404 || err.status === 410) { removeItemById(item.id); deletedCount++; } } })); if (deletedCount > 0) { syncSave(); showToast(`${deletedCount} evento(s) deletados sync.`); } else if (manual) showToast("Tudo ok."); }
-    function removeItemById(id) { const index = items.findIndex(i => i.id === id); if (index > -1) items.splice(index, 1); }
-    window.onload = () => { render(); renderHistory(); if (config.binId && config.apiKey) syncLoad(); if (config.googleClientId) updateGoogleSyncStatus(false); checkCalendarDueDates(); };
-    async function syncLoad() { if (!config.binId) return; document.getElementById('syncText').innerText = 'Sync...'; try { const res = await fetch(`https://api.jsonbin.io/v3/b/${config.binId}/latest`, { headers: { 'X-Master-Key': config.apiKey } }); if (!res.ok) throw new Error(res.status); const data = await res.json(); items = data.record.gtd_tasks || data.record || []; localStorage.setItem('gtd_data', JSON.stringify(items)); render(); document.getElementById('syncText').innerText = 'Online'; document.getElementById('syncDot').className = 'dot online'; checkCalendarDueDates(); } catch (e) { document.getElementById('syncText').innerText = 'Erro'; document.getElementById('syncDot').className = 'dot error'; document.getElementById('syncText').title = e.message; } }
-    async function syncSave() { localStorage.setItem('gtd_data', JSON.stringify(items)); render(); if (!config.binId) return; document.getElementById('syncText').innerText = 'Salvando...'; try { await fetch(`https://api.jsonbin.io/v3/b/${config.binId}`, { method: 'PUT', headers: { 'Content-Type': 'application/json', 'X-Master-Key': config.apiKey, 'X-Bin-Versioning': 'true' }, body: JSON.stringify({ gtd_tasks: items }) }); document.getElementById('syncText').innerText = 'Salvo'; document.getElementById('syncDot').className = 'dot online'; } catch (e) { document.getElementById('syncText').innerText = 'Erro Salvar'; document.getElementById('syncDot').className = 'dot error'; } }
-    async function createCalendarEvent(item) { if (!gapi.client.getToken()) return null; try { const startDateTime = new Date(item.date); const endDateTime = new Date(startDateTime.getTime() + (30 * 60 * 1000)); if (!gapi.client.calendar) await gapi.client.load('calendar', 'v3'); const response = await gapi.client.calendar.events.insert({ 'calendarId': 'primary', 'resource': { 'summary': "GTD: " + item.text, 'start': { 'dateTime': startDateTime.toISOString(), 'timeZone': Intl.DateTimeFormat().resolvedOptions().timeZone }, 'end': { 'dateTime': endDateTime.toISOString(), 'timeZone': Intl.DateTimeFormat().resolvedOptions().timeZone } } }); showToast("Evento criado!"); return response.result.id; } catch (err) { if (err.status === 401) { localStorage.removeItem('gtd_google_token'); updateGoogleSyncStatus(false); alert("Sessão expirada."); } else alert("Erro Google: " + JSON.stringify(err)); return null; } }
-    async function updateGoogleEvent(item) { if (!gapi.client.getToken() || !item.googleEventId) return; try { await gapi.client.calendar.events.patch({ 'calendarId': 'primary', 'eventId': item.googleEventId, 'resource': { 'summary': "GTD: " + item.text } }); showToast("Atualizado no Google."); } catch (e) { console.error(e); } }
-    async function deleteCalendarEvent(eventId) { if (!eventId || !gapi.client.getToken()) return; try { await gapi.client.calendar.events.delete({ 'calendarId': 'primary', 'eventId': eventId }); showToast("Excluído do Google."); } catch (err) { if(err.status!==404 && err.status!==410) console.error(err); } }
-    function addToInbox() { const val = document.getElementById('inboxInput').value.trim(); if(val) { items.push({ id: Date.now(), text: val, status: 'inbox' }); document.getElementById('inboxInput').value = ''; updateHistory(val); syncSave(); } }
-    function startProcessing() { currentItemIdx = items.findIndex(i => i.status === 'inbox'); if (currentItemIdx === -1) return; document.getElementById('processing-zone').style.display = 'block'; document.getElementById('currentItem').innerText = items[currentItemIdx].text; resetSteps(); document.getElementById('processing-zone').scrollIntoView({behavior:'smooth'}); }
-    function handleActionable(bool) { bool ? toStep('step-yes') : toStep('step-no'); }
-    async function finalize(status) { 
-        if (currentItemIdx === null) return; const item = items[currentItemIdx]; item.status = status; 
-        if (status === 'waiting') { const who = document.getElementById('delInput').value; item.note = "Delegado: " + who; document.getElementById('delInput').value = ''; const d = await openDateModal(); if(d) { item.date = d; if(config.googleClientId) { const eid = await createCalendarEvent(item); if(eid) item.googleEventId = eid; } } } 
-        if (status === 'calendar') { item.date = document.getElementById('calInput').value; if(item.date && config.googleClientId) { const eid = await createCalendarEvent(item); if(eid) item.googleEventId = eid; } } 
-        if (status === 'trash') items.splice(currentItemIdx, 1);
-        if (status === 'done') { item.status = 'completed'; item.completedAt = new Date().toISOString(); } 
-        syncSave(); if (items.some(i => i.status === 'inbox')) startProcessing(); else { document.getElementById('processing-zone').style.display = 'none'; showToast("Entrada zerada!"); } 
-    }
-    async function editItem(idx) { const item = items[idx]; const newText = prompt("Editar:", item.text); if (newText && newText !== item.text) { item.text = newText; if ((item.status === 'calendar' || item.status === 'waiting') && item.googleEventId) await updateGoogleEvent(item); syncSave(); } }
-    async function completeItem(idx) { const item = items[idx]; if ((item.status === 'calendar' || item.status === 'waiting') && item.googleEventId) { if(confirm("Remover evento do Google ao concluir?")) { await deleteCalendarEvent(item.googleEventId); } } delete item.date; delete item.googleEventId; item.completedAt = new Date().toISOString(); item.status = 'completed'; syncSave(); }
-    function clearCompletedHistory() { if(confirm("Apagar histórico?")) { items = items.filter(i => i.status !== 'completed'); syncSave(); showToast("Histórico limpo."); } }
-    async function deleteItem(idx) { const item = items[idx]; if(confirm("Remover?")) { if ((item.status === 'calendar' || item.status === 'waiting') && item.googleEventId) await deleteCalendarEvent(item.googleEventId); items.splice(idx, 1); syncSave(); } }
-    function restoreItem(idx) { items[idx].status = 'next'; delete items[idx].completedAt; syncSave(); }
-
-    function resetSteps() { document.querySelectorAll('.step').forEach(e => e.classList.add('hidden')); document.getElementById('step-1').classList.remove('hidden'); }
-    function toStep(id) { document.querySelectorAll('.step').forEach(e => e.classList.add('hidden')); document.getElementById(id).classList.remove('hidden'); }
-    function openConfig() { document.getElementById('cfgBinId').value = config.binId; document.getElementById('cfgApiKey').value = config.apiKey; document.getElementById('cfgGoogleClientId').value = config.googleClientId; document.getElementById('cfgGeminiKey').value = config.geminiKey; document.getElementById('configModal').style.display = 'block'; }
-    function closeConfig() { document.getElementById('configModal').style.display = 'none'; }
-    function saveConfig() { config.binId = document.getElementById('cfgBinId').value.trim(); config.apiKey = document.getElementById('cfgApiKey').value.trim(); config.googleClientId = document.getElementById('cfgGoogleClientId').value.trim(); config.geminiKey = document.getElementById('cfgGeminiKey').value.trim(); localStorage.setItem('gtd_config', JSON.stringify(config)); closeConfig(); location.reload(); }
-
-    function render() {
-        const ids = ['inbox', 'do-now', 'next', 'project', 'waiting', 'calendar', 'someday', 'reference', 'completed'];
-        const counts = {};
-        ids.forEach(id => { document.getElementById('l-'+id).innerHTML = ''; counts[id] = 0; });
-        items.forEach((item, idx) => {
-            let listId = item.status;
-            if(listId === 'next-action') listId = 'next';
-            if(document.getElementById('l-'+listId)) {
-                counts[listId]++;
-                const li = document.createElement('li');
-                li.setAttribute('onmousedown', `handleTouchStart(event, ${idx})`); li.setAttribute('ontouchstart', `handleTouchStart(event, ${idx})`); li.setAttribute('onmouseup', `handleTouchEnd(event)`); li.setAttribute('ontouchend', `handleTouchEnd(event)`); li.setAttribute('ontouchmove', `handleTouchMove(event)`); li.setAttribute('draggable', 'false'); li.setAttribute('ondragstart', `drag(event, ${idx})`); li.setAttribute('ondragend', `dragEnd(event)`); li.setAttribute('ondrop', `dropOnItem(event, ${idx})`); li.setAttribute('ondragover', `allowDropItem(event)`); li.setAttribute('ondragleave', `leaveDropItem(event)`);
-                if (listId === 'completed') li.classList.add('item-completed');
-                let extra = '';
-                if(item.note) extra += `<span class="meta">${item.note}</span>`;
-                if(item.date && (listId === 'calendar' || listId === 'waiting')) {
-                    const d = new Date(item.date);
-                    const googleIcon = item.googleEventId ? '<span class="google-icon">G</span>' : '';
-                    extra += `<span class="meta">📅 ${d.toLocaleDateString('pt-BR')} ${d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})} ${googleIcon}</span>`;
-                } else if (listId === 'completed' && item.completedAt) {
-                    const d = new Date(item.completedAt);
-                    extra += `<span class="meta" style="color:var(--success)">Concluído: ${d.toLocaleDateString('pt-BR')} às ${d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}</span>`;
-                }
-                let buttons = '';
-                if (listId === 'inbox') buttons = `<span class="icon-btn icon-del" onclick="deleteItem(${idx})" title="Excluir">✖</span>`;
-                else if (listId === 'completed') buttons = `<span class="icon-btn icon-restore" onclick="restoreItem(${idx})">↩️</span><span class="icon-btn icon-del" onclick="deleteItem(${idx})">🗑️</span>`;
-                else buttons = `<span class="icon-btn icon-ai" onclick="breakdownProject(${idx})" title="IA: Quebrar em passos">⚡</span><span class="icon-btn icon-edit" onclick="editItem(${idx})">✏️</span><span class="icon-btn icon-check" onclick="completeItem(${idx})">✔</span><span class="icon-btn icon-del" onclick="deleteItem(${idx})">🗑️</span>`;
-                li.innerHTML = `<div><span class="task-text">${item.text} ${item.status === 'someday' || item.status === 'reference' ? '' : ''}</span>${extra}</div><div class="actions-group">${buttons}</div>`;
-                document.getElementById('l-'+listId).appendChild(li);
-            }
-        });
-        ids.forEach(id => { const el = document.getElementById('c-'+id); if(el) el.innerText = counts[id]; });
-        const btn = document.getElementById('btnProcess');
-        const btnMagic = document.getElementById('btnMagic');
-        document.getElementById('inboxCount').innerText = counts['inbox'];
-        if (counts['inbox'] > 0) { btn.classList.remove('hidden'); btnMagic.classList.remove('hidden'); } else { btn.classList.add('hidden'); btnMagic.classList.add('hidden'); document.getElementById('processing-zone').style.display = 'none'; }
-    }
-</script>
-</body>
-</html>
+    async function magicProcess() {
+        const inbox = items.filter(i => i.status === 'inbox');
+        if(!inbox.length) return alert("Nada na entrada.");
+        const txt = inbox.map(i => `- ${i.text} (ID: ${i.id})`).join('\n');
+        const prompt = `Analise GTD. Hoje: ${new Date().toLocaleString()}. Itens:\n${txt}\nJSON Output: [{"id":"...", "status":"(inbox|next|waiting|calendar|someday|project|trash|reference|do-now)", "note":"", "date":"YYYY-MM-DDTHH:MM"}]. Regras: Nome próprio=waiting; Data específica=calendar; <2min=do-now.`;
