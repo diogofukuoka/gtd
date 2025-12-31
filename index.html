@@ -66,12 +66,13 @@
         .modal-content { background: white; width: 90%; max-width: 400px; padding: 20px; border-radius: 10px; }
         #toast { visibility: hidden; min-width: 250px; background-color: #333; color: #fff; text-align: center; border-radius: 4px; padding: 16px; position: fixed; z-index: 9999; left: 50%; bottom: 30px; transform: translateX(-50%); }
         #toast.show { visibility: visible; animation: fadein 0.5s, fadeout 0.5s 2.5s; }
-        #loadingOverlay { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.8); z-index: 9999; align-items: center; justify-content: center; flex-direction: column; }
+        #loadingOverlay { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.9); z-index: 9999; align-items: center; justify-content: center; flex-direction: column; }
         .spinner { border: 4px solid #f3f3f3; border-top: 4px solid var(--accent); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; }
 
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         @keyframes fadein { from {bottom: 0; opacity: 0;} to {bottom: 30px; opacity: 1;} }
         @keyframes fadeout { from {bottom: 30px; opacity: 1;} to {bottom: 0; opacity: 0;} }
+        @keyframes pulse { 0% { opacity: 0.5; } 50% { opacity: 1; } 100% { opacity: 0.5; } }
         .hidden { display: none !important; }
     </style>
 </head>
@@ -153,7 +154,7 @@
     </div>
 </div>
 
-<div id="loadingOverlay"><div class="spinner"></div><p style="margin-top:10px">Processando...</p></div>
+<div id="loadingOverlay"><div class="spinner"></div><p style="margin-top:10px" id="loadingText">Conectando ao Drive...</p></div>
 <div id="toast">Notificação</div>
 
 <script src="https://apis.google.com/js/api.js"></script>
@@ -192,11 +193,13 @@
                 localStorage.setItem('gtd_token', JSON.stringify({ token: resp.access_token, exp: exp }));
                 gapi.client.setToken(resp);
                 updateStatus(true);
-                initDrive(true); 
-                startAutoSync();
+                // AO LOGAR: Força busca do arquivo para sincronizar novos dispositivos
+                forceInitDrive(); 
             }
         });
         render();
+        // Esconde loading inicial se não tiver auth
+        if(!localStorage.getItem('gtd_token')) document.getElementById('loadingOverlay').style.display = 'none';
     };
 
     function checkAuth() {
@@ -204,7 +207,14 @@
         if(stored && Date.now() < stored.exp) {
             gapi.client.setToken({ access_token: stored.token });
             updateStatus(true);
-            if(!driveFileId) initDrive(true); else { manualSync(); startAutoSync(); }
+            if(!driveFileId) forceInitDrive(); 
+            else { 
+                document.getElementById('loadingOverlay').style.display = 'none';
+                manualSync(); 
+                startAutoSync(); 
+            }
+        } else {
+            document.getElementById('loadingOverlay').style.display = 'none';
         }
     }
     
@@ -218,18 +228,33 @@
         document.getElementById('driveStatus').innerText = online ? 'Online' : 'Off';
     }
 
-    // --- DRIVE & SYNC (MERGE) ---
-    async function initDrive(forceSearch = false) {
+    // --- DRIVE BUSCA PROFUNDA ---
+    async function forceInitDrive() {
         if(!gapi.client.getToken()) return;
+        document.getElementById('loadingOverlay').style.display = 'flex';
+        document.getElementById('loadingText').innerText = "Buscando banco de dados...";
+        
         try {
+            // Busca por nome exato e não lixeira
             const list = await gapi.client.drive.files.list({ 
-                spaces: 'appDataFolder', q: `name = '${DB_NAME}' and trashed = false`, fields: 'files(id)' 
+                spaces: 'appDataFolder', 
+                q: `name = '${DB_NAME}' and trashed = false`,
+                fields: 'files(id, name, modifiedTime)',
+                orderBy: 'modifiedTime desc' 
             });
+            
             if(list.result.files.length > 0) {
-                driveFileId = list.result.files[0].id;
+                // Pega o mais recente se houver duplicatas
+                const file = list.result.files[0];
+                driveFileId = file.id;
                 localStorage.setItem('gtd_drive_file_id', driveFileId);
-                driveSync(true); 
+                console.log("Arquivo encontrado: " + driveFileId);
+                showToast("Banco de dados encontrado!");
+                // Baixa imediatamente
+                await driveSync(true); 
             } else {
+                console.log("Criando novo arquivo DB...");
+                showToast("Criando novo banco de dados...");
                 const create = await gapi.client.drive.files.create({
                     resource: { name: DB_NAME, parents: ['appDataFolder'] },
                     media: { mimeType: 'application/json', body: JSON.stringify(items) }
@@ -237,9 +262,16 @@
                 driveFileId = create.result.id;
                 localStorage.setItem('gtd_drive_file_id', driveFileId);
             }
-        } catch(e) { console.error(e); }
+            startAutoSync();
+        } catch(e) { 
+            console.error("Erro Init Drive:", e); 
+            showToast("Erro ao conectar Drive: " + e.message);
+        } finally {
+            document.getElementById('loadingOverlay').style.display = 'none';
+        }
     }
 
+    // --- SYNC ENGINE (SMART MERGE) ---
     async function driveSync(download = false) {
         if(!driveFileId || !gapi.client.getToken() || syncInProgress) return;
         syncInProgress = true;
@@ -247,48 +279,74 @@
         
         try {
             if(download) {
+                // DOWNLOAD (Nuvem -> Local)
                 const res = await gapi.client.drive.files.get({ fileId: driveFileId, alt: 'media' });
                 const remoteData = res.result || res.body;
+                
                 if(Array.isArray(remoteData)) { 
-                    mergeLists(remoteData);
-                    render();
+                    mergeLists(remoteData); // Fusão inteligente
+                    render(); 
                     await checkRemoteCalendarDeletions();
                 }
             } else {
+                // UPLOAD (Local -> Nuvem)
                 const body = JSON.stringify(items);
                 await fetch(`https://www.googleapis.com/upload/drive/v3/files/${driveFileId}?uploadType=media`, {
                     method: 'PATCH',
                     headers: { 'Authorization': `Bearer ${gapi.client.getToken().access_token}`, 'Content-Type': 'application/json' },
                     body: body
                 });
+                console.log("Upload realizado.");
             }
             document.getElementById('driveDot').className = 'dot online';
-        } catch(e) { console.error(e); document.getElementById('driveDot').className = 'dot error'; } 
-        finally { syncInProgress = false; }
+        } catch(e) { 
+            console.error("Sync Error:", e); 
+            document.getElementById('driveDot').className = 'dot error'; 
+            if(e.status === 404) forceInitDrive(); // Se arquivo sumiu, busca de novo
+        } finally {
+            syncInProgress = false;
+        }
     }
 
     function mergeLists(remoteItems) {
         const itemMap = new Map();
+        // Coloca locais no mapa
         items.forEach(i => itemMap.set(i.id, i));
+        
         let hasChanges = false;
+
+        // Mescla com remotos
         remoteItems.forEach(remote => {
             if (itemMap.has(remote.id)) {
                 const local = itemMap.get(remote.id);
-                if ((remote.updatedAt || 0) > (local.updatedAt || 0)) itemMap.set(remote.id, remote);
-            } else itemMap.set(remote.id, remote);
+                // Vence o que tiver updatedAt maior (mais recente)
+                if ((remote.updatedAt || 0) > (local.updatedAt || 0)) {
+                    itemMap.set(remote.id, remote);
+                }
+            } else {
+                // Novo item do remoto
+                itemMap.set(remote.id, remote);
+            }
         });
+
+        // Atualiza lista
         const newItems = Array.from(itemMap.values());
-        if (JSON.stringify(newItems) !== JSON.stringify(items) || newItems.length !== remoteItems.length) hasChanges = true;
-        items = newItems;
-        localStorage.setItem('gtd_data', JSON.stringify(items));
-        if(hasChanges) setTimeout(() => driveSync(false), 1000);
+        
+        // Verifica se mudou algo
+        if (JSON.stringify(newItems) !== JSON.stringify(items) || newItems.length !== items.length) {
+            items = newItems;
+            localStorage.setItem('gtd_data', JSON.stringify(items));
+            // Se houve merge, precisamos subir a versão unificada para a nuvem
+            setTimeout(() => driveSync(false), 500); 
+        }
     }
 
     function sync() {
         localStorage.setItem('gtd_data', JSON.stringify(items));
         render();
+        // Upload quase imediato
         if(window.syncTimer) clearTimeout(window.syncTimer);
-        window.syncTimer = setTimeout(() => driveSync(false), 500); 
+        window.syncTimer = setTimeout(() => driveSync(false), 200); 
     }
     
     function manualSync() { driveSync(true); }
@@ -296,13 +354,13 @@
     function startAutoSync() {
         if(autoSyncInterval) clearInterval(autoSyncInterval);
         autoSyncInterval = setInterval(() => {
-            if(gapi.client.getToken()) driveSync(true); 
+            if(gapi.client.getToken()) driveSync(true); // Baixa mudanças a cada 15s
         }, 15000);
     }
 
     function updateItemTimestamp(item) { item.updatedAt = Date.now(); }
 
-    // --- CALENDAR ---
+    // --- AGENDA ---
     async function checkRemoteCalendarDeletions() {
         if(!config.googleClientId || !gapi.client.getToken()) return;
         let changed = false;
@@ -360,7 +418,6 @@
 
     // --- INTERAÇÕES ---
     let longPressTimer;
-    
     function startMovePress(idx) {
         longPressTimer = setTimeout(() => {
             activeItemIdx = idx;
@@ -416,6 +473,7 @@
     async function breakdownItem(e, idx) {
         e.stopPropagation();
         if(!config.geminiKey) return alert("Configure a API Key do Gemini.");
+        document.getElementById('loadingText').innerText = "IA Pensando...";
         document.getElementById('loadingOverlay').style.display = 'flex';
         const item = items[idx];
         const prompt = `Quebre a tarefa "${item.text}" em etapas acionáveis. Retorne JSON Array strings.`;
