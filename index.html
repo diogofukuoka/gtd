@@ -37,7 +37,7 @@
         .list-card.drag-over { background-color: #e3f2fd; border: 2px dashed #3498db; }
         .list-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #dee2e6; padding-bottom: 8px; margin-bottom: 10px; cursor: pointer; }
         .list-header h3 { margin: 0; font-size: 1rem; }
-        .list-header:active { opacity: 0.6; background-color: #e9ecef; border-radius: 4px; } /* Feedback visual */
+        .list-header:active { opacity: 0.6; background-color: #e9ecef; border-radius: 4px; }
         .badge { background: #fff; padding: 2px 8px; border-radius: 10px; font-size: 0.75rem; font-weight: bold; border: 1px solid #ccc; }
         
         /* Cores das Listas */
@@ -106,7 +106,7 @@
         <div class="status-bar">
             <div><div id="driveDot" class="dot"></div><span id="driveStatus">Off</span></div>
             <div>
-                <button class="btn-config" onclick="driveSync(true)">☁️ Sync</button>
+                <button class="btn-config" onclick="manualSync()">☁️ Sync</button>
                 <button class="btn-config" onclick="openConfig()">⚙️ Config</button>
             </div>
         </div>
@@ -193,7 +193,7 @@
     let items = JSON.parse(localStorage.getItem('gtd_data')) || [];
     let config = JSON.parse(localStorage.getItem('gtd_config')) || { googleClientId: '', geminiKey: '' };
     
-    // Nomes padrão das listas (para o título do prompt)
+    // Nomes padrão das listas
     const listNames = {
         'inbox': '📥 Entrada',
         'do-now': '⚡ Fazer Agora',
@@ -240,7 +240,7 @@
         if(stored && Date.now() < stored.exp) {
             gapi.client.setToken({ access_token: stored.token });
             updateStatus(true);
-            setTimeout(() => driveSync(false), 2000); 
+            setTimeout(() => manualSync(), 2000); 
         }
     }
     
@@ -285,7 +285,8 @@
                     items = remote; 
                     localStorage.setItem('gtd_data', JSON.stringify(items)); 
                     render(); 
-                    showToast("Sincronizado!"); 
+                    // Checa se eventos foram deletados no GCal
+                    checkRemoteCalendarDeletions();
                 }
             } else {
                 const body = JSON.stringify(items);
@@ -305,24 +306,27 @@
         if(window.syncTimer) clearTimeout(window.syncTimer);
         window.syncTimer = setTimeout(() => driveSync(false), 3000);
     }
+    
+    function manualSync() {
+        driveSync(true); // Download and check
+    }
 
-    // --- CALENDAR LOGIC ---
+    // --- CALENDAR LOGIC (Atualizado para v7.9) ---
+    
+    // 1. App -> Agenda: Cria eventos, mas NUNCA deleta do Google
     async function handleCalendarEvents(item, oldStatus, newStatus) {
         if(!config.googleClientId || !gapi.client.getToken()) return;
 
-        // Remover evento
+        // Se sair da caixa de agendamento, apenas desvincula, NÃO deleta do GCal
         if ((oldStatus === 'calendar' || oldStatus === 'waiting') && 
             (newStatus !== 'calendar' && newStatus !== 'waiting')) {
+            // Remove o ID localmente para desvincular
             if (item.googleEventId) {
-                try {
-                    await gapi.client.calendar.events.delete({ calendarId: 'primary', eventId: item.googleEventId });
-                    showToast("Evento removido do Agenda.");
-                } catch(e) { console.log("Evento não encontrado."); }
                 delete item.googleEventId;
             }
         }
 
-        // Criar evento
+        // Se entrar em caixa de agendamento: Cria ou Atualiza
         if ((newStatus === 'calendar' || newStatus === 'waiting') && item.date) {
             try {
                 const start = new Date(item.date);
@@ -338,6 +342,7 @@
                     try {
                         await gapi.client.calendar.events.update({ calendarId: 'primary', eventId: item.googleEventId, resource: event });
                     } catch {
+                         // Se falhar update (ex: deletado remotamente), cria novo
                          const res = await gapi.client.calendar.events.insert({ calendarId: 'primary', resource: event });
                          item.googleEventId = res.result.id;
                     }
@@ -347,6 +352,46 @@
                 }
                 showToast("Evento criado/atualizado no Agenda!");
             } catch(e) { console.error("Erro Agenda:", e); }
+        }
+    }
+
+    // 2. Agenda -> App: Se deletar no Google, deleta do App
+    async function checkRemoteCalendarDeletions() {
+        if(!config.googleClientId || !gapi.client.getToken()) return;
+        
+        let changed = false;
+        // Filtra apenas tarefas que deveriam ter evento ativo
+        const syncedItems = items.filter(i => (i.status === 'calendar' || i.status === 'waiting') && i.googleEventId);
+
+        for (const item of syncedItems) {
+            try {
+                const res = await gapi.client.calendar.events.get({
+                    calendarId: 'primary',
+                    eventId: item.googleEventId
+                });
+                if (res.result.status === 'cancelled') {
+                    // Deletado no Google -> Deleta do App
+                    const idx = items.indexOf(item);
+                    if(idx > -1) {
+                        items.splice(idx, 1);
+                        changed = true;
+                    }
+                }
+            } catch (err) {
+                // 404 (Not Found) ou 410 (Gone) -> Deleta do App
+                if (err.status === 404 || err.status === 410) {
+                    const idx = items.indexOf(item);
+                    if(idx > -1) {
+                        items.splice(idx, 1);
+                        changed = true;
+                    }
+                }
+            }
+        }
+
+        if (changed) {
+            sync(); // Salva e renderiza
+            showToast("Sincronização: Tarefas removidas pois eventos foram excluídos.");
         }
     }
 
@@ -372,9 +417,8 @@
             
             if(text) {
                 const newItem = { id: Date.now(), text: text, status: listKey };
-                items.push(newItem);
                 
-                // Se for Calendário ou Delegar, precisamos pedir a data imediatamente
+                // Lógica de agendamento imediato
                 if (listKey === 'calendar' || listKey === 'waiting') {
                     const dateStr = await askDate();
                     if(dateStr) {
@@ -383,8 +427,16 @@
                             const note = prompt("Delegar para quem?");
                             if(note) newItem.note = "Delegado: " + note;
                         }
+                        // Adiciona primeiro, depois sync trata o evento
+                        items.push(newItem);
                         await handleCalendarEvents(newItem, null, listKey);
+                    } else {
+                        // Cancelou a data? Adiciona em 'next' ou cancela tudo? 
+                        // Melhor cancelar a criação se é calendário e não tem data.
+                        return; 
                     }
+                } else {
+                    items.push(newItem);
                 }
                 
                 sync();
@@ -392,7 +444,7 @@
         }, 600);
     }
 
-    // Função de editar Item (apenas via lápis agora)
+    // Função de editar Item
     function triggerEdit(idx) {
         activeItemIdx = idx;
         const item = items[idx];
@@ -400,7 +452,6 @@
         if(newTxt && newTxt !== item.text) { item.text = newTxt; sync(); }
     }
 
-    // Clique no botão Editar (Ícone)
     function editItemClick(e, idx) {
         e.stopPropagation();
         triggerEdit(idx);
@@ -431,7 +482,7 @@
         document.getElementById('loadingOverlay').style.display = 'none';
     }
 
-    // 4. Deletar
+    // 4. Deletar (Não deleta do GCal)
     function deleteItem(e, idx) {
         e.stopPropagation();
         if(confirm("Excluir tarefa?")) {
@@ -485,13 +536,12 @@
     function render() {
         const listKeys = ['inbox','do-now','next','project','calendar','waiting','someday','reference','completed'];
         const grid = document.querySelector('.lists-grid');
-        grid.innerHTML = ''; // Limpa e reconstrói
+        grid.innerHTML = ''; 
         
         const counts = {};
         
         listKeys.forEach(key => {
             counts[key] = 0;
-            // Cria container da lista
             const card = document.createElement('div');
             card.className = `list-card card-${key}`;
             if(key === 'completed') card.style.gridColumn = '1 / -1';
@@ -499,7 +549,6 @@
             card.ondrop = (e) => drop(e, key);
             card.ondragover = (e) => allowDrop(e);
 
-            // Cabeçalho da Lista
             const headerHtml = `
                 <div class="list-header" 
                      title="Segure para adicionar tarefa aqui"
@@ -517,7 +566,6 @@
             grid.appendChild(card);
         });
 
-        // Popula itens
         items.forEach((item, idx) => {
             const ul = document.getElementById('l-'+item.status);
             if(ul) {
@@ -526,7 +574,6 @@
                 li.draggable = true;
                 li.ondragstart = (e) => e.dataTransfer.setData("text", idx);
                 
-                // Evento Background (Mover - Clique Longo no LI)
                 li.onmousedown = () => startMovePress(idx);
                 li.ontouchstart = () => startMovePress(idx);
                 li.onmouseup = cancelPress; li.ontouchend = cancelPress; li.onmouseleave = cancelPress;
@@ -543,7 +590,6 @@
                     meta += `<span class="meta" style="color:var(--success)">Feito: ${d.toLocaleString()}</span>`;
                 }
 
-                // Layout
                 li.innerHTML = `
                     <div class="task-content">
                         <span class="task-text">${item.text}</span>
