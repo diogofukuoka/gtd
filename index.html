@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>GTD Fukuoka (v8.5)</title>
+    <title>GTD Fukuoka (v8.6)</title>
     <script src="https://bernardo-castilho.github.io/DragDropTouch/DragDropTouch.js"></script>
     <style>
         :root { --primary: #2c3e50; --accent: #3498db; --success: #27ae60; --warning: #f39c12; --danger: #e74c3c; --google: #4285f4; --gray: #95a5a6; --ai: #8e44ad; }
@@ -161,7 +161,7 @@
 <div id="loadingOverlay"><div class="spinner"></div><p style="margin-top:10px" id="loadingText">Carregando...</p></div>
 <div id="toast">Notificação</div>
 
-<!-- SCRIPT BASE -->
+<!-- SCRIPT BASE (UI e Lógica Local) -->
 <script>
     // Globals
     var items = [];
@@ -176,6 +176,7 @@
     var longPressTimer;
     var dateRes;
 
+    // --- CONFIG UI HANDLERS ---
     function openConfig() { 
         document.getElementById('cfgClientId').value = config.googleClientId || ''; 
         document.getElementById('cfgGemini').value = config.geminiKey || '';
@@ -195,6 +196,7 @@
         location.reload();
     }
 
+    // --- HISTORY RENDER ---
     function renderHistory() {
         const dl = document.getElementById('historyList');
         dl.innerHTML = '';
@@ -205,6 +207,7 @@
         });
     }
 
+    // --- RENDER MAIN ---
     function render() {
         const listKeys = Object.keys(listNames);
         const grid = document.querySelector('.lists-grid');
@@ -223,7 +226,7 @@
 
             card.innerHTML = `
                 <div class="list-header" 
-                     onmousedown="startListTitlePress('${key}')" ontouchstart="startListTitlePress('${key}')"
+                     onmousedown="startListTitlePress(event, '${key}')" ontouchstart="startListTitlePress(event, '${key}')"
                      onmouseup="cancelPress()" ontouchend="cancelPress()" onmouseleave="cancelPress()" ontouchmove="cancelPressOnMove(event)">
                     <h3>${listNames[key]}</h3>
                     <div>
@@ -295,6 +298,7 @@
         }
     }
 
+    // --- STANDARD ACTIONS ---
     function addToInbox() {
         const val = document.getElementById('inboxInput').value;
         if(val) { 
@@ -310,6 +314,7 @@
         }
     }
 
+    // --- INIT ---
     window.addEventListener('load', function() {
         render();
         renderHistory();
@@ -321,6 +326,7 @@
         setInterval(window.checkDueDates, 60000);
     });
 
+    // --- HELPERS ---
     function showToast(msg) { 
         const t = document.getElementById('toast'); t.innerText = msg; t.className = 'show'; 
         setTimeout(() => t.className = '', 3000); 
@@ -384,20 +390,25 @@
     }
     function allowDrop(ev) { ev.preventDefault(); ev.currentTarget.classList.add('drag-over'); }
     
+    // Lista Titulo Long Press CORRIGIDO
     function startListTitlePress(e, listKey) {
         if(e.touches && e.touches[0]) touchStartY = e.touches[0].clientY;
         longPressTimer = setTimeout(async () => {
             if(navigator.vibrate) navigator.vibrate(50);
-            const text = prompt(`Adicionar em "${listNames[listKey]}":`);
+            
+            // Correção: Usa listKey passado como argumento, não tenta ler do evento
+            const safeKey = listKey;
+            const text = prompt(`Adicionar em "${listNames[safeKey]}":`);
+            
             if(text) {
-                const newItem = { id: Date.now(), text: text, status: listKey, updatedAt: Date.now() };
-                if (listKey === 'calendar' || listKey === 'waiting') {
+                const newItem = { id: Date.now(), text: text, status: safeKey, updatedAt: Date.now() };
+                if (safeKey === 'calendar' || safeKey === 'waiting') {
                     const dateStr = await askDate();
                     if(dateStr) {
                         newItem.date = dateStr;
-                        if(listKey === 'waiting') { const n = prompt("Delegar?"); if(n) newItem.note = "Delegado: "+n; }
+                        if(safeKey === 'waiting') { const n = prompt("Delegar?"); if(n) newItem.note = "Delegado: "+n; }
                         items.push(newItem);
-                        if(window.handleCalendarEvents) await window.handleCalendarEvents(newItem, null, listKey);
+                        if(window.handleCalendarEvents) await window.handleCalendarEvents(newItem, null, safeKey);
                     } else return;
                 } else items.push(newItem);
                 if(window.sync) window.sync(); else render();
@@ -406,6 +417,7 @@
     }
     function clearCompletedHistory() { if(confirm("Limpar histórico?")) { items = items.filter(i=>i.status!=='completed'); if(window.sync) window.sync(); else render(); } }
     
+    // Processamento
     let procIdx = null;
     function startProcessing() {
         procIdx = items.findIndex(i => i.status === 'inbox');
@@ -428,10 +440,8 @@
         items.forEach(item => {
             if ((item.status === 'calendar' || item.status === 'waiting') && item.date) {
                 const taskDate = new Date(item.date);
-                // Se a data/hora já passou ou é agora
                 if (taskDate <= now) {
                     item.status = 'next';
-                    // Mantem googleEventId como histórico, mas a tarefa vai para Next
                     changed = true;
                 }
             }
@@ -443,6 +453,7 @@
     }
 </script>
 
+<!-- MODULE SCRIPT (Firebase & IA) -->
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getFirestore, doc, onSnapshot, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
