@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>GTD Fukuoka (v8.10)</title>
+    <title>GTD Fukuoka (v8.11)</title>
     <script src="https://bernardo-castilho.github.io/DragDropTouch/DragDropTouch.js"></script>
     <style>
         :root { --primary: #2c3e50; --accent: #3498db; --success: #27ae60; --warning: #f39c12; --danger: #e74c3c; --google: #4285f4; --gray: #95a5a6; --ai: #8e44ad; }
@@ -47,8 +47,22 @@
         .card-do-now { background-color: #fff3cd !important; border: 1px solid #ffeeba !important; }
 
         ul { list-style: none; padding: 0; margin: 0; min-height: 50px; flex-grow: 1; }
-        /* touch-action: pan-y é crucial para permitir rolagem vertical */
-        li { padding: 8px 10px; border: 1px solid #e9ecef; display: flex; justify-content: space-between; align-items: center; background: #ffffff; border-radius: 6px; margin-bottom: 6px; touch-action: pan-y; position: relative; gap: 8px; }
+        li { 
+            padding: 8px 10px; 
+            border: 1px solid #e9ecef; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            background: #ffffff; 
+            border-radius: 6px; 
+            margin-bottom: 6px; 
+            /* Essencial para permitir rolagem no mobile */
+            touch-action: pan-y; 
+            -webkit-user-select: none; /* Evita selecionar texto ao rolar */
+            user-select: none;
+            position: relative; 
+            gap: 8px; 
+        }
         li.ready-to-drag { background-color: #e3f2fd; border: 2px solid #3498db; transform: scale(1.02); z-index: 50; }
         li.dragging { opacity: 0.4; }
         
@@ -233,6 +247,7 @@
     var dateRes;
     var touchStartX = 0;
     var touchStartY = 0;
+    var isScrolling = false; // NOVA FLAG DE SEGURANÇA
 
     // --- CONFIG UI HANDLERS ---
     function openConfig() { 
@@ -385,8 +400,11 @@
         window.checkDueDates();
         setInterval(window.checkDueDates, 60000);
         
-        // Listener global de scroll para cancelar long press
-        window.addEventListener('scroll', cancelPress, true);
+        // Listener global de scroll para cancelar long press (MATADOR)
+        window.addEventListener('scroll', function() {
+            isScrolling = true;
+            clearTimeout(longPressTimer);
+        }, true);
     });
 
     // --- VOICE ---
@@ -411,7 +429,7 @@
         try { recognition.start(); } catch(e) { recognition.stop(); }
     }
 
-    // --- HELPERS (Scroll Logic Fix) ---
+    // --- HELPERS (Scroll Logic Perfected) ---
     function showToast(msg) { 
         const t = document.getElementById('toast'); t.innerText = msg; t.className = 'show'; 
         setTimeout(() => t.className = '', 3000); 
@@ -424,7 +442,9 @@
         if(e.touches && e.touches[0]) {
             var moveX = e.touches[0].clientX;
             var moveY = e.touches[0].clientY;
+            // Se mover > 10px, é scroll
             if(Math.abs(moveX - touchStartX) > 10 || Math.abs(moveY - touchStartY) > 10) {
+                isScrolling = true;
                 clearTimeout(longPressTimer);
             }
         }
@@ -433,17 +453,22 @@
     function askDate() { return new Promise(r => { document.getElementById('dateModal').style.display='flex'; dateRes = r; }); }
     function resolveDate(val) { document.getElementById('dateModal').style.display='none'; dateRes(val); }
     
-    // Captura coordenada inicial
+    // Captura coordenada inicial e inicia timer
     function startMovePress(e, idx) {
         if(e.touches && e.touches[0]) {
             touchStartX = e.touches[0].clientX;
             touchStartY = e.touches[0].clientY;
         }
-        // Tempo aumentado para 600ms para evitar falsos positivos
+        isScrolling = false; // Reseta flag
+        
         longPressTimer = setTimeout(() => {
-            activeItemIdx = idx; document.getElementById('moveModal').style.display = 'flex';
-            if(navigator.vibrate) navigator.vibrate(50);
-        }, 600);
+            // Só abre se não estiver rolando
+            if(!isScrolling) {
+                activeItemIdx = idx; 
+                document.getElementById('moveModal').style.display = 'flex';
+                if(navigator.vibrate) navigator.vibrate(50);
+            }
+        }, 600); // 600ms = Tolerância maior
     }
     
     function editItemClick(e, idx) { e.stopPropagation(); triggerEdit(idx); }
@@ -469,6 +494,7 @@
         const oldStatus = item.status;
         if(newStatus === 'completed') item.completedAt = new Date().toISOString(); else delete item.completedAt;
         
+        // Se vier da IA, usa data da IA, senão pergunta
         if(newStatus === 'calendar' || newStatus === 'waiting') {
             let dateStr = aiDate;
             if(!dateStr) dateStr = await askDate();
@@ -498,24 +524,26 @@
             touchStartX = e.touches[0].clientX;
             touchStartY = e.touches[0].clientY;
         }
+        isScrolling = false;
         longPressTimer = setTimeout(async () => {
-            if(navigator.vibrate) navigator.vibrate(50);
-            
-            const safeKey = listKey;
-            const text = prompt(`Adicionar em "${listNames[safeKey]}":`);
-            
-            if(text) {
-                const newItem = { id: Date.now(), text: text, status: safeKey, updatedAt: Date.now() };
-                if (safeKey === 'calendar' || safeKey === 'waiting') {
-                    const dateStr = await askDate();
-                    if(dateStr) {
-                        newItem.date = dateStr;
-                        if(safeKey === 'waiting') { const n = prompt("Delegar?"); if(n) newItem.note = "Delegado: "+n; }
-                        items.push(newItem);
-                        if(window.handleCalendarEvents) await window.handleCalendarEvents(newItem, null, safeKey);
-                    } else return;
-                } else items.push(newItem);
-                if(window.sync) window.sync(); else render();
+            if(!isScrolling) {
+                if(navigator.vibrate) navigator.vibrate(50);
+                const safeKey = listKey;
+                const text = prompt(`Adicionar em "${listNames[safeKey]}":`);
+                
+                if(text) {
+                    const newItem = { id: Date.now(), text: text, status: safeKey, updatedAt: Date.now() };
+                    if (safeKey === 'calendar' || safeKey === 'waiting') {
+                        const dateStr = await askDate();
+                        if(dateStr) {
+                            newItem.date = dateStr;
+                            if(safeKey === 'waiting') { const n = prompt("Delegar?"); if(n) newItem.note = "Delegado: "+n; }
+                            items.push(newItem);
+                            if(window.handleCalendarEvents) await window.handleCalendarEvents(newItem, null, safeKey);
+                        } else return;
+                    } else items.push(newItem);
+                    if(window.sync) window.sync(); else render();
+                }
             }
         }, 600);
     }
@@ -547,7 +575,7 @@
                 document.getElementById('processing-zone').style.display = 'none';
                 showToast("Entrada zerada!");
             }
-        }, 500); 
+        }, 500); // Pequeno delay para salvar
     }
 
     // --- AUTO-MOVE FUNCTION ---
@@ -657,6 +685,7 @@
         document.getElementById('loadingText').innerText = "IA Processando Caixa de Entrada...";
         document.getElementById('loadingOverlay').style.display = 'flex';
 
+        // Constroi prompt
         const tasksTxt = inboxItems.map(i => `- ID:${i.id} | TEXTO: ${i.text}`).join('\n');
         const now = new Date().toISOString();
         
