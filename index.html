@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>GTD Fukuoka</title>
+    <title>GTD Fukuoka (v8.0 Firebase)</title>
     <script src="https://bernardo-castilho.github.io/DragDropTouch/DragDropTouch.js"></script>
     <style>
         :root { --primary: #2c3e50; --accent: #3498db; --success: #27ae60; --warning: #f39c12; --danger: #e74c3c; --google: #4285f4; --gray: #95a5a6; --ai: #8e44ad; }
@@ -14,11 +14,10 @@
         header { text-align: center; margin-bottom: 20px; }
         h1 { margin: 0; color: var(--primary); font-size: 1.5rem; }
         
-        .status-bar { background: #f8f9fa; border: 1px solid #e9ecef; padding: 10px; border-radius: 8px; margin-top: 15px; font-size: 0.85rem; display: flex; justify-content: space-between; align-items: center; }
+        .status-bar { background: #f8f9fa; border: 1px solid #e9ecef; padding: 10px; border-radius: 8px; margin-top: 15px; font-size: 0.85rem; display: flex; justify-content: space-between; align-items: center; gap: 10px; }
         .dot { width: 10px; height: 10px; border-radius: 50%; background: #ccc; display:inline-block; margin-right:5px; }
         .dot.online { background: var(--success); box-shadow: 0 0 5px var(--success); }
         .dot.syncing { background: var(--warning); animation: pulse 1s infinite; }
-        .dot.error { background: var(--danger); }
         
         button { padding: 0 15px; height: 40px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; transition: 0.2s; }
         button:active { transform: scale(0.96); }
@@ -35,7 +34,7 @@
         .list-card.drag-over { background-color: #e3f2fd; border: 2px dashed #3498db; }
         .list-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #dee2e6; padding-bottom: 8px; margin-bottom: 10px; cursor: pointer; }
         .list-header h3 { margin: 0; font-size: 1rem; }
-        .list-header:active { opacity: 0.6; background-color: #e9ecef; border-radius: 4px; }
+        .list-header:active { opacity: 0.6; background-color: #e9ecef; }
         .badge { background: #fff; padding: 2px 8px; border-radius: 10px; font-size: 0.75rem; font-weight: bold; border: 1px solid #ccc; }
         
         .card-inbox { border-top: 4px solid var(--danger); }
@@ -66,12 +65,13 @@
         .modal-content { background: white; width: 90%; max-width: 400px; padding: 20px; border-radius: 10px; }
         #toast { visibility: hidden; min-width: 250px; background-color: #333; color: #fff; text-align: center; border-radius: 4px; padding: 16px; position: fixed; z-index: 9999; left: 50%; bottom: 30px; transform: translateX(-50%); }
         #toast.show { visibility: visible; animation: fadein 0.5s, fadeout 0.5s 2.5s; }
-        #loadingOverlay { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.95); z-index: 9999; align-items: center; justify-content: center; flex-direction: column; }
+        #loadingOverlay { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.9); z-index: 9999; align-items: center; justify-content: center; flex-direction: column; }
         .spinner { border: 4px solid #f3f3f3; border-top: 4px solid var(--accent); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; }
 
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         @keyframes fadein { from {bottom: 0; opacity: 0;} to {bottom: 30px; opacity: 1;} }
         @keyframes fadeout { from {bottom: 30px; opacity: 1;} to {bottom: 0; opacity: 0;} }
+        @keyframes pulse { 0% { opacity: 0.5; } 50% { opacity: 1; } 100% { opacity: 0.5; } }
         .hidden { display: none !important; }
     </style>
 </head>
@@ -81,9 +81,9 @@
     <header>
         <h1>GTD Fukuoka</h1>
         <div class="status-bar">
-            <div><div id="driveDot" class="dot"></div><span id="driveStatus">Off</span></div>
+            <div><div id="dbDot" class="dot"></div><span id="dbStatus">DB: Off</span></div>
             <div>
-                <button class="btn-config" onclick="manualSync()">☁️ Sync</button>
+                <button class="btn-config" id="btnAuthCalendar" onclick="handleAuthClick()">📅 Conectar Agenda</button>
                 <button class="btn-config" onclick="openConfig()">⚙️ Config</button>
             </div>
         </div>
@@ -131,14 +131,17 @@
 
 <div id="configModal" class="modal-overlay">
     <div class="modal-content">
-        <h3>Configurações</h3>
-        <label>Google Client ID:</label><input type="text" id="cfgClientId" placeholder="Obrigatório">
-        <button onclick="handleAuthClick()" style="width:100%; margin:10px 0; background:var(--google); color:white;">Conectar Google Drive</button>
-        <button onclick="handleSignOut()" style="width:100%; margin-bottom:10px; background:#666; color:white;">Sair / Trocar Conta</button>
+        <h3>Configurações (Firebase)</h3>
+        <p style="font-size:0.8rem; color:#666;">Copie o config do console do Firebase</p>
+        <label>API Key:</label><input type="text" id="fbApiKey">
+        <label>Auth Domain:</label><input type="text" id="fbAuthDomain">
+        <label>Project ID:</label><input type="text" id="fbProjectId">
+        <hr>
+        <label>Google Client ID (Agenda):</label><input type="text" id="cfgClientId">
         <label>Gemini API Key (IA):</label><input type="password" id="cfgGemini">
         <div style="text-align:right; margin-top:15px;">
             <button class="btn-config" onclick="closeConfig()">Fechar</button>
-            <button class="btn-config" style="background:var(--success); color:white;" onclick="saveConfig()">Salvar</button>
+            <button class="btn-config" style="background:var(--success); color:white;" onclick="saveConfig()">Salvar e Recarregar</button>
         </div>
     </div>
 </div>
@@ -157,210 +160,123 @@
 <div id="loadingOverlay"><div class="spinner"></div><p style="margin-top:10px" id="loadingText">Carregando...</p></div>
 <div id="toast">Notificação</div>
 
+<!-- LIBRARIES -->
 <script src="https://apis.google.com/js/api.js"></script>
 <script src="https://accounts.google.com/gsi/client"></script>
-<script>
-    // --- ESTADO & CONFIG ---
-    let items = JSON.parse(localStorage.getItem('gtd_data')) || [];
-    let config = JSON.parse(localStorage.getItem('gtd_config')) || { googleClientId: '', geminiKey: '' };
-    
-    const listNames = {
-        'inbox': '📥 Entrada', 'do-now': '⚡ Fazer Agora', 'next': '🔥 Próximas Ações',
-        'project': '📂 Projetos', 'calendar': '📅 Calendário', 'waiting': '⏳ Delegar',
-        'someday': '💡 Talvez', 'reference': '📚 Referência', 'completed': '✅ Concluídas'
-    };
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getFirestore, doc, onSnapshot, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-    let activeItemIdx = null; 
-    let autoSyncInterval;
-    let syncInProgress = false;
+    // --- GLOBALS ---
+    let items = [];
+    let config = JSON.parse(localStorage.getItem('gtd_config')) || {};
+    let db, unsubscribe;
     
-    // --- GOOGLE API ---
-    let tokenClient;
-    let driveFileId = localStorage.getItem('gtd_drive_file_id');
-    const SCOPES = 'https://www.googleapis.com/auth/calendar.events https://www.googleapis.com/auth/drive.appdata';
-    const DB_NAME = 'gtd_fukuoka_v7_db.json';
-
-    window.onload = () => {
-        // Validação de ambiente
-        if(window.location.protocol === 'file:') {
-            alert("Atenção: O Google não permite login a partir de arquivos locais (file://). Use um servidor local (localhost) ou o GitHub Pages.");
+    // --- FIREBASE INIT ---
+    if(config.fbApiKey && config.fbProjectId) {
+        try {
+            const firebaseConfig = {
+                apiKey: config.fbApiKey,
+                authDomain: config.fbAuthDomain,
+                projectId: config.fbProjectId
+            };
+            const app = initializeApp(firebaseConfig);
+            db = getFirestore(app);
+            initRealtimeSync();
+        } catch(e) {
+            console.error("Erro Firebase", e);
+            document.getElementById('dbStatus').innerText = "Erro Config";
+            document.getElementById('dbDot').className = "dot error";
         }
+    } else {
+        document.getElementById('dbStatus').innerText = "Sem Config";
+        document.getElementById('loadingOverlay').style.display = 'none';
+        // Se não tem config, mostra modal
+        if(!items.length) openConfig();
+    }
 
-        gapi.load('client', async () => {
-            await gapi.client.init({ discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest', 'https://www.googleapis.com/discovery/v1/apis/drive/v3/rest'] });
-            setTimeout(checkAuth, 500); // Delay de segurança
-        });
-        
-        tokenClient = google.accounts.oauth2.initTokenClient({
-            client_id: config.googleClientId, scope: SCOPES,
-            callback: (resp) => {
-                if(resp.error) return console.error(resp);
-                const exp = Date.now() + (resp.expires_in * 1000);
-                localStorage.setItem('gtd_token', JSON.stringify({ token: resp.access_token, exp: exp }));
-                gapi.client.setToken(resp);
-                updateStatus(true);
-                forceInitDrive(); 
-            }
-        });
-        render();
-    };
-
-    async function checkAuth() {
-        const stored = JSON.parse(localStorage.getItem('gtd_token'));
-        if(stored && Date.now() < stored.exp) {
-            gapi.client.setToken({ access_token: stored.token });
-            
-            // Teste de validade real do token
-            try {
-                await gapi.client.drive.files.list({ pageSize: 1, fields: 'files(id)' });
-                updateStatus(true);
-                if(!driveFileId) forceInitDrive(); 
-                else { 
-                    document.getElementById('loadingOverlay').style.display = 'none';
-                    manualSync(); 
-                    startAutoSync(); 
+    function initRealtimeSync() {
+        document.getElementById('dbStatus').innerText = "Conectando...";
+        // Escuta em tempo real o documento 'my_tasks' na coleção 'gtd'
+        unsubscribe = onSnapshot(doc(db, "gtd", "my_tasks"), (docSnap) => {
+            if (docSnap.exists()) {
+                const data = docSnap.data();
+                if(data.tasks) {
+                    items = data.tasks;
+                    render();
+                    // Verifica agenda se houver mudança remota
+                    checkRemoteCalendarDeletions(); 
                 }
-            } catch(e) {
-                // Se der erro 401 (não autorizado), limpa tudo
-                console.warn("Token inválido, fazendo logout...");
-                handleSignOut();
-                document.getElementById('loadingOverlay').style.display = 'none';
+                document.getElementById('dbDot').className = "dot online";
+                document.getElementById('dbStatus').innerText = "Online (Tempo Real)";
+            } else {
+                // Cria documento se não existe
+                setDoc(doc(db, "gtd", "my_tasks"), { tasks: [] });
             }
-        } else {
             document.getElementById('loadingOverlay').style.display = 'none';
+        }, (error) => {
+            console.error("Erro Sync:", error);
+            document.getElementById('dbDot').className = "dot error";
+            document.getElementById('dbStatus').innerText = "Offline";
+            document.getElementById('loadingOverlay').style.display = 'none';
+        });
+    }
+
+    // Salva no Firebase (Isso dispara atualização em todos os outros dispositivos)
+    window.sync = function() {
+        if(db) {
+            document.getElementById('dbDot').className = "dot syncing";
+            setDoc(doc(db, "gtd", "my_tasks"), { tasks: items })
+                .then(() => document.getElementById('dbDot').className = "dot online")
+                .catch(e => console.error("Erro ao salvar", e));
         }
+        render(); // Renderiza local instantaneamente
+    }
+
+    // --- GOOGLE CALENDAR ---
+    let tokenClient;
+    const SCOPES = 'https://www.googleapis.com/auth/calendar.events';
+
+    window.initGapi = function() {
+        gapi.load('client', async () => {
+            await gapi.client.init({ discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest'] });
+            
+            tokenClient = google.accounts.oauth2.initTokenClient({
+                client_id: config.googleClientId, scope: SCOPES,
+                callback: (resp) => {
+                    if(resp.error) return console.error(resp);
+                    const exp = Date.now() + (resp.expires_in * 1000);
+                    localStorage.setItem('gtd_cal_token', JSON.stringify({ token: resp.access_token, exp: exp }));
+                    gapi.client.setToken(resp);
+                    document.getElementById('btnAuthCalendar').innerText = "📅 Agenda OK";
+                    document.getElementById('btnAuthCalendar').style.background = "var(--success)";
+                    document.getElementById('btnAuthCalendar').style.color = "white";
+                }
+            });
+
+            // Check auto-login
+            const stored = JSON.parse(localStorage.getItem('gtd_cal_token'));
+            if(stored && Date.now() < stored.exp) {
+                gapi.client.setToken({ access_token: stored.token });
+                document.getElementById('btnAuthCalendar').innerText = "📅 Agenda OK";
+                document.getElementById('btnAuthCalendar').style.background = "var(--success)";
+                document.getElementById('btnAuthCalendar').style.color = "white";
+                checkRemoteCalendarDeletions();
+            }
+        });
     }
     
-    function handleAuthClick() {
-        if(!config.googleClientId) return alert("Salve o Client ID primeiro.");
+    // Inicia GAPI se tiver config
+    if(config.googleClientId) window.initGapi();
+
+    window.handleAuthClick = function() {
+        if(!config.googleClientId) return alert("Configure o Client ID da Agenda primeiro.");
         tokenClient.requestAccessToken({prompt: ''});
     }
 
-    function handleSignOut() {
-        const token = gapi.client.getToken();
-        if (token !== null) {
-            google.accounts.oauth2.revoke(token.access_token);
-            gapi.client.setToken('');
-            localStorage.removeItem('gtd_token');
-            localStorage.removeItem('gtd_drive_file_id');
-            updateStatus(false);
-            showToast("Desconectado.");
-            location.reload();
-        }
-    }
-
-    function updateStatus(online) {
-        document.getElementById('driveDot').className = online ? 'dot online' : 'dot';
-        document.getElementById('driveStatus').innerText = online ? 'Online' : 'Off';
-    }
-
-    // --- DRIVE & SYNC ---
-    async function forceInitDrive() {
-        if(!gapi.client.getToken()) return;
-        document.getElementById('loadingOverlay').style.display = 'flex';
-        document.getElementById('loadingText').innerText = "Buscando dados...";
-        
-        try {
-            const list = await gapi.client.drive.files.list({ 
-                spaces: 'appDataFolder', 
-                q: `name = '${DB_NAME}' and trashed = false`,
-                fields: 'files(id, modifiedTime)',
-                orderBy: 'modifiedTime desc'
-            });
-            
-            if(list.result.files.length > 0) {
-                driveFileId = list.result.files[0].id;
-                localStorage.setItem('gtd_drive_file_id', driveFileId);
-                console.log("DB Encontrado: " + driveFileId);
-                await driveSync(true); 
-            } else {
-                console.log("Criando novo DB...");
-                const create = await gapi.client.drive.files.create({
-                    resource: { name: DB_NAME, parents: ['appDataFolder'] },
-                    media: { mimeType: 'application/json', body: JSON.stringify(items) }
-                });
-                driveFileId = create.result.id;
-                localStorage.setItem('gtd_drive_file_id', driveFileId);
-            }
-            startAutoSync();
-        } catch(e) { 
-            console.error("Erro Drive:", e); 
-            showToast("Erro de conexão Drive.");
-        } finally {
-            document.getElementById('loadingOverlay').style.display = 'none';
-        }
-    }
-
-    async function driveSync(download = false) {
-        if(!driveFileId || !gapi.client.getToken() || syncInProgress) return;
-        syncInProgress = true;
-        document.getElementById('driveDot').className = 'dot syncing';
-        
-        try {
-            if(download) {
-                const res = await gapi.client.drive.files.get({ fileId: driveFileId, alt: 'media' });
-                const remoteData = res.result || res.body;
-                if(Array.isArray(remoteData)) { 
-                    mergeLists(remoteData);
-                    render(); 
-                    await checkRemoteCalendarDeletions();
-                }
-            } else {
-                const body = JSON.stringify(items);
-                await fetch(`https://www.googleapis.com/upload/drive/v3/files/${driveFileId}?uploadType=media`, {
-                    method: 'PATCH',
-                    headers: { 'Authorization': `Bearer ${gapi.client.getToken().access_token}`, 'Content-Type': 'application/json' },
-                    body: body
-                });
-            }
-            document.getElementById('driveDot').className = 'dot online';
-        } catch(e) { 
-            console.error("Sync Error:", e); 
-            document.getElementById('driveDot').className = 'dot error';
-            if(e.status === 404) forceInitDrive(); 
-        } finally {
-            syncInProgress = false;
-        }
-    }
-
-    function mergeLists(remoteItems) {
-        const itemMap = new Map();
-        items.forEach(i => itemMap.set(i.id, i));
-        let hasChanges = false;
-        remoteItems.forEach(remote => {
-            if (itemMap.has(remote.id)) {
-                const local = itemMap.get(remote.id);
-                if ((remote.updatedAt || 0) > (local.updatedAt || 0)) itemMap.set(remote.id, remote);
-            } else itemMap.set(remote.id, remote);
-        });
-        const newItems = Array.from(itemMap.values());
-        if (JSON.stringify(newItems) !== JSON.stringify(items) || newItems.length !== remoteItems.length) hasChanges = true;
-        items = newItems;
-        localStorage.setItem('gtd_data', JSON.stringify(items));
-        if(hasChanges) setTimeout(() => driveSync(false), 1000);
-    }
-
-    function sync() {
-        localStorage.setItem('gtd_data', JSON.stringify(items));
-        render();
-        if(window.syncTimer) clearTimeout(window.syncTimer);
-        window.syncTimer = setTimeout(() => driveSync(false), 500); 
-    }
-    
-    function manualSync() { driveSync(true); }
-    
-    function startAutoSync() {
-        if(autoSyncInterval) clearInterval(autoSyncInterval);
-        autoSyncInterval = setInterval(() => {
-            if(gapi.client.getToken()) driveSync(true); 
-        }, 15000);
-    }
-
-    function updateItemTimestamp(item) { item.updatedAt = Date.now(); }
-
-    // --- CALENDAR ---
+    // --- AGENDA LOGIC ---
     async function checkRemoteCalendarDeletions() {
-        if(!config.googleClientId || !gapi.client.getToken()) return;
+        if(!gapi.client.getToken()) return;
         let changed = false;
         const syncedItems = items.filter(i => (i.status === 'calendar' || i.status === 'waiting') && i.googleEventId);
 
@@ -372,7 +288,7 @@
                 if (err.status === 404 || err.status === 410) { deleteLocalTask(item); changed = true; }
             }
         }
-        if (changed) sync(); 
+        if (changed) window.sync();
     }
 
     function deleteLocalTask(item) {
@@ -380,15 +296,16 @@
         if(idx > -1) items.splice(idx, 1);
     }
 
-    async function handleCalendarEvents(item, oldStatus, newStatus) {
-        if(!config.googleClientId || !gapi.client.getToken()) return;
+    window.handleCalendarEvents = async function(item, oldStatus, newStatus) {
+        if(!gapi.client.getToken()) return; // Se não tiver logado na agenda, só ignora
 
+        // Se sair da caixa de agendamento: Desvincula apenas
         if ((oldStatus === 'calendar' || oldStatus === 'waiting') && (newStatus !== 'calendar' && newStatus !== 'waiting')) {
             if (item.googleEventId) delete item.googleEventId;
         }
 
+        // Se entrar/manter em caixa de agendamento: Cria/Atualiza
         if ((newStatus === 'calendar' || newStatus === 'waiting') && item.date) {
-            updateItemTimestamp(item);
             try {
                 const start = new Date(item.date);
                 const end = new Date(start.getTime() + 30 * 60000); 
@@ -414,142 +331,19 @@
         }
     }
 
-    // --- INTERAÇÕES ---
+    // --- STANDARD APP LOGIC (UI, CLICKS) ---
+    const listNames = {
+        'inbox': '📥 Entrada', 'do-now': '⚡ Fazer Agora', 'next': '🔥 Próximas Ações',
+        'project': '📂 Projetos', 'calendar': '📅 Calendário', 'waiting': '⏳ Delegar',
+        'someday': '💡 Talvez', 'reference': '📚 Referência', 'completed': '✅ Concluídas'
+    };
+    let activeItemIdx = null;
     let longPressTimer;
-    
-    function startMovePress(idx) {
-        longPressTimer = setTimeout(() => {
-            activeItemIdx = idx;
-            document.getElementById('moveModal').style.display = 'flex';
-            if(navigator.vibrate) navigator.vibrate(50);
-        }, 500);
-    }
 
-    function startListTitlePress(listKey) {
-        longPressTimer = setTimeout(async () => {
-            if(navigator.vibrate) navigator.vibrate(50);
-            const listName = listNames[listKey];
-            const text = prompt(`Adicionar nova tarefa em "${listName}":`);
-            
-            if(text) {
-                const newItem = { id: Date.now(), text: text, status: listKey, updatedAt: Date.now() };
-                if (listKey === 'calendar' || listKey === 'waiting') {
-                    const dateStr = await askDate();
-                    if(dateStr) {
-                        newItem.date = dateStr;
-                        if(listKey === 'waiting') {
-                            const note = prompt("Delegar para quem?");
-                            if(note) newItem.note = "Delegado: " + note;
-                        }
-                        items.push(newItem);
-                        await handleCalendarEvents(newItem, null, listKey);
-                    } else return;
-                } else {
-                    items.push(newItem);
-                }
-                sync();
-            }
-        }, 600);
-    }
-
-    async function triggerEdit(idx) {
-        activeItemIdx = idx;
-        const item = items[idx];
-        const newTxt = prompt("Editar Título da Tarefa:", item.text);
-        if(newTxt && newTxt !== item.text) { 
-            item.text = newTxt; 
-            updateItemTimestamp(item);
-            if(item.status === 'calendar' || item.status === 'waiting') {
-                await handleCalendarEvents(item, item.status, item.status);
-            }
-            sync(); 
-        }
-    }
-
-    function editItemClick(e, idx) { e.stopPropagation(); triggerEdit(idx); }
-    function cancelPress() { clearTimeout(longPressTimer); }
-
-    async function breakdownItem(e, idx) {
-        e.stopPropagation();
-        if(!config.geminiKey) return alert("Configure a API Key do Gemini.");
-        document.getElementById('loadingText').innerText = "IA Pensando...";
-        document.getElementById('loadingOverlay').style.display = 'flex';
-        const item = items[idx];
-        const prompt = `Quebre a tarefa "${item.text}" em etapas acionáveis. Retorne JSON Array strings.`;
-        
-        try {
-            const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${config.geminiKey}`, {
-                method: 'POST', headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
-            });
-            const data = await res.json();
-            const txt = data.candidates[0].content.parts[0].text;
-            const steps = JSON.parse(txt.replace(/```json|```/g, '').trim());
-            steps.forEach(step => items.push({ 
-                id: Date.now() + Math.random(), 
-                text: step, 
-                status: 'next', 
-                note: `De: ${item.text}`,
-                updatedAt: Date.now() 
-            }));
-            sync();
-            showToast("Tarefas criadas!");
-        } catch(e) { alert("Erro IA: " + e); }
-        document.getElementById('loadingOverlay').style.display = 'none';
-    }
-
-    function deleteItem(e, idx) {
-        e.stopPropagation();
-        if(confirm("Excluir tarefa?")) {
-            const item = items[idx];
-            handleCalendarEvents(item, item.status, 'trash'); 
-            items.splice(idx, 1);
-            sync();
-        }
-    }
-    
-    async function finalizeCtx(newStatus) {
-        document.getElementById('moveModal').style.display = 'none';
-        const item = items[activeItemIdx];
-        await changeItemStatus(item, newStatus);
-    }
-
-    async function drop(ev, newStatus) {
-        ev.preventDefault();
-        ev.currentTarget.classList.remove('drag-over');
-        const idx = ev.dataTransfer.getData("text");
-        if(idx !== "") { await changeItemStatus(items[idx], newStatus); }
-    }
-    function allowDrop(ev) { ev.preventDefault(); ev.currentTarget.classList.add('drag-over'); }
-
-    async function changeItemStatus(item, newStatus) {
-        const oldStatus = item.status;
-        item.updatedAt = Date.now();
-        if(newStatus === 'completed') item.completedAt = new Date().toISOString();
-        else delete item.completedAt;
-
-        if(newStatus === 'calendar' || newStatus === 'waiting') {
-            const dateStr = await askDate();
-            if(!dateStr) return; 
-            item.date = dateStr;
-            if(newStatus === 'waiting') {
-                const note = prompt("Delegar para quem?");
-                if(note) item.note = "Delegado: " + note;
-            }
-        }
-        await handleCalendarEvents(item, oldStatus, newStatus);
-        item.status = newStatus;
-        sync();
-    }
-
-    let dateRes;
-    function askDate() { return new Promise(r => { document.getElementById('dateModal').style.display='flex'; dateRes = r; }); }
-    function resolveDate(val) { document.getElementById('dateModal').style.display='none'; dateRes(val); }
-
-    // --- RENDER ---
-    function render() {
-        const listKeys = ['inbox','do-now','next','project','calendar','waiting','someday','reference','completed'];
+    window.render = function() {
+        const listKeys = Object.keys(listNames);
         const grid = document.querySelector('.lists-grid');
+        if(!grid) return;
         grid.innerHTML = ''; 
         const counts = {};
         
@@ -558,10 +352,12 @@
             const card = document.createElement('div');
             card.className = `list-card card-${key}`;
             if(key === 'completed') card.style.gridColumn = '1 / -1';
+            
+            // Drag Events
             card.ondrop = (e) => drop(e, key);
             card.ondragover = (e) => allowDrop(e);
 
-            const headerHtml = `
+            card.innerHTML = `
                 <div class="list-header" 
                      onmousedown="startListTitlePress('${key}')" ontouchstart="startListTitlePress('${key}')"
                      onmouseup="cancelPress()" ontouchend="cancelPress()" onmouseleave="cancelPress()" ontouchmove="cancelPress()">
@@ -573,7 +369,6 @@
                 </div>
                 <ul id="l-${key}"></ul>
             `;
-            card.innerHTML = headerHtml;
             grid.appendChild(card);
         });
 
@@ -584,6 +379,7 @@
                 const li = document.createElement('li');
                 li.draggable = true;
                 li.ondragstart = (e) => e.dataTransfer.setData("text", idx);
+                
                 li.onmousedown = () => startMovePress(idx);
                 li.ontouchstart = () => startMovePress(idx);
                 li.onmouseup = cancelPress; li.ontouchend = cancelPress; li.onmouseleave = cancelPress; li.ontouchmove = cancelPress;
@@ -632,13 +428,14 @@
         }
     }
 
-    function addToInbox() {
+    // --- INPUTS & ACTIONS ---
+    window.addToInbox = function() {
         const val = document.getElementById('inboxInput').value;
         if(val) { items.push({id:Date.now(), text:val, status:'inbox', updatedAt:Date.now()}); document.getElementById('inboxInput').value=''; sync(); }
     }
-    
+
     let procIdx = null;
-    function startProcessing() {
+    window.startProcessing = function() {
         procIdx = items.findIndex(i => i.status === 'inbox');
         if(procIdx > -1) {
             document.getElementById('processing-zone').style.display = 'block';
@@ -646,7 +443,8 @@
             activeItemIdx = procIdx; 
         }
     }
-    function handleActionable(bool) {
+    
+    window.handleActionable = function(bool) {
         if(!bool) { 
             if(confirm("É Lixo? (Cancelar para Talvez/Ref)")) { changeItemStatus(items[procIdx], 'trash'); } 
             else { changeItemStatus(items[procIdx], 'someday'); } 
@@ -655,24 +453,162 @@
         }
     }
 
-    function openConfig() { 
+    // --- INTERACTIONS ---
+    window.startMovePress = function(idx) {
+        longPressTimer = setTimeout(() => {
+            activeItemIdx = idx;
+            document.getElementById('moveModal').style.display = 'flex';
+            if(navigator.vibrate) navigator.vibrate(50);
+        }, 500);
+    }
+
+    window.startListTitlePress = function(listKey) {
+        longPressTimer = setTimeout(async () => {
+            if(navigator.vibrate) navigator.vibrate(50);
+            const text = prompt(`Adicionar nova tarefa em "${listNames[listKey]}":`);
+            
+            if(text) {
+                const newItem = { id: Date.now(), text: text, status: listKey, updatedAt: Date.now() };
+                if (listKey === 'calendar' || listKey === 'waiting') {
+                    const dateStr = await askDate();
+                    if(dateStr) {
+                        newItem.date = dateStr;
+                        if(listKey === 'waiting') {
+                            const note = prompt("Delegar para quem?");
+                            if(note) newItem.note = "Delegado: " + note;
+                        }
+                        items.push(newItem);
+                        await handleCalendarEvents(newItem, null, listKey);
+                    } else return;
+                } else {
+                    items.push(newItem);
+                }
+                sync();
+            }
+        }, 600);
+    }
+
+    async function triggerEdit(idx) {
+        activeItemIdx = idx;
+        const item = items[idx];
+        const newTxt = prompt("Editar Título da Tarefa:", item.text);
+        if(newTxt && newTxt !== item.text) { 
+            item.text = newTxt; 
+            item.updatedAt = Date.now();
+            if(item.status === 'calendar' || item.status === 'waiting') {
+                await handleCalendarEvents(item, item.status, item.status);
+            }
+            sync(); 
+        }
+    }
+
+    window.editItemClick = function(e, idx) { e.stopPropagation(); triggerEdit(idx); }
+    window.cancelPress = function() { clearTimeout(longPressTimer); }
+
+    window.breakdownItem = async function(e, idx) {
+        e.stopPropagation();
+        if(!config.geminiKey) return alert("Configure a API Key do Gemini.");
+        document.getElementById('loadingText').innerText = "IA Pensando...";
+        document.getElementById('loadingOverlay').style.display = 'flex';
+        const item = items[idx];
+        const prompt = `Quebre a tarefa "${item.text}" em etapas acionáveis. Retorne JSON Array strings.`;
+        
+        try {
+            const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${config.geminiKey}`, {
+                method: 'POST', headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+            });
+            const data = await res.json();
+            const txt = data.candidates[0].content.parts[0].text;
+            const steps = JSON.parse(txt.replace(/```json|```/g, '').trim());
+            steps.forEach(step => items.push({ 
+                id: Date.now() + Math.random(), 
+                text: step, 
+                status: 'next', 
+                note: `De: ${item.text}`,
+                updatedAt: Date.now() 
+            }));
+            sync();
+            showToast("Tarefas criadas!");
+        } catch(e) { alert("Erro IA: " + e); }
+        document.getElementById('loadingOverlay').style.display = 'none';
+    }
+
+    window.deleteItem = function(e, idx) {
+        e.stopPropagation();
+        if(confirm("Excluir tarefa?")) {
+            const item = items[idx];
+            handleCalendarEvents(item, item.status, 'trash'); 
+            items.splice(idx, 1);
+            sync();
+        }
+    }
+    
+    window.finalizeCtx = async function(newStatus) {
+        document.getElementById('moveModal').style.display = 'none';
+        const item = items[activeItemIdx];
+        await changeItemStatus(item, newStatus);
+    }
+
+    window.drop = async function(ev, newStatus) {
+        ev.preventDefault();
+        ev.currentTarget.classList.remove('drag-over');
+        const idx = ev.dataTransfer.getData("text");
+        if(idx !== "") { await changeItemStatus(items[idx], newStatus); }
+    }
+    window.allowDrop = function(ev) { ev.preventDefault(); ev.currentTarget.classList.add('drag-over'); }
+
+    async function changeItemStatus(item, newStatus) {
+        const oldStatus = item.status;
+        item.updatedAt = Date.now();
+        if(newStatus === 'completed') item.completedAt = new Date().toISOString();
+        else delete item.completedAt;
+
+        if(newStatus === 'calendar' || newStatus === 'waiting') {
+            const dateStr = await askDate();
+            if(!dateStr) return; 
+            item.date = dateStr;
+            if(newStatus === 'waiting') {
+                const note = prompt("Delegar para quem?");
+                if(note) item.note = "Delegado: " + note;
+            }
+        }
+        await handleCalendarEvents(item, oldStatus, newStatus);
+        item.status = newStatus;
+        sync();
+    }
+
+    let dateRes;
+    function askDate() { return new Promise(r => { document.getElementById('dateModal').style.display='flex'; dateRes = r; }); }
+    window.resolveDate = function(val) { document.getElementById('dateModal').style.display='none'; dateRes(val); }
+
+    // --- CONFIG UI ---
+    window.openConfig = function() { 
         document.getElementById('cfgClientId').value = config.googleClientId || ''; 
         document.getElementById('cfgGemini').value = config.geminiKey || '';
+        document.getElementById('fbApiKey').value = config.fbApiKey || '';
+        document.getElementById('fbAuthDomain').value = config.fbAuthDomain || '';
+        document.getElementById('fbProjectId').value = config.fbProjectId || '';
         document.getElementById('configModal').style.display = 'flex'; 
     }
-    function closeConfig() { document.getElementById('configModal').style.display = 'none'; }
-    function saveConfig() {
+    window.closeConfig = function() { document.getElementById('configModal').style.display = 'none'; }
+    window.saveConfig = function() {
         config.googleClientId = document.getElementById('cfgClientId').value;
         config.geminiKey = document.getElementById('cfgGemini').value;
+        config.fbApiKey = document.getElementById('fbApiKey').value;
+        config.fbAuthDomain = document.getElementById('fbAuthDomain').value;
+        config.fbProjectId = document.getElementById('fbProjectId').value;
         localStorage.setItem('gtd_config', JSON.stringify(config));
-        closeConfig(); location.reload();
+        location.reload();
     }
+    
+    window.clearCompletedHistory = function() { if(confirm("Limpar histórico?")) { items = items.filter(i=>i.status!=='completed'); sync(); } }
+    
     function showToast(msg) { 
         const t = document.getElementById('toast'); 
         t.innerText = msg; t.className = 'show'; 
         setTimeout(() => t.className = '', 3000); 
     }
-    function clearCompletedHistory() { if(confirm("Limpar histórico?")) { items = items.filter(i=>i.status!=='completed'); sync(); } }
 </script>
 </body>
 </html>
