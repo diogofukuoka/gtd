@@ -14,13 +14,12 @@
         header { text-align: center; margin-bottom: 20px; }
         h1 { margin: 0; color: var(--primary); font-size: 1.5rem; }
         
-        /* Status Bar */
         .status-bar { background: #f8f9fa; border: 1px solid #e9ecef; padding: 10px; border-radius: 8px; margin-top: 15px; font-size: 0.85rem; display: flex; justify-content: space-between; align-items: center; }
         .dot { width: 10px; height: 10px; border-radius: 50%; background: #ccc; display:inline-block; margin-right:5px; }
         .dot.online { background: var(--success); box-shadow: 0 0 5px var(--success); }
         .dot.syncing { background: var(--warning); animation: pulse 1s infinite; }
+        .dot.error { background: var(--danger); }
         
-        /* Botões Gerais */
         button { padding: 0 15px; height: 40px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; transition: 0.2s; }
         button:active { transform: scale(0.96); }
         .btn-config { background: white; border: 1px solid #ccc; color: #333; font-size: 0.85rem; }
@@ -30,7 +29,6 @@
         .input-group { display: flex; gap: 8px; margin-bottom: 20px; width: 100%; }
         input[type="text"], input[type="datetime-local"], input[type="password"] { flex: 1; padding: 12px; border: 2px solid #ddd; border-radius: 8px; font-size: 16px; }
 
-        /* Listas Grid */
         .lists-grid { display: grid; grid-template-columns: 1fr; gap: 20px; }
         @media(min-width: 700px) { .lists-grid { grid-template-columns: 1fr 1fr; } }
         .list-card { background-color: #f1f3f5; border: 1px solid #ced4da; border-radius: 8px; padding: 15px; min-height: 100px; display: flex; flex-direction: column; }
@@ -40,7 +38,6 @@
         .list-header:active { opacity: 0.6; background-color: #e9ecef; border-radius: 4px; }
         .badge { background: #fff; padding: 2px 8px; border-radius: 10px; font-size: 0.75rem; font-weight: bold; border: 1px solid #ccc; }
         
-        /* Cores das Listas */
         .card-inbox { border-top: 4px solid var(--danger); }
         .card-next { border-top: 4px solid var(--success); }
         .card-waiting { border-top: 4px solid var(--warning); }
@@ -49,21 +46,8 @@
         .card-completed { border-top: 4px solid var(--gray); opacity: 0.8; }
         .card-do-now { background-color: #fff3cd !important; border: 1px solid #ffeeba !important; }
 
-        /* Estilo dos Itens (Tarefas) */
         ul { list-style: none; padding: 0; margin: 0; min-height: 50px; flex-grow: 1; }
-        li { 
-            padding: 8px 10px; 
-            border: 1px solid #e9ecef; 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-            background: #ffffff; 
-            border-radius: 6px; 
-            margin-bottom: 6px; 
-            touch-action: pan-y; 
-            position: relative;
-            gap: 8px;
-        }
+        li { padding: 8px 10px; border: 1px solid #e9ecef; display: flex; justify-content: space-between; align-items: center; background: #ffffff; border-radius: 6px; margin-bottom: 6px; touch-action: pan-y; position: relative; gap: 8px; }
         li.ready-to-drag { background-color: #e3f2fd; border: 2px solid #3498db; transform: scale(1.02); z-index: 50; }
         li.dragging { opacity: 0.4; }
         
@@ -71,20 +55,13 @@
         .task-text { font-weight: 400; font-size: 1rem; color: #2c3e50; }
         .meta { font-size: 0.75rem; color: #666; display: block; margin-top: 2px; pointer-events: none; }
         
-        /* Botões de Ação na Tarefa */
         .task-actions { display: flex; gap: 4px; align-items: center; }
-        .btn-icon { 
-            background: none; border: none; padding: 0; 
-            font-size: 1.1rem; cursor: pointer; border-radius: 4px; 
-            width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;
-            transition: background 0.2s;
-        }
+        .btn-icon { background: none; border: none; padding: 0; font-size: 1.1rem; cursor: pointer; border-radius: 4px; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; transition: background 0.2s; }
         .btn-icon:hover { background-color: #f1f3f5; }
         .btn-icon.del:hover { color: var(--danger); background-color: #ffebee; }
         .btn-icon.edit:hover { color: var(--accent); background-color: #e3f2fd; }
         .btn-icon.ai:hover { color: var(--ai); background-color: #f3e5f5; }
 
-        /* Modais */
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 3000; align-items: center; justify-content: center; }
         .modal-content { background: white; width: 90%; max-width: 400px; padding: 20px; border-radius: 10px; }
         #toast { visibility: hidden; min-width: 250px; background-color: #333; color: #fff; text-align: center; border-radius: 4px; padding: 16px; position: fixed; z-index: 9999; left: 50%; bottom: 30px; transform: translateX(-50%); }
@@ -123,7 +100,6 @@
         <button onclick="magicProcess()" id="btnMagic" class="btn-config hidden" style="flex:1; background:linear-gradient(135deg, #8e44ad, #3498db); color:white;">✨ Auto-IA</button>
     </div>
 
-    <!-- ÁREA DE PROCESSAMENTO (WIZARD) -->
     <div id="processing-zone" style="display:none; border:2px solid var(--accent); padding:15px; border-radius:10px; margin-bottom:20px;">
         <h3 id="currentItem" style="margin-top:0; background:#fff8e1; padding:10px; border-left:4px solid var(--warning);"></h3>
         <div id="step-1">
@@ -132,11 +108,9 @@
         </div>
     </div>
 
-    <!-- LISTAS -->
     <div class="lists-grid"></div>
 </div>
 
-<!-- MODAL MOVER -->
 <div id="moveModal" class="modal-overlay">
     <div class="modal-content">
         <h3>Mover tarefa para:</h3>
@@ -155,11 +129,10 @@
     </div>
 </div>
 
-<!-- CONFIG MODAL -->
 <div id="configModal" class="modal-overlay">
     <div class="modal-content">
         <h3>Configurações</h3>
-        <label>Google Client ID:</label><input type="text" id="cfgClientId">
+        <label>Google Client ID:</label><input type="text" id="cfgClientId" placeholder="Obrigatório para Sync">
         <button onclick="handleAuthClick()" style="width:100%; margin:10px 0; background:var(--google); color:white;">Conectar Google Drive</button>
         <label>Gemini API Key (IA):</label><input type="password" id="cfgGemini">
         <div style="text-align:right; margin-top:15px;">
@@ -169,7 +142,6 @@
     </div>
 </div>
 
-<!-- DATE PICKER -->
 <div id="dateModal" class="modal-overlay">
     <div class="modal-content">
         <h3>Escolha a Data</h3>
@@ -187,6 +159,7 @@
 <script src="https://apis.google.com/js/api.js"></script>
 <script src="https://accounts.google.com/gsi/client"></script>
 <script>
+    // --- ESTADO & CONFIG ---
     let items = JSON.parse(localStorage.getItem('gtd_data')) || [];
     let config = JSON.parse(localStorage.getItem('gtd_config')) || { googleClientId: '', geminiKey: '' };
     
@@ -198,8 +171,9 @@
 
     let activeItemIdx = null; 
     let autoSyncInterval;
+    let syncInProgress = false;
     
-    // Google API
+    // --- GOOGLE API & SYNC ---
     let tokenClient;
     let driveFileId = localStorage.getItem('gtd_drive_file_id');
     const SCOPES = 'https://www.googleapis.com/auth/calendar.events https://www.googleapis.com/auth/drive.appdata';
@@ -218,7 +192,8 @@
                 localStorage.setItem('gtd_token', JSON.stringify({ token: resp.access_token, exp: exp }));
                 gapi.client.setToken(resp);
                 updateStatus(true);
-                initDrive();
+                // AO LOGAR: Força busca do arquivo para sincronizar novos dispositivos
+                initDrive(true); 
                 startAutoSync();
             }
         });
@@ -230,7 +205,8 @@
         if(stored && Date.now() < stored.exp) {
             gapi.client.setToken({ access_token: stored.token });
             updateStatus(true);
-            setTimeout(() => { manualSync(); startAutoSync(); }, 2000); 
+            // AO ABRIR: Tenta buscar arquivo se não tiver ID, ou sync se tiver
+            if(!driveFileId) initDrive(true); else { manualSync(); startAutoSync(); }
         }
     }
     
@@ -244,16 +220,26 @@
         document.getElementById('driveStatus').innerText = online ? 'Online' : 'Off';
     }
 
-    // --- DRIVE & SYNC ---
-    async function initDrive() {
+    // --- DRIVE CORE ---
+    async function initDrive(forceSearch = false) {
         if(!gapi.client.getToken()) return;
         try {
-            const list = await gapi.client.drive.files.list({ spaces: 'appDataFolder', q: `name = '${DB_NAME}' and trashed = false` });
+            // Busca sempre o arquivo primeiro para garantir link correto entre dispositivos
+            const list = await gapi.client.drive.files.list({ 
+                spaces: 'appDataFolder', 
+                q: `name = '${DB_NAME}' and trashed = false`,
+                fields: 'files(id)' 
+            });
+            
             if(list.result.files.length > 0) {
+                // Arquivo existe: Usa ele e baixa dados
                 driveFileId = list.result.files[0].id;
                 localStorage.setItem('gtd_drive_file_id', driveFileId);
-                driveSync(true); 
+                console.log("Arquivo encontrado: " + driveFileId);
+                driveSync(true); // DOWNLOAD IMEDIATO
             } else {
+                // Arquivo não existe: Cria
+                console.log("Criando novo arquivo DB...");
                 const create = await gapi.client.drive.files.create({
                     resource: { name: DB_NAME, parents: ['appDataFolder'] },
                     media: { mimeType: 'application/json', body: JSON.stringify(items) }
@@ -261,93 +247,89 @@
                 driveFileId = create.result.id;
                 localStorage.setItem('gtd_drive_file_id', driveFileId);
             }
-        } catch(e) { console.error(e); }
+        } catch(e) { 
+            console.error("Erro Init Drive:", e); 
+            document.getElementById('driveDot').className = 'dot error';
+        }
     }
 
     async function driveSync(download = false) {
-        if(!driveFileId || !gapi.client.getToken()) return;
+        if(!driveFileId || !gapi.client.getToken() || syncInProgress) return;
+        syncInProgress = true;
         document.getElementById('driveDot').className = 'dot syncing';
+        
         try {
             if(download) {
+                // DOWNLOAD (Nuvem -> Local)
                 const res = await gapi.client.drive.files.get({ fileId: driveFileId, alt: 'media' });
                 const remote = res.result || res.body;
+                
                 if(Array.isArray(remote)) { 
+                    // Estratégia simples: Último estado da nuvem vence ao abrir
+                    // Se for auto-sync de fundo, ideal seria merge, mas aqui substituímos para consistência
                     items = remote; 
                     localStorage.setItem('gtd_data', JSON.stringify(items)); 
                     render(); 
-                    // Checagem robusta de agenda
-                    showToast("Verificando integridade da agenda...");
                     await checkRemoteCalendarDeletions();
                 }
             } else {
+                // UPLOAD (Local -> Nuvem) - IMEDIATO
                 const body = JSON.stringify(items);
                 await fetch(`https://www.googleapis.com/upload/drive/v3/files/${driveFileId}?uploadType=media`, {
                     method: 'PATCH',
                     headers: { 'Authorization': `Bearer ${gapi.client.getToken().access_token}`, 'Content-Type': 'application/json' },
                     body: body
                 });
+                console.log("Upload realizado.");
             }
             document.getElementById('driveDot').className = 'dot online';
-        } catch(e) { console.error(e); document.getElementById('driveDot').className = 'dot'; }
+        } catch(e) { 
+            console.error("Sync Error:", e); 
+            document.getElementById('driveDot').className = 'dot error'; 
+        } finally {
+            syncInProgress = false;
+        }
     }
 
+    // Função central que salva e SOBE IMEDIATAMENTE
     function sync() {
         localStorage.setItem('gtd_data', JSON.stringify(items));
         render();
+        // Sem debounce longo. Salva quase instantaneamente para garantir sync entre abas/devices
         if(window.syncTimer) clearTimeout(window.syncTimer);
-        window.syncTimer = setTimeout(() => driveSync(false), 3000);
+        window.syncTimer = setTimeout(() => driveSync(false), 500); 
     }
     
     function manualSync() { driveSync(true); }
     
     function startAutoSync() {
         if(autoSyncInterval) clearInterval(autoSyncInterval);
+        // Intervalo de 15s para baixar mudanças de outros devices
         autoSyncInterval = setInterval(() => {
             if(gapi.client.getToken()) driveSync(true); 
-        }, 30000);
+        }, 15000);
     }
 
-    // --- CALENDAR: AUTO-DELETE LOGIC ---
-    
+    // --- AGENDA: LIMPEZA ---
     async function checkRemoteCalendarDeletions() {
         if(!config.googleClientId || !gapi.client.getToken()) return;
         
         let changed = false;
-        // Pega IDs que tem evento vinculado
         const syncedItems = items.filter(i => (i.status === 'calendar' || i.status === 'waiting') && i.googleEventId);
 
-        // Verifica cada um
         for (const item of syncedItems) {
-            // Verifica se o item ainda existe na lista principal (segurança)
-            if(!items.includes(item)) continue;
-
             try {
-                const res = await gapi.client.calendar.events.get({
-                    calendarId: 'primary',
-                    eventId: item.googleEventId
-                });
-                
-                // Se retornou, mas status é cancelled (na lixeira)
+                const res = await gapi.client.calendar.events.get({ calendarId: 'primary', eventId: item.googleEventId });
                 if (res.result.status === 'cancelled') {
-                    console.log("Evento cancelado encontrado: " + item.text);
-                    deleteLocalTask(item);
-                    changed = true;
+                    deleteLocalTask(item); changed = true;
                 }
             } catch (err) {
-                // Se der erro 404 (Not Found) ou 410 (Gone) - Excluído permanentemente
-                const code = err.status || (err.result && err.result.error && err.result.error.code);
-                if (code == 404 || code == 410) {
-                    console.log("Evento não encontrado (404/410): " + item.text);
-                    deleteLocalTask(item);
-                    changed = true;
+                if (err.status === 404 || err.status === 410) {
+                    deleteLocalTask(item); changed = true;
                 }
             }
         }
-
-        if (changed) {
-            sync(); // Salva e sobe
-            showToast("Tarefas removidas (apagadas no Agenda).");
-        }
+        if (changed) sync(); 
     }
 
     function deleteLocalTask(item) {
@@ -355,17 +337,16 @@
         if(idx > -1) items.splice(idx, 1);
     }
 
-    // --- CALENDAR: CREATE/UPDATE (App -> Google) ---
+    // --- AGENDA: CRIAÇÃO/ATUALIZAÇÃO ---
     async function handleCalendarEvents(item, oldStatus, newStatus) {
         if(!config.googleClientId || !gapi.client.getToken()) return;
 
-        // Se sair da caixa de agendamento: Desvincula apenas (Não apaga do Google)
-        if ((oldStatus === 'calendar' || oldStatus === 'waiting') && 
-            (newStatus !== 'calendar' && newStatus !== 'waiting')) {
+        // Sair da caixa: Desvincula apenas
+        if ((oldStatus === 'calendar' || oldStatus === 'waiting') && (newStatus !== 'calendar' && newStatus !== 'waiting')) {
             if (item.googleEventId) delete item.googleEventId;
         }
 
-        // Se entrar/manter em caixa de agendamento: Cria/Atualiza
+        // Entrar/Manter: Cria ou Atualiza
         if ((newStatus === 'calendar' || newStatus === 'waiting') && item.date) {
             try {
                 const start = new Date(item.date);
@@ -421,7 +402,7 @@
                         }
                         items.push(newItem);
                         await handleCalendarEvents(newItem, null, listKey);
-                    } else { return; }
+                    } else return;
                 } else {
                     items.push(newItem);
                 }
@@ -443,11 +424,7 @@
         }
     }
 
-    function editItemClick(e, idx) {
-        e.stopPropagation();
-        triggerEdit(idx);
-    }
-    
+    function editItemClick(e, idx) { e.stopPropagation(); triggerEdit(idx); }
     function cancelPress() { clearTimeout(longPressTimer); }
 
     async function breakdownItem(e, idx) {
@@ -455,7 +432,7 @@
         if(!config.geminiKey) return alert("Configure a API Key do Gemini.");
         document.getElementById('loadingOverlay').style.display = 'flex';
         const item = items[idx];
-        const prompt = `Quebre a tarefa "${item.text}" em etapas acionáveis. Retorne JSON Array strings. Ex: ["Passo 1", "Passo 2"]`;
+        const prompt = `Quebre a tarefa "${item.text}" em etapas acionáveis. Retorne JSON Array strings.`;
         
         try {
             const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${config.geminiKey}`, {
@@ -476,8 +453,7 @@
         e.stopPropagation();
         if(confirm("Excluir tarefa?")) {
             const item = items[idx];
-            // NÃO deleta do agenda, apenas remove do app
-            handleCalendarEvents(item, item.status, 'trash'); 
+            handleCalendarEvents(item, item.status, 'trash'); // Remove apenas vinculo, mantem GCal se nao for 404
             items.splice(idx, 1);
             sync();
         }
@@ -525,7 +501,6 @@
         const listKeys = ['inbox','do-now','next','project','calendar','waiting','someday','reference','completed'];
         const grid = document.querySelector('.lists-grid');
         grid.innerHTML = ''; 
-        
         const counts = {};
         
         listKeys.forEach(key => {
@@ -539,7 +514,7 @@
 
             const headerHtml = `
                 <div class="list-header" 
-                     title="Segure para adicionar tarefa aqui"
+                     title="Segure para adicionar"
                      onmousedown="startListTitlePress('${key}')" ontouchstart="startListTitlePress('${key}')"
                      onmouseup="cancelPress()" ontouchend="cancelPress()" onmouseleave="cancelPress()">
                     <h3>${listNames[key]}</h3>
@@ -610,7 +585,6 @@
         }
     }
 
-    // --- PROCESSAMENTO ---
     function addToInbox() {
         const val = document.getElementById('inboxInput').value;
         if(val) { items.push({id:Date.now(), text:val, status:'inbox'}); document.getElementById('inboxInput').value=''; sync(); }
@@ -634,7 +608,6 @@
         }
     }
 
-    // Config Helpers
     function openConfig() { 
         document.getElementById('cfgClientId').value = config.googleClientId || ''; 
         document.getElementById('cfgGemini').value = config.geminiKey || '';
