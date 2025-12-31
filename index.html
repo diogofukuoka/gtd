@@ -66,13 +66,12 @@
         .modal-content { background: white; width: 90%; max-width: 400px; padding: 20px; border-radius: 10px; }
         #toast { visibility: hidden; min-width: 250px; background-color: #333; color: #fff; text-align: center; border-radius: 4px; padding: 16px; position: fixed; z-index: 9999; left: 50%; bottom: 30px; transform: translateX(-50%); }
         #toast.show { visibility: visible; animation: fadein 0.5s, fadeout 0.5s 2.5s; }
-        #loadingOverlay { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.9); z-index: 9999; align-items: center; justify-content: center; flex-direction: column; }
+        #loadingOverlay { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.95); z-index: 9999; align-items: center; justify-content: center; flex-direction: column; }
         .spinner { border: 4px solid #f3f3f3; border-top: 4px solid var(--accent); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; }
 
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         @keyframes fadein { from {bottom: 0; opacity: 0;} to {bottom: 30px; opacity: 1;} }
         @keyframes fadeout { from {bottom: 30px; opacity: 1;} to {bottom: 0; opacity: 0;} }
-        @keyframes pulse { 0% { opacity: 0.5; } 50% { opacity: 1; } 100% { opacity: 0.5; } }
         .hidden { display: none !important; }
     </style>
 </head>
@@ -84,7 +83,7 @@
         <div class="status-bar">
             <div><div id="driveDot" class="dot"></div><span id="driveStatus">Off</span></div>
             <div>
-                <button class="btn-config" onclick="manualSync()">☁️ Sync Agora</button>
+                <button class="btn-config" onclick="manualSync()">☁️ Sync</button>
                 <button class="btn-config" onclick="openConfig()">⚙️ Config</button>
             </div>
         </div>
@@ -133,8 +132,9 @@
 <div id="configModal" class="modal-overlay">
     <div class="modal-content">
         <h3>Configurações</h3>
-        <label>Google Client ID:</label><input type="text" id="cfgClientId">
+        <label>Google Client ID:</label><input type="text" id="cfgClientId" placeholder="Obrigatório">
         <button onclick="handleAuthClick()" style="width:100%; margin:10px 0; background:var(--google); color:white;">Conectar Google Drive</button>
+        <button onclick="handleSignOut()" style="width:100%; margin-bottom:10px; background:#666; color:white;">Sair / Trocar Conta</button>
         <label>Gemini API Key (IA):</label><input type="password" id="cfgGemini">
         <div style="text-align:right; margin-top:15px;">
             <button class="btn-config" onclick="closeConfig()">Fechar</button>
@@ -154,7 +154,7 @@
     </div>
 </div>
 
-<div id="loadingOverlay"><div class="spinner"></div><p style="margin-top:10px" id="loadingText">Conectando ao Drive...</p></div>
+<div id="loadingOverlay"><div class="spinner"></div><p style="margin-top:10px" id="loadingText">Carregando...</p></div>
 <div id="toast">Notificação</div>
 
 <script src="https://apis.google.com/js/api.js"></script>
@@ -181,37 +181,50 @@
     const DB_NAME = 'gtd_fukuoka_v7_db.json';
 
     window.onload = () => {
+        // Validação de ambiente
+        if(window.location.protocol === 'file:') {
+            alert("Atenção: O Google não permite login a partir de arquivos locais (file://). Use um servidor local (localhost) ou o GitHub Pages.");
+        }
+
         gapi.load('client', async () => {
             await gapi.client.init({ discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest', 'https://www.googleapis.com/discovery/v1/apis/drive/v3/rest'] });
-            checkAuth();
+            setTimeout(checkAuth, 500); // Delay de segurança
         });
+        
         tokenClient = google.accounts.oauth2.initTokenClient({
             client_id: config.googleClientId, scope: SCOPES,
             callback: (resp) => {
-                if(resp.error) return;
+                if(resp.error) return console.error(resp);
                 const exp = Date.now() + (resp.expires_in * 1000);
                 localStorage.setItem('gtd_token', JSON.stringify({ token: resp.access_token, exp: exp }));
                 gapi.client.setToken(resp);
                 updateStatus(true);
-                // AO LOGAR: Força busca do arquivo para sincronizar novos dispositivos
                 forceInitDrive(); 
             }
         });
         render();
-        // Esconde loading inicial se não tiver auth
-        if(!localStorage.getItem('gtd_token')) document.getElementById('loadingOverlay').style.display = 'none';
     };
 
-    function checkAuth() {
+    async function checkAuth() {
         const stored = JSON.parse(localStorage.getItem('gtd_token'));
         if(stored && Date.now() < stored.exp) {
             gapi.client.setToken({ access_token: stored.token });
-            updateStatus(true);
-            if(!driveFileId) forceInitDrive(); 
-            else { 
+            
+            // Teste de validade real do token
+            try {
+                await gapi.client.drive.files.list({ pageSize: 1, fields: 'files(id)' });
+                updateStatus(true);
+                if(!driveFileId) forceInitDrive(); 
+                else { 
+                    document.getElementById('loadingOverlay').style.display = 'none';
+                    manualSync(); 
+                    startAutoSync(); 
+                }
+            } catch(e) {
+                // Se der erro 401 (não autorizado), limpa tudo
+                console.warn("Token inválido, fazendo logout...");
+                handleSignOut();
                 document.getElementById('loadingOverlay').style.display = 'none';
-                manualSync(); 
-                startAutoSync(); 
             }
         } else {
             document.getElementById('loadingOverlay').style.display = 'none';
@@ -223,38 +236,45 @@
         tokenClient.requestAccessToken({prompt: ''});
     }
 
+    function handleSignOut() {
+        const token = gapi.client.getToken();
+        if (token !== null) {
+            google.accounts.oauth2.revoke(token.access_token);
+            gapi.client.setToken('');
+            localStorage.removeItem('gtd_token');
+            localStorage.removeItem('gtd_drive_file_id');
+            updateStatus(false);
+            showToast("Desconectado.");
+            location.reload();
+        }
+    }
+
     function updateStatus(online) {
         document.getElementById('driveDot').className = online ? 'dot online' : 'dot';
         document.getElementById('driveStatus').innerText = online ? 'Online' : 'Off';
     }
 
-    // --- DRIVE BUSCA PROFUNDA ---
+    // --- DRIVE & SYNC ---
     async function forceInitDrive() {
         if(!gapi.client.getToken()) return;
         document.getElementById('loadingOverlay').style.display = 'flex';
-        document.getElementById('loadingText').innerText = "Buscando banco de dados...";
+        document.getElementById('loadingText').innerText = "Buscando dados...";
         
         try {
-            // Busca por nome exato e não lixeira
             const list = await gapi.client.drive.files.list({ 
                 spaces: 'appDataFolder', 
                 q: `name = '${DB_NAME}' and trashed = false`,
-                fields: 'files(id, name, modifiedTime)',
-                orderBy: 'modifiedTime desc' 
+                fields: 'files(id, modifiedTime)',
+                orderBy: 'modifiedTime desc'
             });
             
             if(list.result.files.length > 0) {
-                // Pega o mais recente se houver duplicatas
-                const file = list.result.files[0];
-                driveFileId = file.id;
+                driveFileId = list.result.files[0].id;
                 localStorage.setItem('gtd_drive_file_id', driveFileId);
-                console.log("Arquivo encontrado: " + driveFileId);
-                showToast("Banco de dados encontrado!");
-                // Baixa imediatamente
+                console.log("DB Encontrado: " + driveFileId);
                 await driveSync(true); 
             } else {
-                console.log("Criando novo arquivo DB...");
-                showToast("Criando novo banco de dados...");
+                console.log("Criando novo DB...");
                 const create = await gapi.client.drive.files.create({
                     resource: { name: DB_NAME, parents: ['appDataFolder'] },
                     media: { mimeType: 'application/json', body: JSON.stringify(items) }
@@ -264,14 +284,13 @@
             }
             startAutoSync();
         } catch(e) { 
-            console.error("Erro Init Drive:", e); 
-            showToast("Erro ao conectar Drive: " + e.message);
+            console.error("Erro Drive:", e); 
+            showToast("Erro de conexão Drive.");
         } finally {
             document.getElementById('loadingOverlay').style.display = 'none';
         }
     }
 
-    // --- SYNC ENGINE (SMART MERGE) ---
     async function driveSync(download = false) {
         if(!driveFileId || !gapi.client.getToken() || syncInProgress) return;
         syncInProgress = true;
@@ -279,30 +298,26 @@
         
         try {
             if(download) {
-                // DOWNLOAD (Nuvem -> Local)
                 const res = await gapi.client.drive.files.get({ fileId: driveFileId, alt: 'media' });
                 const remoteData = res.result || res.body;
-                
                 if(Array.isArray(remoteData)) { 
-                    mergeLists(remoteData); // Fusão inteligente
+                    mergeLists(remoteData);
                     render(); 
                     await checkRemoteCalendarDeletions();
                 }
             } else {
-                // UPLOAD (Local -> Nuvem)
                 const body = JSON.stringify(items);
                 await fetch(`https://www.googleapis.com/upload/drive/v3/files/${driveFileId}?uploadType=media`, {
                     method: 'PATCH',
                     headers: { 'Authorization': `Bearer ${gapi.client.getToken().access_token}`, 'Content-Type': 'application/json' },
                     body: body
                 });
-                console.log("Upload realizado.");
             }
             document.getElementById('driveDot').className = 'dot online';
         } catch(e) { 
             console.error("Sync Error:", e); 
-            document.getElementById('driveDot').className = 'dot error'; 
-            if(e.status === 404) forceInitDrive(); // Se arquivo sumiu, busca de novo
+            document.getElementById('driveDot').className = 'dot error';
+            if(e.status === 404) forceInitDrive(); 
         } finally {
             syncInProgress = false;
         }
@@ -310,43 +325,26 @@
 
     function mergeLists(remoteItems) {
         const itemMap = new Map();
-        // Coloca locais no mapa
         items.forEach(i => itemMap.set(i.id, i));
-        
         let hasChanges = false;
-
-        // Mescla com remotos
         remoteItems.forEach(remote => {
             if (itemMap.has(remote.id)) {
                 const local = itemMap.get(remote.id);
-                // Vence o que tiver updatedAt maior (mais recente)
-                if ((remote.updatedAt || 0) > (local.updatedAt || 0)) {
-                    itemMap.set(remote.id, remote);
-                }
-            } else {
-                // Novo item do remoto
-                itemMap.set(remote.id, remote);
-            }
+                if ((remote.updatedAt || 0) > (local.updatedAt || 0)) itemMap.set(remote.id, remote);
+            } else itemMap.set(remote.id, remote);
         });
-
-        // Atualiza lista
         const newItems = Array.from(itemMap.values());
-        
-        // Verifica se mudou algo
-        if (JSON.stringify(newItems) !== JSON.stringify(items) || newItems.length !== items.length) {
-            items = newItems;
-            localStorage.setItem('gtd_data', JSON.stringify(items));
-            // Se houve merge, precisamos subir a versão unificada para a nuvem
-            setTimeout(() => driveSync(false), 500); 
-        }
+        if (JSON.stringify(newItems) !== JSON.stringify(items) || newItems.length !== remoteItems.length) hasChanges = true;
+        items = newItems;
+        localStorage.setItem('gtd_data', JSON.stringify(items));
+        if(hasChanges) setTimeout(() => driveSync(false), 1000);
     }
 
     function sync() {
         localStorage.setItem('gtd_data', JSON.stringify(items));
         render();
-        // Upload quase imediato
         if(window.syncTimer) clearTimeout(window.syncTimer);
-        window.syncTimer = setTimeout(() => driveSync(false), 200); 
+        window.syncTimer = setTimeout(() => driveSync(false), 500); 
     }
     
     function manualSync() { driveSync(true); }
@@ -354,13 +352,13 @@
     function startAutoSync() {
         if(autoSyncInterval) clearInterval(autoSyncInterval);
         autoSyncInterval = setInterval(() => {
-            if(gapi.client.getToken()) driveSync(true); // Baixa mudanças a cada 15s
+            if(gapi.client.getToken()) driveSync(true); 
         }, 15000);
     }
 
     function updateItemTimestamp(item) { item.updatedAt = Date.now(); }
 
-    // --- AGENDA ---
+    // --- CALENDAR ---
     async function checkRemoteCalendarDeletions() {
         if(!config.googleClientId || !gapi.client.getToken()) return;
         let changed = false;
@@ -418,6 +416,7 @@
 
     // --- INTERAÇÕES ---
     let longPressTimer;
+    
     function startMovePress(idx) {
         longPressTimer = setTimeout(() => {
             activeItemIdx = idx;
