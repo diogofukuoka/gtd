@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>GTD Fukuoka (v8.12)</title>
+    <title>GTD Fukuoka (v8.13)</title>
     <script src="https://bernardo-castilho.github.io/DragDropTouch/DragDropTouch.js"></script>
     <style>
         :root { --primary: #2c3e50; --accent: #3498db; --success: #27ae60; --warning: #f39c12; --danger: #e74c3c; --google: #4285f4; --gray: #95a5a6; --ai: #8e44ad; }
@@ -56,10 +56,8 @@
             background: #ffffff; 
             border-radius: 6px; 
             margin-bottom: 6px; 
-            /* Configurações críticas para toque */
             touch-action: pan-y; 
             -webkit-user-select: none;
-            -webkit-touch-callout: none;
             user-select: none;
             position: relative; 
             gap: 8px; 
@@ -121,13 +119,11 @@
         <button class="btn-add" onclick="addToInbox()">+</button>
     </div>
 
-    <!-- BOTÕES DE PROCESSAMENTO -->
     <div id="processButtons" class="hidden" style="display:flex; gap:10px; margin-bottom:20px;">
         <button onclick="startProcessing()" id="btnProcess" class="btn-config" style="flex:1; background:var(--primary); color:white;">⚡ Processar Manual</button>
         <button onclick="magicProcess()" id="btnMagic" class="btn-config" style="flex:1; background:linear-gradient(135deg, #8e44ad, #3498db); color:white;">✨ Processar pela IA</button>
     </div>
 
-    <!-- WIZARD MANUAL -->
     <div id="processing-zone">
         <div style="border-bottom:1px solid #eee; padding-bottom:10px; margin-bottom:10px; text-align:center; font-weight:bold; color:#888;">PROCESSANDO ITEM:</div>
         <h3 id="currentItem" style="margin:0 0 15px 0; background:#fff3cd; padding:15px; border-left:5px solid var(--warning); border-radius:4px;"></h3>
@@ -190,8 +186,8 @@
 <div id="loadingOverlay"><div class="spinner"></div><p style="margin-top:10px" id="loadingText">Carregando...</p></div>
 <div id="toast">Notificação</div>
 
-<!-- SCRIPT BASE -->
 <script>
+    // Globals
     var items = [];
     var config = JSON.parse(localStorage.getItem('gtd_config')) || {};
     var inputHistory = JSON.parse(localStorage.getItem('gtd_history')) || [];
@@ -201,8 +197,9 @@
     var dateRes;
     var touchStartX = 0;
     var touchStartY = 0;
-    var isScrolling = false;
+    var isScrolling = false; // Flag crucial para rolagem
 
+    // --- CONFIG ---
     function openConfig() { 
         document.getElementById('cfgClientId').value = config.googleClientId || ''; 
         document.getElementById('cfgGemini').value = config.geminiKey || '';
@@ -220,6 +217,16 @@
         config.fbProjectId = document.getElementById('fbProjectId').value;
         localStorage.setItem('gtd_config', JSON.stringify(config));
         location.reload();
+    }
+
+    function renderHistory() {
+        const dl = document.getElementById('historyList');
+        dl.innerHTML = '';
+        inputHistory.slice().reverse().forEach(h => {
+            const op = document.createElement('option');
+            op.value = h;
+            dl.appendChild(op);
+        });
     }
 
     function render() {
@@ -240,7 +247,7 @@
 
             card.innerHTML = `
                 <div class="list-header" 
-                     onmousedown="startListTitlePress(event, '${key}')" ontouchstart="startListTitlePress(event, '${key}')"
+                     onmousedown="startListTitlePress(event, '${key}', 'mouse')" ontouchstart="startListTitlePress(event, '${key}', 'touch')"
                      onmouseup="cancelPress()" ontouchend="cancelPress()" onmouseleave="cancelPress()" ontouchmove="cancelPressOnMove(event)">
                     <h3>${listNames[key]}</h3>
                     <div>
@@ -262,11 +269,13 @@
                 li.ondragstart = (e) => e.dataTransfer.setData("text", idx);
                 
                 // --- EVENTOS DE TOQUE CORRIGIDOS ---
-                li.ontouchstart = (e) => startMovePress(e, idx);
+                li.ontouchstart = (e) => startMovePress(e, idx, 'touch');
                 li.ontouchmove = (e) => cancelPressOnMove(e);
                 li.ontouchend = cancelPress;
                 li.ontouchcancel = cancelPress;
-                li.onmousedown = (e) => { if(!e.touches) startMovePress(e, idx); }; // Apenas mouse, ignora toque duplo
+                
+                // Eventos de Mouse (Desktop)
+                li.onmousedown = (e) => { if(!e.touches) startMovePress(e, idx, 'mouse'); };
                 li.oncontextmenu = (e) => e.preventDefault(); 
 
                 let meta = "";
@@ -322,6 +331,7 @@
                 inputHistory.push(val);
                 if(inputHistory.length > 50) inputHistory.shift();
                 localStorage.setItem('gtd_history', JSON.stringify(inputHistory));
+                renderHistory();
             }
             items.push({id:Date.now(), text:val, status:'inbox', updatedAt:Date.now()}); 
             document.getElementById('inboxInput').value=''; 
@@ -331,89 +341,80 @@
 
     window.addEventListener('load', function() {
         render();
+        renderHistory();
         if(!config.fbApiKey && !items.length) setTimeout(openConfig, 500);
         if(!config.googleClientId) document.getElementById('loadingOverlay').style.display = 'none';
         window.checkDueDates();
         setInterval(window.checkDueDates, 60000);
         
-        // Listener global para limpar timer se rolar a janela
+        // Listener global de scroll para matar qualquer clique longo
         window.addEventListener('scroll', function() {
-            clearTimeout(longPressTimer);
             isScrolling = true;
+            clearTimeout(longPressTimer);
         }, true);
     });
 
-    // --- HELPERS PARA TOQUE ---
-    function cancelPress() { 
-        clearTimeout(longPressTimer); 
+    // --- VOICE ---
+    let recognition;
+    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        recognition = new SpeechRecognition();
+        recognition.lang = 'pt-BR';
+        recognition.continuous = false;
+        recognition.onstart = function() { document.getElementById('voiceBtn').classList.add('listening'); };
+        recognition.onend = function() { document.getElementById('voiceBtn').classList.remove('listening'); };
+        recognition.onresult = function(event) {
+            const text = event.results[0][0].transcript;
+            const input = document.getElementById('inboxInput');
+            input.value = text.charAt(0).toUpperCase() + text.slice(1);
+            input.focus();
+        };
+    } else { document.getElementById('voiceBtn').style.display = 'none'; }
+    window.toggleVoice = function() { if(!recognition) return alert("Sem suporte voz."); try { recognition.start(); } catch(e) { recognition.stop(); } }
+
+    // --- HELPERS E TOUCH ---
+    function showToast(msg) { 
+        const t = document.getElementById('toast'); t.innerText = msg; t.className = 'show'; 
+        setTimeout(() => t.className = '', 3000); 
     }
+    
+    function cancelPress() { clearTimeout(longPressTimer); }
     
     function cancelPressOnMove(e) {
         if(e.touches && e.touches[0]) {
             var moveX = e.touches[0].clientX;
             var moveY = e.touches[0].clientY;
-            // Se mover mais de 5px, considera scroll e cancela
-            if(Math.abs(moveX - touchStartX) > 5 || Math.abs(moveY - touchStartY) > 5) {
+            // Se moveu mais de 10px, é scroll -> cancela timer
+            if(Math.abs(moveX - touchStartX) > 10 || Math.abs(moveY - touchStartY) > 10) {
                 clearTimeout(longPressTimer);
                 isScrolling = true;
             }
         }
     }
 
-    function startMovePress(e, idx) {
-        if(e.touches && e.touches[0]) {
+    function askDate() { return new Promise(r => { document.getElementById('dateModal').style.display='flex'; dateRes = r; }); }
+    function resolveDate(val) { document.getElementById('dateModal').style.display='none'; dateRes(val); }
+    
+    // Inicia timer de clique longo (800ms)
+    function startMovePress(e, idx, type) {
+        // Se for toque, salva coords
+        if(type === 'touch' && e.touches && e.touches[0]) {
             touchStartX = e.touches[0].clientX;
             touchStartY = e.touches[0].clientY;
         }
         isScrolling = false;
         
-        // Timer de 600ms para diferenciar toque rápido de longo
         longPressTimer = setTimeout(() => {
             if(!isScrolling) {
                 activeItemIdx = idx; 
                 document.getElementById('moveModal').style.display = 'flex';
                 if(navigator.vibrate) navigator.vibrate(50);
             }
-        }, 600);
+        }, 800); // Tempo aumentado para evitar falsos positivos
     }
     
-    function startListTitlePress(e, listKey) {
-        if(e.touches && e.touches[0]) {
-            touchStartX = e.touches[0].clientX;
-            touchStartY = e.touches[0].clientY;
-        }
-        isScrolling = false;
-        longPressTimer = setTimeout(async () => {
-            if(!isScrolling) {
-                if(navigator.vibrate) navigator.vibrate(50);
-                const safeKey = listKey;
-                const text = prompt(`Adicionar em "${listNames[safeKey]}":`);
-                
-                if(text) {
-                    const newItem = { id: Date.now(), text: text, status: safeKey, updatedAt: Date.now() };
-                    if (safeKey === 'calendar' || safeKey === 'waiting') {
-                        const dateStr = await askDate();
-                        if(dateStr) {
-                            newItem.date = dateStr;
-                            if(safeKey === 'waiting') { const n = prompt("Delegar?"); if(n) newItem.note = "Delegado: "+n; }
-                            items.push(newItem);
-                            if(window.handleCalendarEvents) await window.handleCalendarEvents(newItem, null, safeKey);
-                        } else return;
-                    } else items.push(newItem);
-                    if(window.sync) window.sync(); else render();
-                }
-            }
-        }, 600);
-    }
-
-    // --- DEMAIS FUNÇÕES ---
-    function askDate() { return new Promise(r => { document.getElementById('dateModal').style.display='flex'; dateRes = r; }); }
-    function resolveDate(val) { document.getElementById('dateModal').style.display='none'; dateRes(val); }
-    function showToast(msg) { 
-        const t = document.getElementById('toast'); t.innerText = msg; t.className = 'show'; 
-        setTimeout(() => t.className = '', 3000); 
-    }
     function editItemClick(e, idx) { e.stopPropagation(); triggerEdit(idx); }
+    
     function triggerEdit(idx) {
         const item = items[idx]; const newTxt = prompt("Editar:", item.text);
         if(newTxt && newTxt !== item.text) { item.text = newTxt; if(window.sync) window.sync(); else render(); }
@@ -454,30 +455,35 @@
         if(idx !== "") changeItemStatus(items[idx], newStatus);
     }
     function allowDrop(ev) { ev.preventDefault(); ev.currentTarget.classList.add('drag-over'); }
+    
+    function startListTitlePress(e, listKey, type) {
+        if(type === 'touch' && e.touches && e.touches[0]) {
+            touchStartX = e.touches[0].clientX;
+            touchStartY = e.touches[0].clientY;
+        }
+        isScrolling = false;
+        longPressTimer = setTimeout(async () => {
+            if(!isScrolling) {
+                if(navigator.vibrate) navigator.vibrate(50);
+                const text = prompt(`Adicionar em "${listNames[listKey]}":`);
+                if(text) {
+                    const newItem = { id: Date.now(), text: text, status: listKey, updatedAt: Date.now() };
+                    if (listKey === 'calendar' || listKey === 'waiting') {
+                        const dateStr = await askDate();
+                        if(dateStr) {
+                            newItem.date = dateStr;
+                            if(listKey === 'waiting') { const n = prompt("Delegar?"); if(n) newItem.note = "Delegado: "+n; }
+                            items.push(newItem);
+                            if(window.handleCalendarEvents) await window.handleCalendarEvents(newItem, null, listKey);
+                        } else return;
+                    } else items.push(newItem);
+                    if(window.sync) window.sync(); else render();
+                }
+            }
+        }, 800);
+    }
     function clearCompletedHistory() { if(confirm("Limpar histórico?")) { items = items.filter(i=>i.status!=='completed'); if(window.sync) window.sync(); else render(); } }
     
-    // Voice
-    let recognition;
-    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
-        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-        recognition = new SpeechRecognition();
-        recognition.lang = 'pt-BR';
-        recognition.continuous = false;
-        recognition.onstart = function() { document.getElementById('voiceBtn').classList.add('listening'); };
-        recognition.onend = function() { document.getElementById('voiceBtn').classList.remove('listening'); };
-        recognition.onresult = function(event) {
-            const text = event.results[0][0].transcript;
-            const input = document.getElementById('inboxInput');
-            input.value = text.charAt(0).toUpperCase() + text.slice(1);
-            input.focus();
-        };
-    } else { document.getElementById('voiceBtn').style.display = 'none'; }
-    window.toggleVoice = function() {
-        if(!recognition) return alert("Navegador sem suporte a voz.");
-        try { recognition.start(); } catch(e) { recognition.stop(); }
-    }
-
-    // Processamento
     let procIdx = null;
     function startProcessing() {
         procIdx = items.findIndex(i => i.status === 'inbox');
@@ -488,19 +494,12 @@
             toStep('step-1');
         }
     }
-    function toStep(stepId) {
-        document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
-        document.getElementById(stepId).classList.add('active');
-    }
+    function toStep(stepId) { document.querySelectorAll('.step').forEach(s => s.classList.remove('active')); document.getElementById(stepId).classList.add('active'); }
     function finalizeProc(newStatus) {
         changeItemStatus(items[procIdx], newStatus);
         setTimeout(() => {
-            if (items.some(i => i.status === 'inbox')) {
-                startProcessing();
-            } else {
-                document.getElementById('processing-zone').style.display = 'none';
-                showToast("Entrada zerada!");
-            }
+            if (items.some(i => i.status === 'inbox')) startProcessing();
+            else { document.getElementById('processing-zone').style.display = 'none'; showToast("Entrada zerada!"); }
         }, 500); 
     }
     window.checkDueDates = function() {
