@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>GTD Fukuoka (v8.11)</title>
+    <title>GTD Fukuoka (v8.12)</title>
     <script src="https://bernardo-castilho.github.io/DragDropTouch/DragDropTouch.js"></script>
     <style>
         :root { --primary: #2c3e50; --accent: #3498db; --success: #27ae60; --warning: #f39c12; --danger: #e74c3c; --google: #4285f4; --gray: #95a5a6; --ai: #8e44ad; }
@@ -56,9 +56,10 @@
             background: #ffffff; 
             border-radius: 6px; 
             margin-bottom: 6px; 
-            /* Essencial para permitir rolagem no mobile */
+            /* Configurações críticas para toque */
             touch-action: pan-y; 
-            -webkit-user-select: none; /* Evita selecionar texto ao rolar */
+            -webkit-user-select: none;
+            -webkit-touch-callout: none;
             user-select: none;
             position: relative; 
             gap: 8px; 
@@ -77,7 +78,6 @@
         .btn-icon.edit:hover { color: var(--accent); background-color: #e3f2fd; }
         .btn-icon.ai:hover { color: var(--ai); background-color: #f3e5f5; }
 
-        /* WIZARD STYLES */
         #processing-zone { display:none; border:2px solid var(--accent); padding:15px; border-radius:10px; margin-bottom:20px; background: white; }
         .step { display: none; animation: fadeIn 0.3s; }
         .step.active { display: block; }
@@ -131,52 +131,11 @@
     <div id="processing-zone">
         <div style="border-bottom:1px solid #eee; padding-bottom:10px; margin-bottom:10px; text-align:center; font-weight:bold; color:#888;">PROCESSANDO ITEM:</div>
         <h3 id="currentItem" style="margin:0 0 15px 0; background:#fff3cd; padding:15px; border-left:5px solid var(--warning); border-radius:4px;"></h3>
-        
-        <div id="step-1" class="step active">
-            <p style="text-align:center; font-weight:bold;">É passível de ação?</p>
-            <div class="decision-grid">
-                <button class="btn-no" onclick="toStep('step-no')">NÃO</button>
-                <button class="btn-yes" onclick="toStep('step-yes')">SIM</button>
-            </div>
-        </div>
-
-        <div id="step-no" class="step">
-            <p style="text-align:center; font-weight:bold;">O que fazer com isso?</p>
-            <div class="decision-grid">
-                <button class="btn-no" onclick="finalizeProc('trash')">Lixo 🗑️</button>
-                <button class="btn-opt" onclick="finalizeProc('someday')">Talvez 💡</button>
-                <button class="btn-opt" style="grid-column:span 2" onclick="finalizeProc('reference')">Referência 📚</button>
-            </div>
-            <button class="btn-config" style="width:100%; margin-top:10px" onclick="toStep('step-1')">Voltar</button>
-        </div>
-
-        <div id="step-yes" class="step">
-            <p style="text-align:center; font-weight:bold;">Leva menos de 2 minutos?</p>
-            <div class="decision-grid">
-                <button class="btn-yes" onclick="finalizeProc('do-now')">SIM (Faça Agora)</button>
-                <button class="btn-no" onclick="toStep('step-delegate')">NÃO</button>
-            </div>
-            <button class="btn-config" style="width:100%; margin-top:10px" onclick="toStep('step-1')">Voltar</button>
-        </div>
-
-        <div id="step-delegate" class="step">
-            <p style="text-align:center; font-weight:bold;">Você é a melhor pessoa para fazer?</p>
-            <div class="decision-grid">
-                <button class="btn-no" onclick="finalizeProc('waiting')">NÃO (Delegar)</button>
-                <button class="btn-yes" onclick="toStep('step-defer')">SIM (Eu faço)</button>
-            </div>
-            <button class="btn-config" style="width:100%; margin-top:10px" onclick="toStep('step-yes')">Voltar</button>
-        </div>
-
-        <div id="step-defer" class="step">
-            <p style="text-align:center; font-weight:bold;">Tem dia ou hora específica?</p>
-            <div class="decision-grid">
-                <button class="btn-opt" onclick="finalizeProc('calendar')">SIM (Agenda)</button>
-                <button class="btn-opt" onclick="finalizeProc('next')">NÃO (Assim que der)</button>
-                <button class="btn-opt" style="grid-column:span 2" onclick="finalizeProc('project')">É complexo (Projeto)</button>
-            </div>
-            <button class="btn-config" style="width:100%; margin-top:10px" onclick="toStep('step-delegate')">Voltar</button>
-        </div>
+        <div id="step-1" class="step active"><p style="text-align:center; font-weight:bold;">É passível de ação?</p><div class="decision-grid"><button class="btn-no" onclick="toStep('step-no')">NÃO</button><button class="btn-yes" onclick="toStep('step-yes')">SIM</button></div></div>
+        <div id="step-no" class="step"><p style="text-align:center; font-weight:bold;">O que fazer com isso?</p><div class="decision-grid"><button class="btn-no" onclick="finalizeProc('trash')">Lixo 🗑️</button><button class="btn-opt" onclick="finalizeProc('someday')">Talvez 💡</button><button class="btn-opt" style="grid-column:span 2" onclick="finalizeProc('reference')">Referência 📚</button></div><button class="btn-config" style="width:100%; margin-top:10px" onclick="toStep('step-1')">Voltar</button></div>
+        <div id="step-yes" class="step"><p style="text-align:center; font-weight:bold;">Leva menos de 2 minutos?</p><div class="decision-grid"><button class="btn-yes" onclick="finalizeProc('do-now')">SIM (Faça Agora)</button><button class="btn-no" onclick="toStep('step-delegate')">NÃO</button></div><button class="btn-config" style="width:100%; margin-top:10px" onclick="toStep('step-1')">Voltar</button></div>
+        <div id="step-delegate" class="step"><p style="text-align:center; font-weight:bold;">Você é a melhor pessoa para fazer?</p><div class="decision-grid"><button class="btn-no" onclick="finalizeProc('waiting')">NÃO (Delegar)</button><button class="btn-yes" onclick="toStep('step-defer')">SIM (Eu faço)</button></div><button class="btn-config" style="width:100%; margin-top:10px" onclick="toStep('step-yes')">Voltar</button></div>
+        <div id="step-defer" class="step"><p style="text-align:center; font-weight:bold;">Tem dia ou hora específica?</p><div class="decision-grid"><button class="btn-opt" onclick="finalizeProc('calendar')">SIM (Agenda)</button><button class="btn-opt" onclick="finalizeProc('next')">NÃO (Assim que der)</button><button class="btn-opt" style="grid-column:span 2" onclick="finalizeProc('project')">É complexo (Projeto)</button></div><button class="btn-config" style="width:100%; margin-top:10px" onclick="toStep('step-delegate')">Voltar</button></div>
     </div>
 
     <div class="lists-grid"></div>
@@ -231,25 +190,19 @@
 <div id="loadingOverlay"><div class="spinner"></div><p style="margin-top:10px" id="loadingText">Carregando...</p></div>
 <div id="toast">Notificação</div>
 
-<!-- SCRIPT BASE (UI e Lógica Local) -->
+<!-- SCRIPT BASE -->
 <script>
-    // Globals
     var items = [];
     var config = JSON.parse(localStorage.getItem('gtd_config')) || {};
     var inputHistory = JSON.parse(localStorage.getItem('gtd_history')) || [];
-    var listNames = {
-        'inbox': '📥 Entrada', 'do-now': '⚡ Fazer Agora', 'next': '🔥 Próximas Ações',
-        'project': '📂 Projetos', 'calendar': '📅 Calendário', 'waiting': '⏳ Delegar',
-        'someday': '💡 Talvez', 'reference': '📚 Referência', 'completed': '✅ Concluídas'
-    };
+    var listNames = { 'inbox': '📥 Entrada', 'do-now': '⚡ Fazer Agora', 'next': '🔥 Próximas Ações', 'project': '📂 Projetos', 'calendar': '📅 Calendário', 'waiting': '⏳ Delegar', 'someday': '💡 Talvez', 'reference': '📚 Referência', 'completed': '✅ Concluídas' };
     var activeItemIdx = null;
     var longPressTimer;
     var dateRes;
     var touchStartX = 0;
     var touchStartY = 0;
-    var isScrolling = false; // NOVA FLAG DE SEGURANÇA
+    var isScrolling = false;
 
-    // --- CONFIG UI HANDLERS ---
     function openConfig() { 
         document.getElementById('cfgClientId').value = config.googleClientId || ''; 
         document.getElementById('cfgGemini').value = config.geminiKey || '';
@@ -267,16 +220,6 @@
         config.fbProjectId = document.getElementById('fbProjectId').value;
         localStorage.setItem('gtd_config', JSON.stringify(config));
         location.reload();
-    }
-
-    function renderHistory() {
-        const dl = document.getElementById('historyList');
-        dl.innerHTML = '';
-        inputHistory.slice().reverse().forEach(h => {
-            const op = document.createElement('option');
-            op.value = h;
-            dl.appendChild(op);
-        });
     }
 
     function render() {
@@ -318,13 +261,12 @@
                 li.draggable = true;
                 li.ondragstart = (e) => e.dataTransfer.setData("text", idx);
                 
-                // EVENTOS DE TOQUE OTIMIZADOS
-                li.onmousedown = (e) => startMovePress(e, idx);
+                // --- EVENTOS DE TOQUE CORRIGIDOS ---
                 li.ontouchstart = (e) => startMovePress(e, idx);
-                li.onmouseup = cancelPress; 
-                li.ontouchend = cancelPress; 
-                li.onmouseleave = cancelPress; 
                 li.ontouchmove = (e) => cancelPressOnMove(e);
+                li.ontouchend = cancelPress;
+                li.ontouchcancel = cancelPress;
+                li.onmousedown = (e) => { if(!e.touches) startMovePress(e, idx); }; // Apenas mouse, ignora toque duplo
                 li.oncontextmenu = (e) => e.preventDefault(); 
 
                 let meta = "";
@@ -353,20 +295,16 @@
             }
         });
 
-        // Update Badges
         listKeys.forEach(l => {
              const badge = document.getElementById('c-'+l);
              if(badge) badge.innerText = counts[l];
         });
-        
-        // Update Dashboard (Buttons)
         updateDashboard(counts['inbox']);
     }
 
     function updateDashboard(inboxCount) {
         const btnContainer = document.getElementById('processButtons');
         const processingZone = document.getElementById('processing-zone');
-        
         if(inboxCount > 0) {
             btnContainer.classList.remove('hidden');
             btnContainer.style.display = 'flex'; 
@@ -384,7 +322,6 @@
                 inputHistory.push(val);
                 if(inputHistory.length > 50) inputHistory.shift();
                 localStorage.setItem('gtd_history', JSON.stringify(inputHistory));
-                renderHistory();
             }
             items.push({id:Date.now(), text:val, status:'inbox', updatedAt:Date.now()}); 
             document.getElementById('inboxInput').value=''; 
@@ -394,130 +331,51 @@
 
     window.addEventListener('load', function() {
         render();
-        renderHistory();
         if(!config.fbApiKey && !items.length) setTimeout(openConfig, 500);
         if(!config.googleClientId) document.getElementById('loadingOverlay').style.display = 'none';
         window.checkDueDates();
         setInterval(window.checkDueDates, 60000);
         
-        // Listener global de scroll para cancelar long press (MATADOR)
+        // Listener global para limpar timer se rolar a janela
         window.addEventListener('scroll', function() {
-            isScrolling = true;
             clearTimeout(longPressTimer);
+            isScrolling = true;
         }, true);
     });
 
-    // --- VOICE ---
-    let recognition;
-    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
-        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-        recognition = new SpeechRecognition();
-        recognition.lang = 'pt-BR';
-        recognition.continuous = false;
-        recognition.onstart = function() { document.getElementById('voiceBtn').classList.add('listening'); };
-        recognition.onend = function() { document.getElementById('voiceBtn').classList.remove('listening'); };
-        recognition.onresult = function(event) {
-            const text = event.results[0][0].transcript;
-            const input = document.getElementById('inboxInput');
-            input.value = text.charAt(0).toUpperCase() + text.slice(1);
-            input.focus();
-        };
-    } else { document.getElementById('voiceBtn').style.display = 'none'; }
-
-    window.toggleVoice = function() {
-        if(!recognition) return alert("Navegador sem suporte a voz.");
-        try { recognition.start(); } catch(e) { recognition.stop(); }
-    }
-
-    // --- HELPERS (Scroll Logic Perfected) ---
-    function showToast(msg) { 
-        const t = document.getElementById('toast'); t.innerText = msg; t.className = 'show'; 
-        setTimeout(() => t.className = '', 3000); 
+    // --- HELPERS PARA TOQUE ---
+    function cancelPress() { 
+        clearTimeout(longPressTimer); 
     }
     
-    function cancelPress() { clearTimeout(longPressTimer); }
-    
-    // Cancela se mover mais que 10px em qualquer direção
     function cancelPressOnMove(e) {
         if(e.touches && e.touches[0]) {
             var moveX = e.touches[0].clientX;
             var moveY = e.touches[0].clientY;
-            // Se mover > 10px, é scroll
-            if(Math.abs(moveX - touchStartX) > 10 || Math.abs(moveY - touchStartY) > 10) {
-                isScrolling = true;
+            // Se mover mais de 5px, considera scroll e cancela
+            if(Math.abs(moveX - touchStartX) > 5 || Math.abs(moveY - touchStartY) > 5) {
                 clearTimeout(longPressTimer);
+                isScrolling = true;
             }
         }
     }
 
-    function askDate() { return new Promise(r => { document.getElementById('dateModal').style.display='flex'; dateRes = r; }); }
-    function resolveDate(val) { document.getElementById('dateModal').style.display='none'; dateRes(val); }
-    
-    // Captura coordenada inicial e inicia timer
     function startMovePress(e, idx) {
         if(e.touches && e.touches[0]) {
             touchStartX = e.touches[0].clientX;
             touchStartY = e.touches[0].clientY;
         }
-        isScrolling = false; // Reseta flag
+        isScrolling = false;
         
+        // Timer de 600ms para diferenciar toque rápido de longo
         longPressTimer = setTimeout(() => {
-            // Só abre se não estiver rolando
             if(!isScrolling) {
                 activeItemIdx = idx; 
                 document.getElementById('moveModal').style.display = 'flex';
                 if(navigator.vibrate) navigator.vibrate(50);
             }
-        }, 600); // 600ms = Tolerância maior
+        }, 600);
     }
-    
-    function editItemClick(e, idx) { e.stopPropagation(); triggerEdit(idx); }
-    
-    function triggerEdit(idx) {
-        const item = items[idx]; const newTxt = prompt("Editar:", item.text);
-        if(newTxt && newTxt !== item.text) { item.text = newTxt; if(window.sync) window.sync(); else render(); }
-    }
-    function deleteItem(e, idx) {
-        e.stopPropagation();
-        if(confirm("Excluir?")) {
-            const item = items[idx];
-            if(window.handleCalendarEvents) window.handleCalendarEvents(item, item.status, 'trash');
-            items.splice(idx, 1);
-            if(window.sync) window.sync(); else render();
-        }
-    }
-    function finalizeCtx(newStatus) {
-        document.getElementById('moveModal').style.display = 'none';
-        changeItemStatus(items[activeItemIdx], newStatus);
-    }
-    async function changeItemStatus(item, newStatus, aiDate = null, aiNote = null) {
-        const oldStatus = item.status;
-        if(newStatus === 'completed') item.completedAt = new Date().toISOString(); else delete item.completedAt;
-        
-        // Se vier da IA, usa data da IA, senão pergunta
-        if(newStatus === 'calendar' || newStatus === 'waiting') {
-            let dateStr = aiDate;
-            if(!dateStr) dateStr = await askDate();
-            
-            if(!dateStr) return; // Cancelou
-            item.date = dateStr;
-            
-            if(newStatus === 'waiting') { 
-                if(aiNote) item.note = aiNote;
-                else { const n = prompt("Delegar para?"); if(n) item.note = "Delegado: "+n; }
-            }
-        }
-        
-        if(window.handleCalendarEvents) await window.handleCalendarEvents(item, oldStatus, newStatus);
-        item.status = newStatus;
-        if(window.sync) window.sync(); else render();
-    }
-    function drop(ev, newStatus) {
-        ev.preventDefault(); ev.currentTarget.classList.remove('drag-over');
-        const idx = ev.dataTransfer.getData("text");
-        if(idx !== "") changeItemStatus(items[idx], newStatus);
-    }
-    function allowDrop(ev) { ev.preventDefault(); ev.currentTarget.classList.add('drag-over'); }
     
     function startListTitlePress(e, listKey) {
         if(e.touches && e.touches[0]) {
@@ -547,9 +405,79 @@
             }
         }, 600);
     }
+
+    // --- DEMAIS FUNÇÕES ---
+    function askDate() { return new Promise(r => { document.getElementById('dateModal').style.display='flex'; dateRes = r; }); }
+    function resolveDate(val) { document.getElementById('dateModal').style.display='none'; dateRes(val); }
+    function showToast(msg) { 
+        const t = document.getElementById('toast'); t.innerText = msg; t.className = 'show'; 
+        setTimeout(() => t.className = '', 3000); 
+    }
+    function editItemClick(e, idx) { e.stopPropagation(); triggerEdit(idx); }
+    function triggerEdit(idx) {
+        const item = items[idx]; const newTxt = prompt("Editar:", item.text);
+        if(newTxt && newTxt !== item.text) { item.text = newTxt; if(window.sync) window.sync(); else render(); }
+    }
+    function deleteItem(e, idx) {
+        e.stopPropagation();
+        if(confirm("Excluir?")) {
+            const item = items[idx];
+            if(window.handleCalendarEvents) window.handleCalendarEvents(item, item.status, 'trash');
+            items.splice(idx, 1);
+            if(window.sync) window.sync(); else render();
+        }
+    }
+    function finalizeCtx(newStatus) {
+        document.getElementById('moveModal').style.display = 'none';
+        changeItemStatus(items[activeItemIdx], newStatus);
+    }
+    async function changeItemStatus(item, newStatus, aiDate = null, aiNote = null) {
+        const oldStatus = item.status;
+        if(newStatus === 'completed') item.completedAt = new Date().toISOString(); else delete item.completedAt;
+        if(newStatus === 'calendar' || newStatus === 'waiting') {
+            let dateStr = aiDate;
+            if(!dateStr) dateStr = await askDate();
+            if(!dateStr) return; 
+            item.date = dateStr;
+            if(newStatus === 'waiting') { 
+                if(aiNote) item.note = aiNote;
+                else { const n = prompt("Delegar para?"); if(n) item.note = "Delegado: "+n; }
+            }
+        }
+        if(window.handleCalendarEvents) await window.handleCalendarEvents(item, oldStatus, newStatus);
+        item.status = newStatus;
+        if(window.sync) window.sync(); else render();
+    }
+    function drop(ev, newStatus) {
+        ev.preventDefault(); ev.currentTarget.classList.remove('drag-over');
+        const idx = ev.dataTransfer.getData("text");
+        if(idx !== "") changeItemStatus(items[idx], newStatus);
+    }
+    function allowDrop(ev) { ev.preventDefault(); ev.currentTarget.classList.add('drag-over'); }
     function clearCompletedHistory() { if(confirm("Limpar histórico?")) { items = items.filter(i=>i.status!=='completed'); if(window.sync) window.sync(); else render(); } }
     
-    // --- MANUAL PROCESSING LOGIC ---
+    // Voice
+    let recognition;
+    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        recognition = new SpeechRecognition();
+        recognition.lang = 'pt-BR';
+        recognition.continuous = false;
+        recognition.onstart = function() { document.getElementById('voiceBtn').classList.add('listening'); };
+        recognition.onend = function() { document.getElementById('voiceBtn').classList.remove('listening'); };
+        recognition.onresult = function(event) {
+            const text = event.results[0][0].transcript;
+            const input = document.getElementById('inboxInput');
+            input.value = text.charAt(0).toUpperCase() + text.slice(1);
+            input.focus();
+        };
+    } else { document.getElementById('voiceBtn').style.display = 'none'; }
+    window.toggleVoice = function() {
+        if(!recognition) return alert("Navegador sem suporte a voz.");
+        try { recognition.start(); } catch(e) { recognition.stop(); }
+    }
+
+    // Processamento
     let procIdx = null;
     function startProcessing() {
         procIdx = items.findIndex(i => i.status === 'inbox');
@@ -560,12 +488,10 @@
             toStep('step-1');
         }
     }
-    
     function toStep(stepId) {
         document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
         document.getElementById(stepId).classList.add('active');
     }
-
     function finalizeProc(newStatus) {
         changeItemStatus(items[procIdx], newStatus);
         setTimeout(() => {
@@ -575,30 +501,21 @@
                 document.getElementById('processing-zone').style.display = 'none';
                 showToast("Entrada zerada!");
             }
-        }, 500); // Pequeno delay para salvar
+        }, 500); 
     }
-
-    // --- AUTO-MOVE FUNCTION ---
     window.checkDueDates = function() {
         const now = new Date();
         let changed = false;
         items.forEach(item => {
             if ((item.status === 'calendar' || item.status === 'waiting') && item.date) {
                 const taskDate = new Date(item.date);
-                if (taskDate <= now) {
-                    item.status = 'next';
-                    changed = true;
-                }
+                if (taskDate <= now) { item.status = 'next'; changed = true; }
             }
         });
-        if (changed) {
-            if(window.sync) window.sync(); else render();
-            showToast("Tarefas vencidas movidas para Próximas Ações");
-        }
+        if (changed) { if(window.sync) window.sync(); else render(); showToast("Tarefas vencidas movidas para Próximas Ações"); }
     }
 </script>
 
-<!-- MODULE SCRIPT (Firebase & IA) -->
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getFirestore, doc, onSnapshot, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
@@ -606,14 +523,9 @@
     let db;
     if(config.fbApiKey && config.fbProjectId) {
         try {
-            const firebaseConfig = {
-                apiKey: config.fbApiKey,
-                authDomain: config.fbAuthDomain,
-                projectId: config.fbProjectId
-            };
+            const firebaseConfig = { apiKey: config.fbApiKey, authDomain: config.fbAuthDomain, projectId: config.fbProjectId };
             const app = initializeApp(firebaseConfig);
             db = getFirestore(app);
-            
             document.getElementById('dbStatus').innerText = "Conectando...";
             onSnapshot(doc(db, "gtd", "my_tasks"), (docSnap) => {
                 if (docSnap.exists()) {
@@ -625,23 +537,11 @@
                     }
                     document.getElementById('dbDot').className = "dot online";
                     document.getElementById('dbStatus').innerText = "Online";
-                } else {
-                    setDoc(doc(db, "gtd", "my_tasks"), { tasks: [] });
-                }
+                } else { setDoc(doc(db, "gtd", "my_tasks"), { tasks: [] }); }
                 document.getElementById('loadingOverlay').style.display = 'none';
-            }, (error) => {
-                console.error("Erro Sync:", error);
-                document.getElementById('dbDot').className = "dot error";
-                document.getElementById('dbStatus').innerText = "Erro Auth";
-                document.getElementById('loadingOverlay').style.display = 'none';
-            });
-        } catch(e) {
-            console.error("Erro Firebase", e);
-            document.getElementById('loadingOverlay').style.display = 'none';
-        }
-    } else {
-        document.getElementById('dbStatus').innerText = "Sem Config";
-    }
+            }, (error) => { console.error("Erro Sync:", error); document.getElementById('dbDot').className = "dot error"; document.getElementById('dbStatus').innerText = "Erro Auth"; document.getElementById('loadingOverlay').style.display = 'none'; });
+        } catch(e) { console.error("Erro Firebase", e); document.getElementById('loadingOverlay').style.display = 'none'; }
+    } else { document.getElementById('dbStatus').innerText = "Sem Config"; }
 
     window.sync = function() {
         if(db) {
@@ -675,37 +575,15 @@
         document.getElementById('loadingOverlay').style.display = 'none';
     }
 
-    // --- AUTO IA PROCESSOR (MAGIC) ---
     window.magicProcess = async function() {
         if(!config.geminiKey) return alert("Configure a API Key do Gemini.");
-        
         const inboxItems = items.filter(i => i.status === 'inbox');
         if(inboxItems.length === 0) return alert("Caixa de entrada vazia.");
-
-        document.getElementById('loadingText').innerText = "IA Processando Caixa de Entrada...";
+        document.getElementById('loadingText').innerText = "IA Processando...";
         document.getElementById('loadingOverlay').style.display = 'flex';
-
-        // Constroi prompt
         const tasksTxt = inboxItems.map(i => `- ID:${i.id} | TEXTO: ${i.text}`).join('\n');
         const now = new Date().toISOString();
-        
-        const prompt = `
-            Hoje é ${now}. Analise estas tarefas GTD e classifique-as.
-            ${tasksTxt}
-            
-            Regras de Saída (JSON Array):
-            [{"id": "...", "status": "...", "date": "YYYY-MM-DDTHH:MM", "note": "..."}]
-            
-            Regras de Status:
-            1. Se tiver data/hora específica no texto -> 'calendar'. Extraia data ISO.
-            2. Se citar outra pessoa (ex: cobrar Fulano) -> 'waiting'. Note: "Delegado: Fulano".
-            3. Se for ação rápida (<2min) -> 'do-now'.
-            4. Se for vago/sonho -> 'someday'.
-            5. Se for referência/leitura -> 'reference'.
-            6. Se for complexo -> 'project'.
-            7. Padrão -> 'next'.
-        `;
-
+        const prompt = `Hoje é ${now}. Analise estas tarefas GTD e classifique-as. ${tasksTxt} Regras de Saída (JSON Array): [{"id": "...", "status": "...", "date": "YYYY-MM-DDTHH:MM", "note": "..."}]. Regras: 1. Se tiver data/hora específica -> 'calendar'. 2. Se citar outra pessoa -> 'waiting'. 3. <2min -> 'do-now'. 4. Vago -> 'someday'. 5. Ref -> 'reference'. 6. Complexo -> 'project'. 7. Padrão -> 'next'.`;
         try {
             const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${config.geminiKey}`, {
                 method: 'POST', headers: {'Content-Type': 'application/json'},
@@ -714,23 +592,10 @@
             const data = await res.json();
             const txt = data.candidates[0].content.parts[0].text;
             const decisions = JSON.parse(txt.replace(/```json|```/g, '').trim());
-
-            for (const d of decisions) {
-                const item = items.find(i => i.id == d.id); 
-                if(item) {
-                    await changeItemStatus(item, d.status, d.date, d.note);
-                }
-            }
-            
+            for (const d of decisions) { const item = items.find(i => i.id == d.id); if(item) await changeItemStatus(item, d.status, d.date, d.note); }
             window.sync();
             showToast("Processamento IA Concluído!");
-
-        } catch(e) {
-            console.error(e);
-            alert("Erro IA: " + e.message);
-        } finally {
-            document.getElementById('loadingOverlay').style.display = 'none';
-        }
+        } catch(e) { alert("Erro IA: " + e.message); } finally { document.getElementById('loadingOverlay').style.display = 'none'; }
     }
 </script>
 
@@ -739,7 +604,6 @@
 <script>
     const SCOPES = 'https://www.googleapis.com/auth/calendar.events';
     let tokenClient;
-
     if(config.googleClientId) {
         window.addEventListener('load', () => {
             gapi.load('client', async () => {
@@ -768,12 +632,10 @@
             });
         });
     }
-
     window.handleAuthClick = function() {
         if(!config.googleClientId) return alert("Configure o Client ID da Agenda primeiro.");
         tokenClient.requestAccessToken({prompt: ''});
     }
-
     window.handleCalendarEvents = async function(item, oldStatus, newStatus) {
         if(!gapi.client.getToken()) return;
         if ((oldStatus === 'calendar' || oldStatus === 'waiting') && (newStatus !== 'calendar' && newStatus !== 'waiting')) {
@@ -783,23 +645,12 @@
             try {
                 const start = new Date(item.date);
                 const end = new Date(start.getTime() + 30 * 60000); 
-                const event = {
-                    summary: `GTD: ${item.text} ${newStatus === 'waiting' ? '(Delegado)' : ''}`,
-                    description: item.note || '',
-                    start: { dateTime: start.toISOString() },
-                    end: { dateTime: end.toISOString() }
-                };
-                if(item.googleEventId) {
-                    try { await gapi.client.calendar.events.update({ calendarId: 'primary', eventId: item.googleEventId, resource: event }); } 
-                    catch { const res = await gapi.client.calendar.events.insert({ calendarId: 'primary', resource: event }); item.googleEventId = res.result.id; }
-                } else {
-                    const res = await gapi.client.calendar.events.insert({ calendarId: 'primary', resource: event });
-                    item.googleEventId = res.result.id;
-                }
+                const event = { summary: `GTD: ${item.text} ${newStatus === 'waiting' ? '(Delegado)' : ''}`, description: item.note || '', start: { dateTime: start.toISOString() }, end: { dateTime: end.toISOString() } };
+                if(item.googleEventId) { try { await gapi.client.calendar.events.update({ calendarId: 'primary', eventId: item.googleEventId, resource: event }); } catch { const res = await gapi.client.calendar.events.insert({ calendarId: 'primary', resource: event }); item.googleEventId = res.result.id; } } 
+                else { const res = await gapi.client.calendar.events.insert({ calendarId: 'primary', resource: event }); item.googleEventId = res.result.id; }
             } catch(e) { console.error("Erro Agenda:", e); }
         }
     }
-
     window.checkRemoteCalendarDeletions = async function() {
         if(!gapi.client.getToken()) return;
         let changed = false;
@@ -808,9 +659,7 @@
             try {
                 const res = await gapi.client.calendar.events.get({ calendarId: 'primary', eventId: item.googleEventId });
                 if (res.result.status === 'cancelled') { items.splice(items.indexOf(item), 1); changed = true; }
-            } catch (err) {
-                if (err.status === 404 || err.status === 410) { items.splice(items.indexOf(item), 1); changed = true; }
-            }
+            } catch (err) { if (err.status === 404 || err.status === 410) { items.splice(items.indexOf(item), 1); changed = true; } }
         }
         if (changed) window.sync();
     }
