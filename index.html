@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>GTD Fukuoka (v8.3)</title>
+    <title>GTD Fukuoka (v8.4)</title>
+    <!-- DragDropTouch para compatibilidade mobile do arrastar -->
     <script src="https://bernardo-castilho.github.io/DragDropTouch/DragDropTouch.js"></script>
     <style>
         :root { --primary: #2c3e50; --accent: #3498db; --success: #27ae60; --warning: #f39c12; --danger: #e74c3c; --google: #4285f4; --gray: #95a5a6; --ai: #8e44ad; }
@@ -47,7 +48,20 @@
         .card-do-now { background-color: #fff3cd !important; border: 1px solid #ffeeba !important; }
 
         ul { list-style: none; padding: 0; margin: 0; min-height: 50px; flex-grow: 1; }
-        li { padding: 8px 10px; border: 1px solid #e9ecef; display: flex; justify-content: space-between; align-items: center; background: #ffffff; border-radius: 6px; margin-bottom: 6px; touch-action: pan-y; position: relative; gap: 8px; }
+        li { 
+            padding: 8px 10px; 
+            border: 1px solid #e9ecef; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            background: #ffffff; 
+            border-radius: 6px; 
+            margin-bottom: 6px; 
+            /* Importante: permite rolagem vertical sem travar */
+            touch-action: pan-y; 
+            position: relative; 
+            gap: 8px; 
+        }
         li.ready-to-drag { background-color: #e3f2fd; border: 2px solid #3498db; transform: scale(1.02); z-index: 50; }
         li.dragging { opacity: 0.4; }
         
@@ -56,7 +70,8 @@
         .meta { font-size: 0.75rem; color: #666; display: block; margin-top: 2px; pointer-events: none; }
         
         .task-actions { display: flex; gap: 4px; align-items: center; }
-        .btn-icon { background: none; border: none; padding: 0; font-size: 1.1rem; cursor: pointer; border-radius: 4px; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; transition: background 0.2s; }
+        /* Usamos z-index maior para garantir que o toque vá para o botão */
+        .btn-icon { background: none; border: none; padding: 0; font-size: 1.1rem; cursor: pointer; border-radius: 4px; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; transition: background 0.2s; position: relative; z-index: 2; }
         .btn-icon:hover { background-color: #f1f3f5; }
         .btn-icon.del:hover { color: var(--danger); background-color: #ffebee; }
         .btn-icon.edit:hover { color: var(--accent); background-color: #e3f2fd; }
@@ -84,7 +99,6 @@
             <div><div id="dbDot" class="dot"></div><span id="dbStatus">DB: Off</span></div>
             <div>
                 <button class="btn-config" id="btnAuthCalendar" onclick="handleAuthClick()">📅 Agenda</button>
-                <button class="btn-config" onclick="manualSync()">☁️ Sync Agora</button>
                 <button class="btn-config" onclick="openConfig()">⚙️ Config</button>
             </div>
         </div>
@@ -175,6 +189,7 @@
     };
     var activeItemIdx = null;
     var longPressTimer;
+    var touchStartY = 0; // Para detectar rolagem
     var dateRes;
 
     // --- CONFIG UI HANDLERS ---
@@ -227,8 +242,8 @@
 
             card.innerHTML = `
                 <div class="list-header" 
-                     onmousedown="startListTitlePress('${key}')" ontouchstart="startListTitlePress('${key}')"
-                     onmouseup="cancelPress()" ontouchend="cancelPress()" onmouseleave="cancelPress()" ontouchmove="cancelPress()">
+                     onmousedown="startListTitlePress(event, '${key}')" ontouchstart="startListTitlePress(event, '${key}')"
+                     onmouseup="cancelPress()" ontouchend="cancelPress()" onmouseleave="cancelPress()" ontouchmove="cancelPressOnMove(event)">
                     <h3>${listNames[key]}</h3>
                     <div>
                         ${key === 'completed' ? `<button class="btn-config" onclick="clearCompletedHistory()" style="font-size:0.7rem; padding:2px 5px;">🗑️</button>` : ''}
@@ -248,9 +263,15 @@
                 li.draggable = true;
                 li.ondragstart = (e) => e.dataTransfer.setData("text", idx);
                 
-                li.onmousedown = () => startMovePress(idx);
-                li.ontouchstart = () => startMovePress(idx);
-                li.onmouseup = cancelPress; li.ontouchend = cancelPress; li.onmouseleave = cancelPress; li.ontouchmove = cancelPress;
+                // EVENTOS DE TOQUE REFINADOS PARA PERMITIR SCROLL
+                li.onmousedown = (e) => startMovePress(e, idx);
+                li.ontouchstart = (e) => startMovePress(e, idx);
+                
+                li.onmouseup = cancelPress; 
+                li.ontouchend = cancelPress; 
+                li.onmouseleave = cancelPress; 
+                li.ontouchmove = (e) => cancelPressOnMove(e); // Cancela se mover o dedo (scroll)
+                
                 li.oncontextmenu = (e) => e.preventDefault(); 
 
                 let meta = "";
@@ -270,9 +291,9 @@
                         ${meta}
                     </div>
                     <div class="task-actions">
-                        <button class="btn-icon edit" title="Editar" onmousedown="editItemClick(event, ${idx})">✏️</button>
-                        <button class="btn-icon ai" title="Desmembrar (IA)" onmousedown="breakdownItem(event, ${idx})">🤖</button>
-                        <button class="btn-icon del" title="Excluir" onmousedown="deleteItem(event, ${idx})">🗑️</button>
+                        <button class="btn-icon edit" title="Editar" onclick="editItemClick(event, ${idx})">✏️</button>
+                        <button class="btn-icon ai" title="Desmembrar (IA)" onclick="breakdownItem(event, ${idx})">🤖</button>
+                        <button class="btn-icon del" title="Excluir" onclick="deleteItem(event, ${idx})">🗑️</button>
                     </div>
                 `;
                 ul.appendChild(li);
@@ -300,14 +321,12 @@
     function addToInbox() {
         const val = document.getElementById('inboxInput').value;
         if(val) { 
-            // Save History
             if(!inputHistory.includes(val)) {
                 inputHistory.push(val);
                 if(inputHistory.length > 50) inputHistory.shift();
                 localStorage.setItem('gtd_history', JSON.stringify(inputHistory));
                 renderHistory();
             }
-
             items.push({id:Date.now(), text:val, status:'inbox', updatedAt:Date.now()}); 
             document.getElementById('inboxInput').value=''; 
             if(window.sync) window.sync(); else render(); 
@@ -320,6 +339,9 @@
         renderHistory();
         if(!config.fbApiKey && !items.length) setTimeout(openConfig, 500);
         if(!config.googleClientId) document.getElementById('loadingOverlay').style.display = 'none';
+        
+        // Listener global para scroll cancela cliques longos
+        window.addEventListener('scroll', cancelPress, true);
     });
 
     // --- HELPERS ---
@@ -327,31 +349,41 @@
         const t = document.getElementById('toast'); t.innerText = msg; t.className = 'show'; 
         setTimeout(() => t.className = '', 3000); 
     }
+    
+    // LOGICA DE CANCELAR CLIQUE LONGO AO ROLAR
     function cancelPress() { clearTimeout(longPressTimer); }
+    
+    function cancelPressOnMove(e) {
+        // Se for toque e moveu mais que 10px, considera scroll e cancela
+        if(e.touches && e.touches[0]) {
+            let moveY = e.touches[0].clientY;
+            if(Math.abs(moveY - touchStartY) > 10) {
+                clearTimeout(longPressTimer);
+            }
+        }
+    }
+
     function askDate() { return new Promise(r => { document.getElementById('dateModal').style.display='flex'; dateRes = r; }); }
     function resolveDate(val) { document.getElementById('dateModal').style.display='none'; dateRes(val); }
-    function startMovePress(idx) {
+    
+    function startMovePress(e, idx) {
+        if(e.touches && e.touches[0]) touchStartY = e.touches[0].clientY; // Salva pos inicial
         longPressTimer = setTimeout(() => {
             activeItemIdx = idx; document.getElementById('moveModal').style.display = 'flex';
             if(navigator.vibrate) navigator.vibrate(50);
         }, 500);
     }
+    
     function editItemClick(e, idx) { e.stopPropagation(); triggerEdit(idx); }
+    
     function triggerEdit(idx) {
         const item = items[idx]; const newTxt = prompt("Editar:", item.text);
-        if(newTxt && newTxt !== item.text) { 
-            item.text = newTxt; 
-            if(window.handleCalendarEvents && (item.status === 'calendar' || item.status === 'waiting')) {
-                window.handleCalendarEvents(item, item.status, item.status);
-            }
-            if(window.sync) window.sync(); else render(); 
-        }
+        if(newTxt && newTxt !== item.text) { item.text = newTxt; if(window.sync) window.sync(); else render(); }
     }
     function deleteItem(e, idx) {
         e.stopPropagation();
         if(confirm("Excluir?")) {
             const item = items[idx];
-            // Se tiver evento no calendário, não exclui do Google (mantém histórico), mas sai do App
             if(window.handleCalendarEvents) window.handleCalendarEvents(item, item.status, 'trash');
             items.splice(idx, 1);
             if(window.sync) window.sync(); else render();
@@ -382,7 +414,8 @@
     function allowDrop(ev) { ev.preventDefault(); ev.currentTarget.classList.add('drag-over'); }
     
     // Lista Titulo Long Press
-    function startListTitlePress(listKey) {
+    function startListTitlePress(e, listKey) {
+        if(e.touches && e.touches[0]) touchStartY = e.touches[0].clientY;
         longPressTimer = setTimeout(async () => {
             if(navigator.vibrate) navigator.vibrate(50);
             const text = prompt(`Adicionar em "${listNames[listKey]}":`);
@@ -403,13 +436,6 @@
     }
     function clearCompletedHistory() { if(confirm("Limpar histórico?")) { items = items.filter(i=>i.status!=='completed'); if(window.sync) window.sync(); else render(); } }
     
-    // Manual Sync Button Action
-    function manualSync() {
-        if(window.sync) window.sync();
-        if(window.checkRemoteCalendarDeletions) window.checkRemoteCalendarDeletions();
-        showToast("Verificando nuvem e agenda...");
-    }
-
     // Processamento
     let procIdx = null;
     function startProcessing() {
@@ -451,7 +477,6 @@
                     if(data.tasks) {
                         items = data.tasks;
                         render();
-                        // Se atualizou o banco, verifica a agenda também
                         if(window.checkRemoteCalendarDeletions) window.checkRemoteCalendarDeletions();
                     }
                     document.getElementById('dbDot').className = "dot online";
@@ -474,6 +499,7 @@
         document.getElementById('dbStatus').innerText = "Sem Config";
     }
 
+    // Expose Sync to Global
     window.sync = function() {
         if(db) {
             document.getElementById('dbDot').className = "dot syncing";
@@ -486,8 +512,9 @@
 
     // --- IA Breakdown ---
     window.breakdownItem = async function(e, idx) {
-        e.stopPropagation();
+        e.stopPropagation(); // Impede clique no LI
         if(!config.geminiKey) return alert("Configure a API Key do Gemini.");
+        document.getElementById('loadingText').innerText = "IA Pensando...";
         document.getElementById('loadingOverlay').style.display = 'flex';
         const item = items[idx];
         const prompt = `Quebre a tarefa "${item.text}" em etapas acionáveis. Retorne JSON Array strings.`;
@@ -518,29 +545,26 @@
         window.addEventListener('load', () => {
             gapi.load('client', async () => {
                 await gapi.client.init({ discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest'] });
-                
                 tokenClient = google.accounts.oauth2.initTokenClient({
                     client_id: config.googleClientId, scope: SCOPES,
                     callback: (resp) => {
-                        if(resp.error) return console.error(resp);
+                        if(resp.error) return;
                         const exp = Date.now() + (resp.expires_in * 1000);
                         localStorage.setItem('gtd_cal_token', JSON.stringify({ token: resp.access_token, exp: exp }));
                         gapi.client.setToken(resp);
                         document.getElementById('btnAuthCalendar').innerText = "📅 Agenda OK";
                         document.getElementById('btnAuthCalendar').style.background = "var(--success)";
                         document.getElementById('btnAuthCalendar').style.color = "white";
-                        // Ao logar, verifica imediatamente
                         window.checkRemoteCalendarDeletions();
                     }
                 });
-
+                // Auto Login
                 const stored = JSON.parse(localStorage.getItem('gtd_cal_token'));
                 if(stored && Date.now() < stored.exp) {
                     gapi.client.setToken({ access_token: stored.token });
                     document.getElementById('btnAuthCalendar').innerText = "📅 Agenda OK";
                     document.getElementById('btnAuthCalendar').style.background = "var(--success)";
                     document.getElementById('btnAuthCalendar').style.color = "white";
-                    // Inicia verificação automática
                     setInterval(window.checkRemoteCalendarDeletions, 30000); 
                 }
             });
@@ -554,11 +578,9 @@
 
     window.handleCalendarEvents = async function(item, oldStatus, newStatus) {
         if(!gapi.client.getToken()) return;
-        // Se sair, apenas desvincula o ID (não apaga do GCal)
         if ((oldStatus === 'calendar' || oldStatus === 'waiting') && (newStatus !== 'calendar' && newStatus !== 'waiting')) {
             if (item.googleEventId) delete item.googleEventId;
         }
-        // Se entrar ou manter, cria/atualiza
         if ((newStatus === 'calendar' || newStatus === 'waiting') && item.date) {
             try {
                 const start = new Date(item.date);
@@ -580,38 +602,22 @@
         }
     }
 
-    // --- CORREÇÃO DA VERIFICAÇÃO DE EXCLUSÃO ---
     window.checkRemoteCalendarDeletions = async function() {
         if(!gapi.client.getToken()) return;
-        
         let changed = false;
-        // Pega itens que supostamente estão no calendário
         const syncedItems = items.filter(i => (i.status === 'calendar' || i.status === 'waiting') && i.googleEventId);
-
         for (const item of syncedItems) {
             try {
                 const res = await gapi.client.calendar.events.get({ calendarId: 'primary', eventId: item.googleEventId });
-                // Se status for cancelled (está na lixeira do GCal), apaga do App
-                if (res.result.status === 'cancelled') {
-                    deleteLocalTask(item.id); 
-                    changed = true; 
-                }
+                if (res.result.status === 'cancelled') { deleteLocalTask(item.id); changed = true; }
             } catch (err) {
-                // Se erro for 404 (não existe) ou 410 (excluído permanentemente), apaga do App
-                if (err.status === 404 || err.status === 410) { 
-                    deleteLocalTask(item.id); 
-                    changed = true; 
-                }
+                if (err.status === 404 || err.status === 410) { deleteLocalTask(item.id); changed = true; }
             }
         }
-        if (changed) {
-            window.sync();
-            showToast("Sincronização: Tarefas removidas pois foram excluídas da Agenda.");
-        }
+        if (changed) window.sync();
     }
 
     function deleteLocalTask(id) {
-        // Busca index pelo ID para garantir que remove o certo
         const idx = items.findIndex(i => i.id === id);
         if(idx > -1) items.splice(idx, 1);
     }
