@@ -18,7 +18,6 @@
         .dot { width: 10px; height: 10px; border-radius: 50%; background: #ccc; display:inline-block; margin-right:5px; }
         .dot.online { background: var(--success); box-shadow: 0 0 5px var(--success); }
         .dot.syncing { background: var(--warning); animation: pulse 1s infinite; }
-        .dot.error { background: var(--danger); }
         
         button { padding: 0 15px; height: 40px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; transition: 0.2s; }
         button:active { transform: scale(0.96); }
@@ -35,7 +34,6 @@
         .list-card.drag-over { background-color: #e3f2fd; border: 2px dashed #3498db; }
         .list-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #dee2e6; padding-bottom: 8px; margin-bottom: 10px; cursor: pointer; }
         .list-header h3 { margin: 0; font-size: 1rem; }
-        .list-header:active { opacity: 0.6; background-color: #e9ecef; border-radius: 4px; }
         .badge { background: #fff; padding: 2px 8px; border-radius: 10px; font-size: 0.75rem; font-weight: bold; border: 1px solid #ccc; }
         
         .card-inbox { border-top: 4px solid var(--danger); }
@@ -132,7 +130,7 @@
 <div id="configModal" class="modal-overlay">
     <div class="modal-content">
         <h3>Configurações</h3>
-        <label>Google Client ID:</label><input type="text" id="cfgClientId" placeholder="Obrigatório para Sync">
+        <label>Google Client ID:</label><input type="text" id="cfgClientId">
         <button onclick="handleAuthClick()" style="width:100%; margin:10px 0; background:var(--google); color:white;">Conectar Google Drive</button>
         <label>Gemini API Key (IA):</label><input type="password" id="cfgGemini">
         <div style="text-align:right; margin-top:15px;">
@@ -163,6 +161,7 @@
     let items = JSON.parse(localStorage.getItem('gtd_data')) || [];
     let config = JSON.parse(localStorage.getItem('gtd_config')) || { googleClientId: '', geminiKey: '' };
     
+    // Nomes das listas
     const listNames = {
         'inbox': '📥 Entrada', 'do-now': '⚡ Fazer Agora', 'next': '🔥 Próximas Ações',
         'project': '📂 Projetos', 'calendar': '📅 Calendário', 'waiting': '⏳ Delegar',
@@ -173,7 +172,7 @@
     let autoSyncInterval;
     let syncInProgress = false;
     
-    // --- GOOGLE API & SYNC ---
+    // --- GOOGLE API ---
     let tokenClient;
     let driveFileId = localStorage.getItem('gtd_drive_file_id');
     const SCOPES = 'https://www.googleapis.com/auth/calendar.events https://www.googleapis.com/auth/drive.appdata';
@@ -192,8 +191,7 @@
                 localStorage.setItem('gtd_token', JSON.stringify({ token: resp.access_token, exp: exp }));
                 gapi.client.setToken(resp);
                 updateStatus(true);
-                // AO LOGAR: Força busca do arquivo para sincronizar novos dispositivos
-                initDrive(true); 
+                initDrive(true); // Força busca do arquivo
                 startAutoSync();
             }
         });
@@ -205,7 +203,6 @@
         if(stored && Date.now() < stored.exp) {
             gapi.client.setToken({ access_token: stored.token });
             updateStatus(true);
-            // AO ABRIR: Tenta buscar arquivo se não tiver ID, ou sync se tiver
             if(!driveFileId) initDrive(true); else { manualSync(); startAutoSync(); }
         }
     }
@@ -220,26 +217,18 @@
         document.getElementById('driveStatus').innerText = online ? 'Online' : 'Off';
     }
 
-    // --- DRIVE CORE ---
+    // --- DRIVE & SYNC (MERGE LOGIC) ---
     async function initDrive(forceSearch = false) {
         if(!gapi.client.getToken()) return;
         try {
-            // Busca sempre o arquivo primeiro para garantir link correto entre dispositivos
             const list = await gapi.client.drive.files.list({ 
-                spaces: 'appDataFolder', 
-                q: `name = '${DB_NAME}' and trashed = false`,
-                fields: 'files(id)' 
+                spaces: 'appDataFolder', q: `name = '${DB_NAME}' and trashed = false`, fields: 'files(id)' 
             });
-            
             if(list.result.files.length > 0) {
-                // Arquivo existe: Usa ele e baixa dados
                 driveFileId = list.result.files[0].id;
                 localStorage.setItem('gtd_drive_file_id', driveFileId);
-                console.log("Arquivo encontrado: " + driveFileId);
-                driveSync(true); // DOWNLOAD IMEDIATO
+                driveSync(true); // Download e Merge inicial
             } else {
-                // Arquivo não existe: Cria
-                console.log("Criando novo arquivo DB...");
                 const create = await gapi.client.drive.files.create({
                     resource: { name: DB_NAME, parents: ['appDataFolder'] },
                     media: { mimeType: 'application/json', body: JSON.stringify(items) }
@@ -247,12 +236,10 @@
                 driveFileId = create.result.id;
                 localStorage.setItem('gtd_drive_file_id', driveFileId);
             }
-        } catch(e) { 
-            console.error("Erro Init Drive:", e); 
-            document.getElementById('driveDot').className = 'dot error';
-        }
+        } catch(e) { console.error(e); }
     }
 
+    // Função de Sincronia Principal
     async function driveSync(download = false) {
         if(!driveFileId || !gapi.client.getToken() || syncInProgress) return;
         syncInProgress = true;
@@ -260,42 +247,80 @@
         
         try {
             if(download) {
-                // DOWNLOAD (Nuvem -> Local)
+                // DOWNLOAD
                 const res = await gapi.client.drive.files.get({ fileId: driveFileId, alt: 'media' });
-                const remote = res.result || res.body;
+                const remoteData = res.result || res.body;
                 
-                if(Array.isArray(remote)) { 
-                    // Estratégia simples: Último estado da nuvem vence ao abrir
-                    // Se for auto-sync de fundo, ideal seria merge, mas aqui substituímos para consistência
-                    items = remote; 
-                    localStorage.setItem('gtd_data', JSON.stringify(items)); 
-                    render(); 
+                if(Array.isArray(remoteData)) { 
+                    // MERGE INTELIGENTE (Uni listas baseada em ID e Data)
+                    mergeLists(remoteData);
+                    render();
                     await checkRemoteCalendarDeletions();
                 }
             } else {
-                // UPLOAD (Local -> Nuvem) - IMEDIATO
+                // UPLOAD
                 const body = JSON.stringify(items);
                 await fetch(`https://www.googleapis.com/upload/drive/v3/files/${driveFileId}?uploadType=media`, {
                     method: 'PATCH',
                     headers: { 'Authorization': `Bearer ${gapi.client.getToken().access_token}`, 'Content-Type': 'application/json' },
                     body: body
                 });
-                console.log("Upload realizado.");
             }
             document.getElementById('driveDot').className = 'dot online';
         } catch(e) { 
-            console.error("Sync Error:", e); 
+            console.error(e); 
             document.getElementById('driveDot').className = 'dot error'; 
         } finally {
             syncInProgress = false;
         }
     }
 
-    // Função central que salva e SOBE IMEDIATAMENTE
+    // Algoritmo de Fusão
+    function mergeLists(remoteItems) {
+        const itemMap = new Map();
+        
+        // Adiciona itens locais ao mapa
+        items.forEach(i => itemMap.set(i.id, i));
+        
+        let hasChanges = false;
+
+        // Mescla com remotos
+        remoteItems.forEach(remote => {
+            if (itemMap.has(remote.id)) {
+                const local = itemMap.get(remote.id);
+                // Se remoto for mais novo, atualiza local
+                if ((remote.updatedAt || 0) > (local.updatedAt || 0)) {
+                    itemMap.set(remote.id, remote);
+                }
+                // Se local for mais novo, mantemos local (e vamos subir depois)
+            } else {
+                // Se não tem no local, adiciona do remoto
+                itemMap.set(remote.id, remote);
+            }
+        });
+
+        // Atualiza lista principal
+        const newItems = Array.from(itemMap.values());
+        
+        // Verifica se houve mudança para disparar upload de volta
+        if (JSON.stringify(newItems) !== JSON.stringify(items) || newItems.length !== remoteItems.length) {
+            hasChanges = true;
+        }
+        
+        items = newItems;
+        localStorage.setItem('gtd_data', JSON.stringify(items));
+        
+        // Se a fusão gerou uma lista nova, sobe de volta para o Drive para convergir
+        if(hasChanges) {
+            // Pequeno delay para não colidir
+            setTimeout(() => driveSync(false), 1000);
+        }
+    }
+
+    // Salva Local e Sobe Imediato
     function sync() {
         localStorage.setItem('gtd_data', JSON.stringify(items));
         render();
-        // Sem debounce longo. Salva quase instantaneamente para garantir sync entre abas/devices
         if(window.syncTimer) clearTimeout(window.syncTimer);
         window.syncTimer = setTimeout(() => driveSync(false), 500); 
     }
@@ -304,16 +329,19 @@
     
     function startAutoSync() {
         if(autoSyncInterval) clearInterval(autoSyncInterval);
-        // Intervalo de 15s para baixar mudanças de outros devices
         autoSyncInterval = setInterval(() => {
             if(gapi.client.getToken()) driveSync(true); 
-        }, 15000);
+        }, 15000); // 15s check
     }
 
-    // --- AGENDA: LIMPEZA ---
+    // --- UTILS ---
+    function updateItemTimestamp(item) {
+        item.updatedAt = Date.now();
+    }
+
+    // --- CALENDAR ---
     async function checkRemoteCalendarDeletions() {
         if(!config.googleClientId || !gapi.client.getToken()) return;
-        
         let changed = false;
         const syncedItems = items.filter(i => (i.status === 'calendar' || i.status === 'waiting') && i.googleEventId);
 
@@ -337,17 +365,15 @@
         if(idx > -1) items.splice(idx, 1);
     }
 
-    // --- AGENDA: CRIAÇÃO/ATUALIZAÇÃO ---
     async function handleCalendarEvents(item, oldStatus, newStatus) {
         if(!config.googleClientId || !gapi.client.getToken()) return;
 
-        // Sair da caixa: Desvincula apenas
         if ((oldStatus === 'calendar' || oldStatus === 'waiting') && (newStatus !== 'calendar' && newStatus !== 'waiting')) {
             if (item.googleEventId) delete item.googleEventId;
         }
 
-        // Entrar/Manter: Cria ou Atualiza
         if ((newStatus === 'calendar' || newStatus === 'waiting') && item.date) {
+            updateItemTimestamp(item);
             try {
                 const start = new Date(item.date);
                 const end = new Date(start.getTime() + 30 * 60000); 
@@ -391,7 +417,7 @@
             const text = prompt(`Adicionar nova tarefa em "${listName}":`);
             
             if(text) {
-                const newItem = { id: Date.now(), text: text, status: listKey };
+                const newItem = { id: Date.now(), text: text, status: listKey, updatedAt: Date.now() };
                 if (listKey === 'calendar' || listKey === 'waiting') {
                     const dateStr = await askDate();
                     if(dateStr) {
@@ -417,6 +443,7 @@
         const newTxt = prompt("Editar Título da Tarefa:", item.text);
         if(newTxt && newTxt !== item.text) { 
             item.text = newTxt; 
+            updateItemTimestamp(item);
             if(item.status === 'calendar' || item.status === 'waiting') {
                 await handleCalendarEvents(item, item.status, item.status);
             }
@@ -442,7 +469,13 @@
             const data = await res.json();
             const txt = data.candidates[0].content.parts[0].text;
             const steps = JSON.parse(txt.replace(/```json|```/g, '').trim());
-            steps.forEach(step => items.push({ id: Date.now() + Math.random(), text: step, status: 'next', note: `De: ${item.text}` }));
+            steps.forEach(step => items.push({ 
+                id: Date.now() + Math.random(), 
+                text: step, 
+                status: 'next', 
+                note: `De: ${item.text}`,
+                updatedAt: Date.now() 
+            }));
             sync();
             showToast("Tarefas criadas!");
         } catch(e) { alert("Erro IA: " + e); }
@@ -453,7 +486,7 @@
         e.stopPropagation();
         if(confirm("Excluir tarefa?")) {
             const item = items[idx];
-            handleCalendarEvents(item, item.status, 'trash'); // Remove apenas vinculo, mantem GCal se nao for 404
+            handleCalendarEvents(item, item.status, 'trash'); 
             items.splice(idx, 1);
             sync();
         }
@@ -475,6 +508,7 @@
 
     async function changeItemStatus(item, newStatus) {
         const oldStatus = item.status;
+        item.updatedAt = Date.now();
         if(newStatus === 'completed') item.completedAt = new Date().toISOString();
         else delete item.completedAt;
 
@@ -508,13 +542,11 @@
             const card = document.createElement('div');
             card.className = `list-card card-${key}`;
             if(key === 'completed') card.style.gridColumn = '1 / -1';
-            
             card.ondrop = (e) => drop(e, key);
             card.ondragover = (e) => allowDrop(e);
 
             const headerHtml = `
                 <div class="list-header" 
-                     title="Segure para adicionar"
                      onmousedown="startListTitlePress('${key}')" ontouchstart="startListTitlePress('${key}')"
                      onmouseup="cancelPress()" ontouchend="cancelPress()" onmouseleave="cancelPress()">
                     <h3>${listNames[key]}</h3>
@@ -536,7 +568,6 @@
                 const li = document.createElement('li');
                 li.draggable = true;
                 li.ondragstart = (e) => e.dataTransfer.setData("text", idx);
-                
                 li.onmousedown = () => startMovePress(idx);
                 li.ontouchstart = () => startMovePress(idx);
                 li.onmouseup = cancelPress; li.ontouchend = cancelPress; li.onmouseleave = cancelPress;
@@ -587,7 +618,7 @@
 
     function addToInbox() {
         const val = document.getElementById('inboxInput').value;
-        if(val) { items.push({id:Date.now(), text:val, status:'inbox'}); document.getElementById('inboxInput').value=''; sync(); }
+        if(val) { items.push({id:Date.now(), text:val, status:'inbox', updatedAt:Date.now()}); document.getElementById('inboxInput').value=''; sync(); }
     }
     
     let procIdx = null;
