@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>GTD Fukuoka (v8.1)</title>
+    <title>GTD Fukuoka (v8.2)</title>
     <script src="https://bernardo-castilho.github.io/DragDropTouch/DragDropTouch.js"></script>
     <style>
         :root { --primary: #2c3e50; --accent: #3498db; --success: #27ae60; --warning: #f39c12; --danger: #e74c3c; --google: #4285f4; --gray: #95a5a6; --ai: #8e44ad; }
@@ -72,6 +72,7 @@
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         @keyframes fadein { from {bottom: 0; opacity: 0;} to {bottom: 30px; opacity: 1;} }
         @keyframes fadeout { from {bottom: 30px; opacity: 1;} to {bottom: 0; opacity: 0;} }
+        @keyframes pulse { 0% { opacity: 0.5; } 50% { opacity: 1; } 100% { opacity: 0.5; } }
         .hidden { display: none !important; }
     </style>
 </head>
@@ -90,7 +91,10 @@
     </header>
 
     <div class="input-group">
-        <input type="text" id="inboxInput" placeholder="Nova tarefa..." onkeypress="if(event.key==='Enter') addToInbox()">
+        <!-- Campo com datalist para histórico -->
+        <input type="text" id="inboxInput" list="historyList" placeholder="Nova tarefa..." onkeypress="if(event.key==='Enter') addToInbox()">
+        <datalist id="historyList"></datalist>
+        
         <button class="btn-mic" id="voiceBtn" onclick="toggleVoice()">🎤</button>
         <button class="btn-add" onclick="addToInbox()">+</button>
     </div>
@@ -160,11 +164,12 @@
 <div id="loadingOverlay"><div class="spinner"></div><p style="margin-top:10px" id="loadingText">Carregando...</p></div>
 <div id="toast">Notificação</div>
 
-<!-- SCRIPT BASE (UI e Lógica Local - Sempre Funciona) -->
+<!-- SCRIPT BASE (UI e Lógica Local) -->
 <script>
     // Globals
     var items = [];
     var config = JSON.parse(localStorage.getItem('gtd_config')) || {};
+    var inputHistory = JSON.parse(localStorage.getItem('gtd_history')) || [];
     var listNames = {
         'inbox': '📥 Entrada', 'do-now': '⚡ Fazer Agora', 'next': '🔥 Próximas Ações',
         'project': '📂 Projetos', 'calendar': '📅 Calendário', 'waiting': '⏳ Delegar',
@@ -174,7 +179,7 @@
     var longPressTimer;
     var dateRes;
 
-    // --- CONFIG UI HANDLERS (DEFINIDOS ANTES DE TUDO) ---
+    // --- CONFIG UI HANDLERS ---
     function openConfig() { 
         document.getElementById('cfgClientId').value = config.googleClientId || ''; 
         document.getElementById('cfgGemini').value = config.geminiKey || '';
@@ -194,7 +199,18 @@
         location.reload();
     }
 
-    // --- RENDER ---
+    // --- HISTORY RENDER ---
+    function renderHistory() {
+        const dl = document.getElementById('historyList');
+        dl.innerHTML = '';
+        inputHistory.slice().reverse().forEach(h => {
+            const op = document.createElement('option');
+            op.value = h;
+            dl.appendChild(op);
+        });
+    }
+
+    // --- RENDER MAIN ---
     function render() {
         const listKeys = Object.keys(listNames);
         const grid = document.querySelector('.lists-grid');
@@ -286,6 +302,14 @@
     function addToInbox() {
         const val = document.getElementById('inboxInput').value;
         if(val) { 
+            // Save History
+            if(!inputHistory.includes(val)) {
+                inputHistory.push(val);
+                if(inputHistory.length > 50) inputHistory.shift();
+                localStorage.setItem('gtd_history', JSON.stringify(inputHistory));
+                renderHistory();
+            }
+
             items.push({id:Date.now(), text:val, status:'inbox', updatedAt:Date.now()}); 
             document.getElementById('inboxInput').value=''; 
             if(window.sync) window.sync(); else render(); 
@@ -295,7 +319,8 @@
     // --- INIT ---
     window.addEventListener('load', function() {
         render();
-        // Se não tiver config, abre modal automaticamente
+        renderHistory();
+        // Se não tiver config, abre modal
         if(!config.fbApiKey && !items.length) setTimeout(openConfig, 500);
         // Se não tiver token calendar, mostra normal
         if(!config.googleClientId) document.getElementById('loadingOverlay').style.display = 'none';
