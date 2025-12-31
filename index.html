@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>GTD Fukuoka (v8.14)</title>
-    <!-- Script DragDropTouch REMOVIDO -->
+    <title>GTD Fukuoka (v8.13)</title>
+    <script src="https://bernardo-castilho.github.io/DragDropTouch/DragDropTouch.js"></script>
     <style>
         :root { --primary: #2c3e50; --accent: #3498db; --success: #27ae60; --warning: #f39c12; --danger: #e74c3c; --google: #4285f4; --gray: #95a5a6; --ai: #8e44ad; }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -32,6 +32,7 @@
         .lists-grid { display: grid; grid-template-columns: 1fr; gap: 20px; }
         @media(min-width: 700px) { .lists-grid { grid-template-columns: 1fr 1fr; } }
         .list-card { background-color: #f1f3f5; border: 1px solid #ced4da; border-radius: 8px; padding: 15px; min-height: 100px; display: flex; flex-direction: column; }
+        .list-card.drag-over { background-color: #e3f2fd; border: 2px dashed #3498db; }
         .list-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #dee2e6; padding-bottom: 8px; margin-bottom: 10px; cursor: pointer; }
         .list-header h3 { margin: 0; font-size: 1rem; }
         .list-header:active { opacity: 0.6; background-color: #e9ecef; }
@@ -61,6 +62,8 @@
             position: relative; 
             gap: 8px; 
         }
+        li.ready-to-drag { background-color: #e3f2fd; border: 2px solid #3498db; transform: scale(1.02); z-index: 50; }
+        li.dragging { opacity: 0.4; }
         
         .task-content { flex: 1; display: flex; flex-direction: column; cursor: default; padding: 5px 0; }
         .task-text { font-weight: 400; font-size: 1rem; color: #2c3e50; }
@@ -187,7 +190,6 @@
 
 <!-- SCRIPT BASE -->
 <script>
-    // Globals
     var items = [];
     var config = JSON.parse(localStorage.getItem('gtd_config')) || {};
     var inputHistory = JSON.parse(localStorage.getItem('gtd_history')) || [];
@@ -199,7 +201,6 @@
     var touchStartY = 0;
     var isScrolling = false;
 
-    // --- CONFIG ---
     function openConfig() { 
         document.getElementById('cfgClientId').value = config.googleClientId || ''; 
         document.getElementById('cfgGemini').value = config.geminiKey || '';
@@ -242,7 +243,9 @@
             card.className = `list-card card-${key}`;
             if(key === 'completed') card.style.gridColumn = '1 / -1';
             
-            // Drag Removido, apenas eventos de clique
+            card.ondrop = (e) => drop(e, key);
+            card.ondragover = (e) => allowDrop(e);
+
             card.innerHTML = `
                 <div class="list-header" 
                      onmousedown="startListTitlePress(event, '${key}', 'mouse')" ontouchstart="startListTitlePress(event, '${key}', 'touch')"
@@ -263,15 +266,15 @@
             if(ul) {
                 counts[item.status]++;
                 const li = document.createElement('li');
-                // Atributos de drag removidos
+                li.draggable = true;
+                li.ondragstart = (e) => e.dataTransfer.setData("text", idx);
                 
-                // EVENTOS DE TOQUE E MOUSE
+                li.onmousedown = (e) => startMovePress(e, idx, 'mouse');
                 li.ontouchstart = (e) => startMovePress(e, idx, 'touch');
+                li.onmouseup = cancelPress; 
+                li.ontouchend = cancelPress; 
+                li.onmouseleave = cancelPress; 
                 li.ontouchmove = (e) => cancelPressOnMove(e);
-                li.ontouchend = cancelPress;
-                li.ontouchcancel = cancelPress;
-                
-                li.onmousedown = (e) => { if(!e.touches) startMovePress(e, idx, 'mouse'); };
                 li.oncontextmenu = (e) => e.preventDefault(); 
 
                 let meta = "";
@@ -300,10 +303,13 @@
             }
         });
 
+        // Update Badges
         listKeys.forEach(l => {
              const badge = document.getElementById('c-'+l);
              if(badge) badge.innerText = counts[l];
         });
+        
+        // Update Dashboard (Buttons)
         updateDashboard(counts['inbox']);
     }
 
@@ -389,6 +395,7 @@
     function askDate() { return new Promise(r => { document.getElementById('dateModal').style.display='flex'; dateRes = r; }); }
     function resolveDate(val) { document.getElementById('dateModal').style.display='none'; dateRes(val); }
     
+    // Inicia timer de clique longo (800ms)
     function startMovePress(e, idx, type) {
         if(type === 'touch' && e.touches && e.touches[0]) {
             touchStartX = e.touches[0].clientX;
@@ -441,6 +448,12 @@
         item.status = newStatus;
         if(window.sync) window.sync(); else render();
     }
+    function drop(ev, newStatus) {
+        ev.preventDefault(); ev.currentTarget.classList.remove('drag-over');
+        const idx = ev.dataTransfer.getData("text");
+        if(idx !== "") changeItemStatus(items[idx], newStatus);
+    }
+    function allowDrop(ev) { ev.preventDefault(); ev.currentTarget.classList.add('drag-over'); }
     
     function startListTitlePress(e, listKey, type) {
         if(type === 'touch' && e.touches && e.touches[0]) {
@@ -551,12 +564,16 @@
                 body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
             });
             const data = await res.json();
+            
+            if (data.error) throw new Error(data.error.message || "Erro desconhecido da API");
+            if (!data.candidates || data.candidates.length === 0) throw new Error("A IA não retornou resposta.");
+
             const txt = data.candidates[0].content.parts[0].text;
             const steps = JSON.parse(txt.replace(/```json|```/g, '').trim());
             steps.forEach(step => items.push({ id: Date.now() + Math.random(), text: step, status: 'next', note: `De: ${item.text}`, updatedAt: Date.now() }));
             window.sync();
             showToast("Tarefas criadas!");
-        } catch(e) { alert("Erro IA: " + e); }
+        } catch(e) { alert("Erro IA: " + e.message); }
         document.getElementById('loadingOverlay').style.display = 'none';
     }
 
@@ -575,6 +592,10 @@
                 body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
             });
             const data = await res.json();
+            
+            if (data.error) throw new Error(data.error.message || "Erro desconhecido da API");
+            if (!data.candidates || data.candidates.length === 0) throw new Error("A IA não retornou resposta.");
+
             const txt = data.candidates[0].content.parts[0].text;
             const decisions = JSON.parse(txt.replace(/```json|```/g, '').trim());
             for (const d of decisions) { const item = items.find(i => i.id == d.id); if(item) await changeItemStatus(item, d.status, d.date, d.note); }
