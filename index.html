@@ -35,7 +35,8 @@
         @media(min-width: 700px) { .lists-grid { grid-template-columns: 1fr 1fr; } }
         .list-card { background-color: #f1f3f5; border: 1px solid #ced4da; border-radius: 8px; padding: 15px; min-height: 100px; display: flex; flex-direction: column; }
         .list-card.drag-over { background-color: #e3f2fd; border: 2px dashed #3498db; }
-        .list-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #dee2e6; padding-bottom: 8px; margin-bottom: 10px; }
+        .list-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #dee2e6; padding-bottom: 8px; margin-bottom: 10px; cursor: pointer; }
+        .list-header h3 { margin: 0; font-size: 1rem; }
         .badge { background: #fff; padding: 2px 8px; border-radius: 10px; font-size: 0.75rem; font-weight: bold; border: 1px solid #ccc; }
         
         /* Cores das Listas */
@@ -65,10 +66,8 @@
         li.ready-to-drag { background-color: #e3f2fd; border: 2px solid #3498db; transform: scale(1.02); z-index: 50; }
         li.dragging { opacity: 0.4; }
         
-        .task-content { flex: 1; display: flex; flex-direction: column; cursor: text; padding: 5px 0; }
+        .task-content { flex: 1; display: flex; flex-direction: column; cursor: default; padding: 5px 0; }
         .task-text { font-weight: 400; font-size: 1rem; color: #2c3e50; }
-        .task-content:active .task-text { color: var(--accent); } /* Feedback visual ao segurar texto */
-        
         .meta { font-size: 0.75rem; color: #666; display: block; margin-top: 2px; pointer-events: none; }
         
         /* Botões de Ação na Tarefa */
@@ -134,36 +133,7 @@
 
     <!-- LISTAS -->
     <div class="lists-grid">
-        <div class="list-card card-inbox" ondrop="drop(event, 'inbox')" ondragover="allowDrop(event)">
-            <div class="list-header"><h3>📥 Entrada</h3><span class="badge" id="c-inbox">0</span></div><ul id="l-inbox"></ul>
-        </div>
-        <div class="list-card card-do-now" ondrop="drop(event, 'do-now')" ondragover="allowDrop(event)">
-            <div class="list-header"><h3>⚡ Fazer Agora</h3><span class="badge" id="c-do-now">0</span></div><ul id="l-do-now"></ul>
-        </div>
-        <div class="list-card card-next" ondrop="drop(event, 'next')" ondragover="allowDrop(event)">
-            <div class="list-header"><h3>🔥 Próximas Ações</h3><span class="badge" id="c-next">0</span></div><ul id="l-next"></ul>
-        </div>
-        <div class="list-card card-projects" ondrop="drop(event, 'project')" ondragover="allowDrop(event)">
-            <div class="list-header"><h3>📂 Projetos</h3><span class="badge" id="c-project">0</span></div><ul id="l-project"></ul>
-        </div>
-        <div class="list-card card-calendar" ondrop="drop(event, 'calendar')" ondragover="allowDrop(event)">
-            <div class="list-header"><h3>📅 Calendário</h3><span class="badge" id="c-calendar">0</span></div><ul id="l-calendar"></ul>
-        </div>
-        <div class="list-card card-waiting" ondrop="drop(event, 'waiting')" ondragover="allowDrop(event)">
-            <div class="list-header"><h3>⏳ Delegar</h3><span class="badge" id="c-waiting">0</span></div><ul id="l-waiting"></ul>
-        </div>
-        <div class="list-card card-someday" ondrop="drop(event, 'someday')" ondragover="allowDrop(event)">
-            <div class="list-header"><h3>💡 Talvez</h3><span class="badge" id="c-someday">0</span></div><ul id="l-someday"></ul>
-        </div>
-        <div class="list-card card-reference" ondrop="drop(event, 'reference')" ondragover="allowDrop(event)">
-            <div class="list-header"><h3>📚 Referência</h3><span class="badge" id="c-reference">0</span></div><ul id="l-reference"></ul>
-        </div>
-        <div class="list-card card-completed" ondrop="drop(event, 'completed')" ondragover="allowDrop(event)" style="grid-column: 1 / -1;">
-            <div class="list-header">
-                <h3>✅ Concluídas</h3>
-                <div><button class="btn-config" onclick="clearCompletedHistory()">🗑️</button><span class="badge" id="c-completed">0</span></div>
-            </div><ul id="l-completed"></ul>
-        </div>
+        <!-- Renderização dinâmica via JS -->
     </div>
 </div>
 
@@ -221,6 +191,20 @@
     // --- DADOS & CONFIG ---
     let items = JSON.parse(localStorage.getItem('gtd_data')) || [];
     let config = JSON.parse(localStorage.getItem('gtd_config')) || { googleClientId: '', geminiKey: '' };
+    
+    // Nomes das listas personalizáveis
+    let listNames = JSON.parse(localStorage.getItem('gtd_list_names')) || {
+        'inbox': '📥 Entrada',
+        'do-now': '⚡ Fazer Agora',
+        'next': '🔥 Próximas Ações',
+        'project': '📂 Projetos',
+        'calendar': '📅 Calendário',
+        'waiting': '⏳ Delegar',
+        'someday': '💡 Talvez',
+        'reference': '📚 Referência',
+        'completed': '✅ Concluídas'
+    };
+
     let activeItemIdx = null; 
     
     // --- GOOGLE API SETUP ---
@@ -321,11 +305,16 @@
         window.syncTimer = setTimeout(() => driveSync(false), 3000);
     }
 
+    function saveListNames() {
+        localStorage.setItem('gtd_list_names', JSON.stringify(listNames));
+        render();
+    }
+
     // --- CALENDAR LOGIC ---
     async function handleCalendarEvents(item, oldStatus, newStatus) {
         if(!config.googleClientId || !gapi.client.getToken()) return;
 
-        // Remover evento se sair de data
+        // Remover evento
         if ((oldStatus === 'calendar' || oldStatus === 'waiting') && 
             (newStatus !== 'calendar' && newStatus !== 'waiting')) {
             if (item.googleEventId) {
@@ -365,7 +354,7 @@
         }
     }
 
-    // --- INTERAÇÕES DE CLIQUE (LÓGICA REFINADA) ---
+    // --- INTERAÇÕES DE CLIQUE ---
     let longPressTimer;
     
     // 1. Mover: Long press no background do item (LI)
@@ -377,16 +366,19 @@
         }, 500);
     }
 
-    // 2. Editar Título: Long press no Texto (.task-content)
-    function startEditPress(e, idx) {
-        e.stopPropagation(); // Impede que o move dispare
+    // 2. Renomear Lista: Long press no cabeçalho
+    function startListTitlePress(listKey) {
         longPressTimer = setTimeout(() => {
-            triggerEdit(idx);
+            const newName = prompt("Renomear lista:", listNames[listKey]);
+            if(newName) {
+                listNames[listKey] = newName;
+                saveListNames();
+            }
             if(navigator.vibrate) navigator.vibrate(50);
-        }, 500);
+        }, 600);
     }
 
-    // Função comum de editar
+    // Função de editar Item (apenas via lápis agora)
     function triggerEdit(idx) {
         activeItemIdx = idx;
         const item = items[idx];
@@ -477,10 +469,41 @@
 
     // --- RENDER ---
     function render() {
-        const lists = ['inbox','do-now','next','project','calendar','waiting','someday','reference','completed'];
+        const listKeys = ['inbox','do-now','next','project','calendar','waiting','someday','reference','completed'];
+        const grid = document.querySelector('.lists-grid');
+        grid.innerHTML = ''; // Limpa e reconstrói
+        
         const counts = {};
-        lists.forEach(l => { document.getElementById('l-'+l).innerHTML = ''; counts[l] = 0; });
+        
+        listKeys.forEach(key => {
+            counts[key] = 0;
+            // Cria container da lista
+            const card = document.createElement('div');
+            card.className = `list-card card-${key}`;
+            if(key === 'completed') card.style.gridColumn = '1 / -1';
+            
+            card.ondrop = (e) => drop(e, key);
+            card.ondragover = (e) => allowDrop(e);
 
+            // Cabeçalho da Lista (Agora com evento de clique longo)
+            const headerHtml = `
+                <div class="list-header" 
+                     title="Segure para renomear a caixa"
+                     onmousedown="startListTitlePress('${key}')" ontouchstart="startListTitlePress('${key}')"
+                     onmouseup="cancelPress()" ontouchend="cancelPress()" onmouseleave="cancelPress()">
+                    <h3>${listNames[key]}</h3>
+                    <div>
+                        ${key === 'completed' ? `<button class="btn-config" onclick="clearCompletedHistory()" style="font-size:0.7rem; padding:2px 5px;">🗑️</button>` : ''}
+                        <span class="badge" id="c-${key}">0</span>
+                    </div>
+                </div>
+                <ul id="l-${key}"></ul>
+            `;
+            card.innerHTML = headerHtml;
+            grid.appendChild(card);
+        });
+
+        // Popula itens
         items.forEach((item, idx) => {
             const ul = document.getElementById('l-'+item.status);
             if(ul) {
@@ -506,12 +529,9 @@
                     meta += `<span class="meta" style="color:var(--success)">Feito: ${d.toLocaleString()}</span>`;
                 }
 
-                // Layout
+                // Layout - REMOVIDO startEditPress da task-content
                 li.innerHTML = `
-                    <div class="task-content" 
-                         title="Segure para editar texto"
-                         onmousedown="startEditPress(event, ${idx})" ontouchstart="startEditPress(event, ${idx})"
-                         onmouseup="cancelPress()" ontouchend="cancelPress()">
+                    <div class="task-content">
                         <span class="task-text">${item.text}</span>
                         ${meta}
                     </div>
@@ -525,7 +545,11 @@
             }
         });
 
-        lists.forEach(l => document.getElementById('c-'+l).innerText = counts[l]);
+        listKeys.forEach(l => {
+             const badge = document.getElementById('c-'+l);
+             if(badge) badge.innerText = counts[l];
+        });
+        
         document.getElementById('inboxCount').innerText = counts['inbox'];
         
         if(counts['inbox'] > 0) {
