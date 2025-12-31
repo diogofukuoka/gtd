@@ -20,7 +20,7 @@
         .dot.online { background: var(--success); box-shadow: 0 0 5px var(--success); }
         .dot.syncing { background: var(--warning); animation: pulse 1s infinite; }
         
-        /* Botões e Inputs */
+        /* Botões Gerais */
         button { padding: 0 15px; height: 40px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; transition: 0.2s; }
         button:active { transform: scale(0.96); }
         .btn-config { background: white; border: 1px solid #ccc; color: #333; font-size: 0.85rem; }
@@ -30,7 +30,7 @@
         .input-group { display: flex; gap: 8px; margin-bottom: 20px; width: 100%; }
         input[type="text"], input[type="datetime-local"], input[type="password"] { flex: 1; padding: 12px; border: 2px solid #ddd; border-radius: 8px; font-size: 16px; }
 
-        /* Listas */
+        /* Listas Grid */
         .lists-grid { display: grid; grid-template-columns: 1fr; gap: 20px; }
         @media(min-width: 700px) { .lists-grid { grid-template-columns: 1fr 1fr; } }
         .list-card { background-color: #f1f3f5; border: 1px solid #ced4da; border-radius: 8px; padding: 15px; min-height: 100px; display: flex; flex-direction: column; }
@@ -47,21 +47,43 @@
         .card-completed { border-top: 4px solid var(--gray); opacity: 0.8; }
         .card-do-now { background-color: #fff3cd !important; border: 1px solid #ffeeba !important; }
 
-        /* Itens */
+        /* Estilo dos Itens (Tarefas) */
         ul { list-style: none; padding: 0; margin: 0; min-height: 50px; flex-grow: 1; }
-        li { padding: 12px 10px; border: 1px solid #e9ecef; display: flex; justify-content: space-between; align-items: center; background: #ffffff; border-radius: 6px; margin-bottom: 6px; touch-action: pan-y; position: relative; }
+        li { 
+            padding: 10px; 
+            border: 1px solid #e9ecef; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            background: #ffffff; 
+            border-radius: 6px; 
+            margin-bottom: 6px; 
+            touch-action: pan-y; 
+            position: relative;
+            gap: 10px;
+        }
         li.ready-to-drag { background-color: #e3f2fd; border: 2px solid #3498db; transform: scale(1.02); z-index: 50; }
         li.dragging { opacity: 0.4; }
-        .task-text { font-weight: 400; font-size: 1rem; color: #2c3e50; pointer-events: none; }
-        .meta { font-size: 0.75rem; color: #666; display: block; margin-top: 3px; pointer-events: none; }
-        .google-icon { font-size: 0.7rem; margin-left: 5px; color: var(--google); }
-
-        /* Context Menu (O segredo do Long Press) */
-        #contextMenu { display: none; position: fixed; bottom: 0; left: 0; width: 100%; background: white; border-top-left-radius: 15px; border-top-right-radius: 15px; box-shadow: 0 -5px 20px rgba(0,0,0,0.2); z-index: 5000; padding: 20px; animation: slideUp 0.3s; }
-        .ctx-header { font-weight: bold; margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 10px; text-align: center; }
-        .ctx-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        .ctx-btn { padding: 15px; border-radius: 8px; border: none; font-weight: 600; color: white; display: flex; flex-direction: column; align-items: center; gap: 5px; font-size: 0.9rem; }
         
+        .task-content { flex: 1; display: flex; flex-direction: column; pointer-events: auto; }
+        .task-text { font-weight: 400; font-size: 1rem; color: #2c3e50; padding: 5px 0; border-radius: 4px; }
+        .task-text:active { background-color: #e8f0fe; } /* Feedback visual ao clicar texto */
+        .meta { font-size: 0.75rem; color: #666; display: block; margin-top: 2px; }
+        
+        /* Botões de Ação na Tarefa */
+        .task-actions { display: flex; gap: 8px; align-items: center; }
+        .btn-icon { 
+            background: none; border: none; padding: 8px; 
+            font-size: 1.1rem; cursor: pointer; border-radius: 50%; 
+            width: 36px; height: 36px; display: flex; align-items: center; justify-content: center;
+            transition: background 0.2s;
+        }
+        .btn-icon:hover { background-color: #f1f3f5; }
+        .btn-icon.del { color: #bdc3c7; }
+        .btn-icon.del:hover { color: var(--danger); background-color: #ffebee; }
+        .btn-icon.ai { color: var(--ai); }
+        .btn-icon.ai:hover { background-color: #f3e5f5; transform: scale(1.1); }
+
         /* Modais */
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 3000; align-items: center; justify-content: center; }
         .modal-content { background: white; width: 90%; max-width: 400px; padding: 20px; border-radius: 10px; }
@@ -70,7 +92,6 @@
         #loadingOverlay { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.8); z-index: 9999; align-items: center; justify-content: center; flex-direction: column; }
         .spinner { border: 4px solid #f3f3f3; border-top: 4px solid var(--accent); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; }
 
-        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         @keyframes fadein { from {bottom: 0; opacity: 0;} to {bottom: 30px; opacity: 1;} }
         @keyframes fadeout { from {bottom: 30px; opacity: 1;} to {bottom: 0; opacity: 0;} }
@@ -104,7 +125,7 @@
         <button onclick="magicProcess()" id="btnMagic" class="btn-config hidden" style="flex:1; background:linear-gradient(135deg, #8e44ad, #3498db); color:white;">✨ Auto-IA</button>
     </div>
 
-    <!-- ÁREA DE PROCESSAMENTO (WIZARD) - Simplificada -->
+    <!-- ÁREA DE PROCESSAMENTO (WIZARD) -->
     <div id="processing-zone" style="display:none; border:2px solid var(--accent); padding:15px; border-radius:10px; margin-bottom:20px;">
         <h3 id="currentItem" style="margin-top:0; background:#fff8e1; padding:10px; border-left:4px solid var(--warning);"></h3>
         <div id="step-1">
@@ -148,23 +169,10 @@
     </div>
 </div>
 
-<!-- MENU DE CONTEXTO (LONG PRESS) -->
-<div id="contextMenuOverlay" class="modal-overlay" onclick="closeContextMenu()"></div>
-<div id="contextMenu">
-    <div class="ctx-header">Opções da Tarefa</div>
-    <div class="ctx-grid">
-        <button class="ctx-btn" style="background:var(--accent);" onclick="ctxEdit()">✏️ Editar Título</button>
-        <button class="ctx-btn" style="background:var(--primary);" onclick="ctxMove()">➡️ Mover para...</button>
-        <button class="ctx-btn" style="background:var(--ai);" onclick="ctxBreakdown()">🤖 IA: Desmembrar</button>
-        <button class="ctx-btn" style="background:var(--danger);" onclick="ctxDelete()">🗑️ Excluir</button>
-    </div>
-    <button class="btn-config" style="width:100%; margin-top:15px; border:none;" onclick="closeContextMenu()">Cancelar</button>
-</div>
-
 <!-- MODAL MOVER -->
 <div id="moveModal" class="modal-overlay">
     <div class="modal-content">
-        <h3>Mover para:</h3>
+        <h3>Mover tarefa para:</h3>
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
             <button class="btn-config" onclick="finalizeCtx('inbox')">📥 Entrada</button>
             <button class="btn-config" onclick="finalizeCtx('do-now')">⚡ Agora</button>
@@ -214,7 +222,6 @@
 <script>
     // --- DADOS & CONFIG ---
     let items = JSON.parse(localStorage.getItem('gtd_data')) || [];
-    // Mantendo nomes das chaves compatíveis com v7.3 para não quebrar a config
     let config = JSON.parse(localStorage.getItem('gtd_config')) || { googleClientId: '', geminiKey: '' };
     let activeItemIdx = null; 
     
@@ -306,10 +313,7 @@
                 });
             }
             document.getElementById('driveDot').className = 'dot online';
-        } catch(e) { 
-            console.error(e); 
-            document.getElementById('driveDot').className = 'dot'; 
-        }
+        } catch(e) { console.error(e); document.getElementById('driveDot').className = 'dot'; }
     }
 
     function sync() {
@@ -323,7 +327,7 @@
     async function handleCalendarEvents(item, oldStatus, newStatus) {
         if(!config.googleClientId || !gapi.client.getToken()) return;
 
-        // 1. REMOVER
+        // Remover evento se sair de data
         if ((oldStatus === 'calendar' || oldStatus === 'waiting') && 
             (newStatus !== 'calendar' && newStatus !== 'waiting')) {
             if (item.googleEventId) {
@@ -335,7 +339,7 @@
             }
         }
 
-        // 2. CRIAR
+        // Criar evento
         if ((newStatus === 'calendar' || newStatus === 'waiting') && item.date) {
             try {
                 const start = new Date(item.date);
@@ -363,46 +367,39 @@
         }
     }
 
-    // --- INTERAÇÃO (LONG PRESS) ---
+    // --- INTERAÇÕES DE CLIQUE (NOVA LÓGICA) ---
     let longPressTimer;
     
-    function startLongPress(idx) {
+    // 1. Mover: Long press no background do item
+    function startMovePress(idx) {
         longPressTimer = setTimeout(() => {
             activeItemIdx = idx;
-            openContextMenu();
+            document.getElementById('moveModal').style.display = 'flex';
             if(navigator.vibrate) navigator.vibrate(50);
-        }, 600);
+        }, 500);
+    }
+
+    // 2. Editar Título: Long press no Texto
+    function startEditPress(e, idx) {
+        e.stopPropagation(); // Impede que o move dispare
+        longPressTimer = setTimeout(() => {
+            activeItemIdx = idx;
+            const item = items[idx];
+            const newTxt = prompt("Editar Título da Tarefa:", item.text);
+            if(newTxt && newTxt !== item.text) { item.text = newTxt; sync(); }
+            if(navigator.vibrate) navigator.vibrate(50);
+        }, 500);
     }
     
-    function cancelLongPress() { clearTimeout(longPressTimer); }
+    function cancelPress() { clearTimeout(longPressTimer); }
 
-    function openContextMenu() {
-        document.getElementById('contextMenuOverlay').style.display = 'block';
-        document.getElementById('contextMenu').style.display = 'block';
-    }
-    function closeContextMenu() {
-        document.getElementById('contextMenuOverlay').style.display = 'none';
-        document.getElementById('contextMenu').style.display = 'none';
-    }
-
-    // Context Actions
-    function ctxEdit() {
-        closeContextMenu();
-        const item = items[activeItemIdx];
-        const newTxt = prompt("Editar Título:", item.text);
-        if(newTxt) { item.text = newTxt; sync(); }
-    }
-    function ctxMove() {
-        closeContextMenu();
-        document.getElementById('moveModal').style.display = 'flex';
-    }
-    async function ctxBreakdown() {
-        closeContextMenu();
-        const item = items[activeItemIdx];
+    // 3. Desmembrar IA
+    async function breakdownItem(e, idx) {
+        e.stopPropagation();
         if(!config.geminiKey) return alert("Configure a API Key do Gemini.");
-        
         document.getElementById('loadingOverlay').style.display = 'flex';
-        const prompt = `Quebre a tarefa "${item.text}" em etapas acionáveis (passos físicos). Retorne APENAS um Array JSON de strings. Ex: ["Passo 1", "Passo 2"]`;
+        const item = items[idx];
+        const prompt = `Quebre a tarefa "${item.text}" em etapas acionáveis. Retorne JSON Array strings. Ex: ["Passo 1", "Passo 2"]`;
         
         try {
             const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${config.geminiKey}`, {
@@ -412,26 +409,24 @@
             const data = await res.json();
             const txt = data.candidates[0].content.parts[0].text;
             const steps = JSON.parse(txt.replace(/```json|```/g, '').trim());
-            
-            steps.forEach(step => {
-                items.push({ id: Date.now() + Math.random(), text: step, status: 'next', note: `Desmembrado de: ${item.text}` });
-            });
+            steps.forEach(step => items.push({ id: Date.now() + Math.random(), text: step, status: 'next', note: `De: ${item.text}` }));
             sync();
-            showToast("Tarefas criadas em Próximas Ações!");
+            showToast("Tarefas criadas!");
         } catch(e) { alert("Erro IA: " + e); }
         document.getElementById('loadingOverlay').style.display = 'none';
     }
-    function ctxDelete() {
-        closeContextMenu();
+
+    // 4. Deletar
+    function deleteItem(e, idx) {
+        e.stopPropagation();
         if(confirm("Excluir tarefa?")) {
-            const item = items[activeItemIdx];
+            const item = items[idx];
             handleCalendarEvents(item, item.status, 'trash'); 
-            items.splice(activeItemIdx, 1);
+            items.splice(idx, 1);
             sync();
         }
     }
     
-    // Mover via Modal (Contexto)
     async function finalizeCtx(newStatus) {
         document.getElementById('moveModal').style.display = 'none';
         const item = items[activeItemIdx];
@@ -443,22 +438,15 @@
         ev.preventDefault();
         ev.currentTarget.classList.remove('drag-over');
         const idx = ev.dataTransfer.getData("text");
-        if(idx !== "") {
-            const item = items[idx];
-            await changeItemStatus(item, newStatus);
-        }
+        if(idx !== "") { await changeItemStatus(items[idx], newStatus); }
     }
     function allowDrop(ev) { ev.preventDefault(); ev.currentTarget.classList.add('drag-over'); }
 
-    // Lógica Central de Mudança de Status
+    // Lógica Status
     async function changeItemStatus(item, newStatus) {
         const oldStatus = item.status;
-        
-        if(newStatus === 'completed') {
-            item.completedAt = new Date().toISOString();
-        } else {
-            delete item.completedAt;
-        }
+        if(newStatus === 'completed') item.completedAt = new Date().toISOString();
+        else delete item.completedAt;
 
         if(newStatus === 'calendar' || newStatus === 'waiting') {
             const dateStr = await askDate();
@@ -469,13 +457,11 @@
                 if(note) item.note = "Delegado: " + note;
             }
         }
-
         await handleCalendarEvents(item, oldStatus, newStatus);
         item.status = newStatus;
         sync();
     }
 
-    // --- DATE PROMISE ---
     let dateRes;
     function askDate() { return new Promise(r => { document.getElementById('dateModal').style.display='flex'; dateRes = r; }); }
     function resolveDate(val) { document.getElementById('dateModal').style.display='none'; dateRes(val); }
@@ -494,25 +480,36 @@
                 li.draggable = true;
                 li.ondragstart = (e) => e.dataTransfer.setData("text", idx);
                 
-                li.onmousedown = () => startLongPress(idx);
-                li.ontouchstart = () => startLongPress(idx);
-                li.onmouseup = cancelLongPress;
-                li.ontouchend = cancelLongPress;
-                li.onmouseleave = cancelLongPress;
-                li.oncontextmenu = (e) => { e.preventDefault(); }; 
+                // Evento Background (Mover)
+                li.onmousedown = () => startMovePress(idx);
+                li.ontouchstart = () => startMovePress(idx);
+                li.onmouseup = cancelPress; li.ontouchend = cancelPress; li.onmouseleave = cancelPress;
+                li.oncontextmenu = (e) => e.preventDefault(); 
 
                 let meta = "";
                 if(item.note) meta += `<span class="meta">${item.note}</span>`;
                 if(item.date && (item.status === 'calendar' || item.status === 'waiting')) {
                     const d = new Date(item.date);
-                    meta += `<span class="meta">📅 ${d.toLocaleString()} ${item.googleEventId ? '✅ Agenda' : ''}</span>`;
+                    meta += `<span class="meta">📅 ${d.toLocaleString()} ${item.googleEventId ? '✅' : ''}</span>`;
                 }
                 if(item.status === 'completed' && item.completedAt) {
                     const d = new Date(item.completedAt);
-                    meta += `<span class="meta" style="color:var(--success)">Concluído: ${d.toLocaleString()}</span>`;
+                    meta += `<span class="meta" style="color:var(--success)">Feito: ${d.toLocaleString()}</span>`;
                 }
 
-                li.innerHTML = `<div><span class="task-text">${item.text}</span>${meta}</div>`;
+                // Layout
+                li.innerHTML = `
+                    <div class="task-content" 
+                         onmousedown="startEditPress(event, ${idx})" ontouchstart="startEditPress(event, ${idx})"
+                         onmouseup="cancelPress()" ontouchend="cancelPress()">
+                        <span class="task-text">${item.text}</span>
+                        ${meta}
+                    </div>
+                    <div class="task-actions">
+                        <button class="btn-icon ai" title="Desmembrar (IA)" onmousedown="breakdownItem(event, ${idx})">🤖</button>
+                        <button class="btn-icon del" title="Excluir" onmousedown="deleteItem(event, ${idx})">🗑️</button>
+                    </div>
+                `;
                 ul.appendChild(li);
             }
         });
@@ -556,7 +553,6 @@
 
     // Config Helpers
     function openConfig() { 
-        // Usando || '' para evitar "undefined"
         document.getElementById('cfgClientId').value = config.googleClientId || ''; 
         document.getElementById('cfgGemini').value = config.geminiKey || '';
         document.getElementById('configModal').style.display = 'flex'; 
