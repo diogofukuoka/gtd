@@ -106,7 +106,7 @@
         <div class="status-bar">
             <div><div id="driveDot" class="dot"></div><span id="driveStatus">Off</span></div>
             <div>
-                <button class="btn-config" onclick="manualSync()">☁️ Sync</button>
+                <button class="btn-config" onclick="manualSync()">☁️ Sync Agora</button>
                 <button class="btn-config" onclick="openConfig()">⚙️ Config</button>
             </div>
         </div>
@@ -193,7 +193,6 @@
     let items = JSON.parse(localStorage.getItem('gtd_data')) || [];
     let config = JSON.parse(localStorage.getItem('gtd_config')) || { googleClientId: '', geminiKey: '' };
     
-    // Nomes padrão das listas
     const listNames = {
         'inbox': '📥 Entrada',
         'do-now': '⚡ Fazer Agora',
@@ -207,10 +206,10 @@
     };
 
     let activeItemIdx = null; 
+    let autoSyncInterval;
     
     // --- GOOGLE API SETUP ---
     let tokenClient;
-    let gapiInited = false, gisInited = false;
     let driveFileId = localStorage.getItem('gtd_drive_file_id');
     const SCOPES = 'https://www.googleapis.com/auth/calendar.events https://www.googleapis.com/auth/drive.appdata';
     const DB_NAME = 'gtd_fukuoka_v7_db.json';
@@ -218,7 +217,7 @@
     window.onload = () => {
         gapi.load('client', async () => {
             await gapi.client.init({ discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest', 'https://www.googleapis.com/discovery/v1/apis/drive/v3/rest'] });
-            gapiInited = true; checkAuth();
+            checkAuth();
         });
         tokenClient = google.accounts.oauth2.initTokenClient({
             client_id: config.googleClientId, scope: SCOPES,
@@ -229,9 +228,9 @@
                 gapi.client.setToken(resp);
                 updateStatus(true);
                 initDrive();
+                startAutoSync();
             }
         });
-        gisInited = true;
         render();
     };
 
@@ -240,7 +239,7 @@
         if(stored && Date.now() < stored.exp) {
             gapi.client.setToken({ access_token: stored.token });
             updateStatus(true);
-            setTimeout(() => manualSync(), 2000); 
+            setTimeout(() => { manualSync(); startAutoSync(); }, 2000); 
         }
     }
     
@@ -254,7 +253,7 @@
         document.getElementById('driveStatus').innerText = online ? 'Online' : 'Off';
     }
 
-    // --- DRIVE SYNC ---
+    // --- DRIVE SYNC & AUTO SYNC ---
     async function initDrive() {
         if(!gapi.client.getToken()) return;
         try {
@@ -274,21 +273,24 @@
         } catch(e) { console.error(e); }
     }
 
+    // Sync Central
     async function driveSync(download = false) {
         if(!driveFileId || !gapi.client.getToken()) return;
         document.getElementById('driveDot').className = 'dot syncing';
         try {
             if(download) {
+                // DOWNLOAD (Nuvem -> Local)
                 const res = await gapi.client.drive.files.get({ fileId: driveFileId, alt: 'media' });
                 const remote = res.result || res.body;
                 if(Array.isArray(remote)) { 
                     items = remote; 
                     localStorage.setItem('gtd_data', JSON.stringify(items)); 
                     render(); 
-                    // Checa se eventos foram deletados no GCal
+                    // Checagem automática do GCal após baixar dados novos
                     checkRemoteCalendarDeletions();
                 }
             } else {
+                // UPLOAD (Local -> Nuvem)
                 const body = JSON.stringify(items);
                 await fetch(`https://www.googleapis.com/upload/drive/v3/files/${driveFileId}?uploadType=media`, {
                     method: 'PATCH',
@@ -303,30 +305,42 @@
     function sync() {
         localStorage.setItem('gtd_data', JSON.stringify(items));
         render();
+        // Upload rápido
         if(window.syncTimer) clearTimeout(window.syncTimer);
         window.syncTimer = setTimeout(() => driveSync(false), 3000);
     }
     
     function manualSync() {
-        driveSync(true); // Download and check
+        driveSync(true);
+    }
+    
+    // Auto Sync Loop (30s)
+    function startAutoSync() {
+        if(autoSyncInterval) clearInterval(autoSyncInterval);
+        autoSyncInterval = setInterval(() => {
+            if(gapi.client.getToken()) {
+                console.log("Auto-Sync: Verificando...");
+                // Baixa dados do Drive E verifica exclusões no GCal
+                driveSync(true); 
+            }
+        }, 30000);
     }
 
-    // --- CALENDAR LOGIC (Atualizado para v7.9) ---
+    // --- CALENDAR LOGIC (BIDIRECIONAL AUTO) ---
     
-    // 1. App -> Agenda: Cria eventos, mas NUNCA deleta do Google
+    // 1. App -> Agenda: Cria/Atualiza eventos (NUNCA deleta do GCal se remover do App, apenas desvincula)
     async function handleCalendarEvents(item, oldStatus, newStatus) {
         if(!config.googleClientId || !gapi.client.getToken()) return;
 
-        // Se sair da caixa de agendamento, apenas desvincula, NÃO deleta do GCal
+        // Se sair da caixa de agendamento: Desvincula (remove ID), não apaga do GCal
         if ((oldStatus === 'calendar' || oldStatus === 'waiting') && 
             (newStatus !== 'calendar' && newStatus !== 'waiting')) {
-            // Remove o ID localmente para desvincular
             if (item.googleEventId) {
-                delete item.googleEventId;
+                delete item.googleEventId; // Perde o link, evento vira histórico
             }
         }
 
-        // Se entrar em caixa de agendamento: Cria ou Atualiza
+        // Se entrar (ou permanecer editado) em caixa de agendamento: Cria/Atualiza
         if ((newStatus === 'calendar' || newStatus === 'waiting') && item.date) {
             try {
                 const start = new Date(item.date);
@@ -342,7 +356,7 @@
                     try {
                         await gapi.client.calendar.events.update({ calendarId: 'primary', eventId: item.googleEventId, resource: event });
                     } catch {
-                         // Se falhar update (ex: deletado remotamente), cria novo
+                         // Se falhar update (ex: deletado no GCal), cria novo
                          const res = await gapi.client.calendar.events.insert({ calendarId: 'primary', resource: event });
                          item.googleEventId = res.result.id;
                     }
@@ -350,17 +364,15 @@
                     const res = await gapi.client.calendar.events.insert({ calendarId: 'primary', resource: event });
                     item.googleEventId = res.result.id;
                 }
-                showToast("Evento criado/atualizado no Agenda!");
             } catch(e) { console.error("Erro Agenda:", e); }
         }
     }
 
-    // 2. Agenda -> App: Se deletar no Google, deleta do App
+    // 2. Agenda -> App: Se deletar no Google, deleta a tarefa no App automaticamente
     async function checkRemoteCalendarDeletions() {
         if(!config.googleClientId || !gapi.client.getToken()) return;
         
         let changed = false;
-        // Filtra apenas tarefas que deveriam ter evento ativo
         const syncedItems = items.filter(i => (i.status === 'calendar' || i.status === 'waiting') && i.googleEventId);
 
         for (const item of syncedItems) {
@@ -370,7 +382,7 @@
                     eventId: item.googleEventId
                 });
                 if (res.result.status === 'cancelled') {
-                    // Deletado no Google -> Deleta do App
+                    // Deletado no GCal -> Deleta Tarefa
                     const idx = items.indexOf(item);
                     if(idx > -1) {
                         items.splice(idx, 1);
@@ -378,7 +390,7 @@
                     }
                 }
             } catch (err) {
-                // 404 (Not Found) ou 410 (Gone) -> Deleta do App
+                // 404/410 -> Deleta Tarefa
                 if (err.status === 404 || err.status === 410) {
                     const idx = items.indexOf(item);
                     if(idx > -1) {
@@ -390,15 +402,15 @@
         }
 
         if (changed) {
-            sync(); // Salva e renderiza
-            showToast("Sincronização: Tarefas removidas pois eventos foram excluídos.");
+            sync(); // Salva local e sobe atualização pro Drive
+            showToast("Sync: Tarefas removidas (apagadas no Agenda).");
         }
     }
 
-    // --- INTERAÇÕES DE CLIQUE ---
+    // --- INTERAÇÕES ---
     let longPressTimer;
     
-    // 1. Mover: Long press no background do item (LI)
+    // Mover: Long press no background
     function startMovePress(idx) {
         longPressTimer = setTimeout(() => {
             activeItemIdx = idx;
@@ -407,7 +419,7 @@
         }, 500);
     }
 
-    // 2. ADICIONAR NA LISTA: Long press no cabeçalho
+    // ADICIONAR NA LISTA: Long press no cabeçalho
     function startListTitlePress(listKey) {
         longPressTimer = setTimeout(async () => {
             if(navigator.vibrate) navigator.vibrate(50);
@@ -418,7 +430,6 @@
             if(text) {
                 const newItem = { id: Date.now(), text: text, status: listKey };
                 
-                // Lógica de agendamento imediato
                 if (listKey === 'calendar' || listKey === 'waiting') {
                     const dateStr = await askDate();
                     if(dateStr) {
@@ -427,13 +438,10 @@
                             const note = prompt("Delegar para quem?");
                             if(note) newItem.note = "Delegado: " + note;
                         }
-                        // Adiciona primeiro, depois sync trata o evento
                         items.push(newItem);
                         await handleCalendarEvents(newItem, null, listKey);
                     } else {
-                        // Cancelou a data? Adiciona em 'next' ou cancela tudo? 
-                        // Melhor cancelar a criação se é calendário e não tem data.
-                        return; 
+                        return; // Cancelou data
                     }
                 } else {
                     items.push(newItem);
@@ -444,12 +452,19 @@
         }, 600);
     }
 
-    // Função de editar Item
-    function triggerEdit(idx) {
+    // Editar Título (Atualiza GCal também)
+    async function triggerEdit(idx) {
         activeItemIdx = idx;
         const item = items[idx];
         const newTxt = prompt("Editar Título da Tarefa:", item.text);
-        if(newTxt && newTxt !== item.text) { item.text = newTxt; sync(); }
+        if(newTxt && newTxt !== item.text) { 
+            item.text = newTxt; 
+            // Se tiver evento, atualiza o título lá também
+            if(item.status === 'calendar' || item.status === 'waiting') {
+                await handleCalendarEvents(item, item.status, item.status);
+            }
+            sync(); 
+        }
     }
 
     function editItemClick(e, idx) {
@@ -459,7 +474,7 @@
     
     function cancelPress() { clearTimeout(longPressTimer); }
 
-    // 3. Desmembrar IA
+    // Desmembrar IA
     async function breakdownItem(e, idx) {
         e.stopPropagation();
         if(!config.geminiKey) return alert("Configure a API Key do Gemini.");
@@ -482,7 +497,7 @@
         document.getElementById('loadingOverlay').style.display = 'none';
     }
 
-    // 4. Deletar (Não deleta do GCal)
+    // Deletar
     function deleteItem(e, idx) {
         e.stopPropagation();
         if(confirm("Excluir tarefa?")) {
@@ -499,7 +514,7 @@
         await changeItemStatus(item, newStatus);
     }
 
-    // Mover via Drag & Drop
+    // Drag & Drop
     async function drop(ev, newStatus) {
         ev.preventDefault();
         ev.currentTarget.classList.remove('drag-over');
@@ -508,7 +523,7 @@
     }
     function allowDrop(ev) { ev.preventDefault(); ev.currentTarget.classList.add('drag-over'); }
 
-    // Lógica Status
+    // Status Change
     async function changeItemStatus(item, newStatus) {
         const oldStatus = item.status;
         if(newStatus === 'completed') item.completedAt = new Date().toISOString();
