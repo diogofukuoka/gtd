@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>GTD Fukuoka (v8.6)</title>
+    <title>GTD Fukuoka (v8.7)</title>
     <script src="https://bernardo-castilho.github.io/DragDropTouch/DragDropTouch.js"></script>
     <style>
         :root { --primary: #2c3e50; --accent: #3498db; --success: #27ae60; --warning: #f39c12; --danger: #e74c3c; --google: #4285f4; --gray: #95a5a6; --ai: #8e44ad; }
@@ -72,6 +72,7 @@
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         @keyframes fadein { from {bottom: 0; opacity: 0;} to {bottom: 30px; opacity: 1;} }
         @keyframes fadeout { from {bottom: 30px; opacity: 1;} to {bottom: 0; opacity: 0;} }
+        @keyframes pulse-red { 0% { background: #c0392b; box-shadow: 0 0 0 0 rgba(192, 57, 43, 0.7); } 70% { background: #e74c3c; box-shadow: 0 0 0 10px rgba(192, 57, 43, 0); } 100% { background: #c0392b; box-shadow: 0 0 0 0 rgba(192, 57, 43, 0); } }
         .hidden { display: none !important; }
     </style>
 </head>
@@ -326,6 +327,37 @@
         setInterval(window.checkDueDates, 60000);
     });
 
+    // --- VOICE RECOGNITION ---
+    let recognition;
+    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        recognition = new SpeechRecognition();
+        recognition.lang = 'pt-BR';
+        recognition.continuous = false;
+        
+        recognition.onstart = function() { 
+            document.getElementById('voiceBtn').classList.add('listening'); 
+        };
+        
+        recognition.onend = function() { 
+            document.getElementById('voiceBtn').classList.remove('listening'); 
+        };
+        
+        recognition.onresult = function(event) {
+            const text = event.results[0][0].transcript;
+            const input = document.getElementById('inboxInput');
+            input.value = text.charAt(0).toUpperCase() + text.slice(1);
+            input.focus();
+        };
+    } else {
+        document.getElementById('voiceBtn').style.display = 'none';
+    }
+
+    window.toggleVoice = function() {
+        if(!recognition) return alert("Navegador sem suporte a voz.");
+        try { recognition.start(); } catch(e) { recognition.stop(); }
+    }
+
     // --- HELPERS ---
     function showToast(msg) { 
         const t = document.getElementById('toast'); t.innerText = msg; t.className = 'show'; 
@@ -396,7 +428,6 @@
         longPressTimer = setTimeout(async () => {
             if(navigator.vibrate) navigator.vibrate(50);
             
-            // Correção: Usa listKey passado como argumento, não tenta ler do evento
             const safeKey = listKey;
             const text = prompt(`Adicionar em "${listNames[safeKey]}":`);
             
@@ -551,6 +582,7 @@
                         document.getElementById('btnAuthCalendar').innerText = "📅 Agenda OK";
                         document.getElementById('btnAuthCalendar').style.background = "var(--success)";
                         document.getElementById('btnAuthCalendar').style.color = "white";
+                        window.checkRemoteCalendarDeletions();
                     }
                 });
                 const stored = JSON.parse(localStorage.getItem('gtd_cal_token'));
@@ -603,12 +635,17 @@
         for (const item of syncedItems) {
             try {
                 const res = await gapi.client.calendar.events.get({ calendarId: 'primary', eventId: item.googleEventId });
-                if (res.result.status === 'cancelled') { items.splice(items.indexOf(item), 1); changed = true; }
+                if (res.result.status === 'cancelled') { deleteLocalTask(item.id); changed = true; }
             } catch (err) {
-                if (err.status === 404 || err.status === 410) { items.splice(items.indexOf(item), 1); changed = true; }
+                if (err.status === 404 || err.status === 410) { deleteLocalTask(item.id); changed = true; }
             }
         }
         if (changed) window.sync();
+    }
+
+    function deleteLocalTask(id) {
+        const idx = items.findIndex(i => i.id === id);
+        if(idx > -1) items.splice(idx, 1);
     }
 </script>
 </body>
