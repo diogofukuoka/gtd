@@ -50,7 +50,7 @@
         /* Estilo dos Itens (Tarefas) */
         ul { list-style: none; padding: 0; margin: 0; min-height: 50px; flex-grow: 1; }
         li { 
-            padding: 10px; 
+            padding: 8px 10px; 
             border: 1px solid #e9ecef; 
             display: flex; 
             justify-content: space-between; 
@@ -60,29 +60,29 @@
             margin-bottom: 6px; 
             touch-action: pan-y; 
             position: relative;
-            gap: 10px;
+            gap: 8px;
         }
         li.ready-to-drag { background-color: #e3f2fd; border: 2px solid #3498db; transform: scale(1.02); z-index: 50; }
         li.dragging { opacity: 0.4; }
         
-        .task-content { flex: 1; display: flex; flex-direction: column; pointer-events: auto; }
-        .task-text { font-weight: 400; font-size: 1rem; color: #2c3e50; padding: 5px 0; border-radius: 4px; }
-        .task-text:active { background-color: #e8f0fe; } /* Feedback visual ao clicar texto */
-        .meta { font-size: 0.75rem; color: #666; display: block; margin-top: 2px; }
+        .task-content { flex: 1; display: flex; flex-direction: column; cursor: text; padding: 5px 0; }
+        .task-text { font-weight: 400; font-size: 1rem; color: #2c3e50; }
+        .task-content:active .task-text { color: var(--accent); } /* Feedback visual ao segurar texto */
+        
+        .meta { font-size: 0.75rem; color: #666; display: block; margin-top: 2px; pointer-events: none; }
         
         /* Botões de Ação na Tarefa */
-        .task-actions { display: flex; gap: 8px; align-items: center; }
+        .task-actions { display: flex; gap: 4px; align-items: center; }
         .btn-icon { 
-            background: none; border: none; padding: 8px; 
-            font-size: 1.1rem; cursor: pointer; border-radius: 50%; 
-            width: 36px; height: 36px; display: flex; align-items: center; justify-content: center;
+            background: none; border: none; padding: 0; 
+            font-size: 1.1rem; cursor: pointer; border-radius: 4px; 
+            width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;
             transition: background 0.2s;
         }
         .btn-icon:hover { background-color: #f1f3f5; }
-        .btn-icon.del { color: #bdc3c7; }
         .btn-icon.del:hover { color: var(--danger); background-color: #ffebee; }
-        .btn-icon.ai { color: var(--ai); }
-        .btn-icon.ai:hover { background-color: #f3e5f5; transform: scale(1.1); }
+        .btn-icon.edit:hover { color: var(--accent); background-color: #e3f2fd; }
+        .btn-icon.ai:hover { color: var(--ai); background-color: #f3e5f5; }
 
         /* Modais */
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 3000; align-items: center; justify-content: center; }
@@ -95,8 +95,6 @@
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         @keyframes fadein { from {bottom: 0; opacity: 0;} to {bottom: 30px; opacity: 1;} }
         @keyframes fadeout { from {bottom: 30px; opacity: 1;} to {bottom: 0; opacity: 0;} }
-        @keyframes pulse-red { 0% { background: #c0392b; } 50% { background: #e74c3c; } 100% { background: #c0392b; } }
-        @keyframes pulse { 0% { opacity: 0.5; } 50% { opacity: 1; } 100% { opacity: 0.5; } }
         .hidden { display: none !important; }
     </style>
 </head>
@@ -367,10 +365,10 @@
         }
     }
 
-    // --- INTERAÇÕES DE CLIQUE (NOVA LÓGICA) ---
+    // --- INTERAÇÕES DE CLIQUE (LÓGICA REFINADA) ---
     let longPressTimer;
     
-    // 1. Mover: Long press no background do item
+    // 1. Mover: Long press no background do item (LI)
     function startMovePress(idx) {
         longPressTimer = setTimeout(() => {
             activeItemIdx = idx;
@@ -379,16 +377,27 @@
         }, 500);
     }
 
-    // 2. Editar Título: Long press no Texto
+    // 2. Editar Título: Long press no Texto (.task-content)
     function startEditPress(e, idx) {
         e.stopPropagation(); // Impede que o move dispare
         longPressTimer = setTimeout(() => {
-            activeItemIdx = idx;
-            const item = items[idx];
-            const newTxt = prompt("Editar Título da Tarefa:", item.text);
-            if(newTxt && newTxt !== item.text) { item.text = newTxt; sync(); }
+            triggerEdit(idx);
             if(navigator.vibrate) navigator.vibrate(50);
         }, 500);
+    }
+
+    // Função comum de editar
+    function triggerEdit(idx) {
+        activeItemIdx = idx;
+        const item = items[idx];
+        const newTxt = prompt("Editar Título da Tarefa:", item.text);
+        if(newTxt && newTxt !== item.text) { item.text = newTxt; sync(); }
+    }
+
+    // Clique no botão Editar (Ícone)
+    function editItemClick(e, idx) {
+        e.stopPropagation();
+        triggerEdit(idx);
     }
     
     function cancelPress() { clearTimeout(longPressTimer); }
@@ -480,7 +489,7 @@
                 li.draggable = true;
                 li.ondragstart = (e) => e.dataTransfer.setData("text", idx);
                 
-                // Evento Background (Mover)
+                // Evento Background (Mover - Clique Longo no LI)
                 li.onmousedown = () => startMovePress(idx);
                 li.ontouchstart = () => startMovePress(idx);
                 li.onmouseup = cancelPress; li.ontouchend = cancelPress; li.onmouseleave = cancelPress;
@@ -500,12 +509,14 @@
                 // Layout
                 li.innerHTML = `
                     <div class="task-content" 
+                         title="Segure para editar texto"
                          onmousedown="startEditPress(event, ${idx})" ontouchstart="startEditPress(event, ${idx})"
                          onmouseup="cancelPress()" ontouchend="cancelPress()">
                         <span class="task-text">${item.text}</span>
                         ${meta}
                     </div>
                     <div class="task-actions">
+                        <button class="btn-icon edit" title="Editar" onmousedown="editItemClick(event, ${idx})">✏️</button>
                         <button class="btn-icon ai" title="Desmembrar (IA)" onmousedown="breakdownItem(event, ${idx})">🤖</button>
                         <button class="btn-icon del" title="Excluir" onmousedown="deleteItem(event, ${idx})">🗑️</button>
                     </div>
