@@ -37,6 +37,7 @@
         .list-card.drag-over { background-color: #e3f2fd; border: 2px dashed #3498db; }
         .list-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #dee2e6; padding-bottom: 8px; margin-bottom: 10px; cursor: pointer; }
         .list-header h3 { margin: 0; font-size: 1rem; }
+        .list-header:active { opacity: 0.6; background-color: #e9ecef; border-radius: 4px; } /* Feedback visual */
         .badge { background: #fff; padding: 2px 8px; border-radius: 10px; font-size: 0.75rem; font-weight: bold; border: 1px solid #ccc; }
         
         /* Cores das Listas */
@@ -192,8 +193,8 @@
     let items = JSON.parse(localStorage.getItem('gtd_data')) || [];
     let config = JSON.parse(localStorage.getItem('gtd_config')) || { googleClientId: '', geminiKey: '' };
     
-    // Nomes das listas personalizáveis
-    let listNames = JSON.parse(localStorage.getItem('gtd_list_names')) || {
+    // Nomes padrão das listas (para o título do prompt)
+    const listNames = {
         'inbox': '📥 Entrada',
         'do-now': '⚡ Fazer Agora',
         'next': '🔥 Próximas Ações',
@@ -305,11 +306,6 @@
         window.syncTimer = setTimeout(() => driveSync(false), 3000);
     }
 
-    function saveListNames() {
-        localStorage.setItem('gtd_list_names', JSON.stringify(listNames));
-        render();
-    }
-
     // --- CALENDAR LOGIC ---
     async function handleCalendarEvents(item, oldStatus, newStatus) {
         if(!config.googleClientId || !gapi.client.getToken()) return;
@@ -366,15 +362,33 @@
         }, 500);
     }
 
-    // 2. Renomear Lista: Long press no cabeçalho
+    // 2. ADICIONAR NA LISTA: Long press no cabeçalho
     function startListTitlePress(listKey) {
-        longPressTimer = setTimeout(() => {
-            const newName = prompt("Renomear lista:", listNames[listKey]);
-            if(newName) {
-                listNames[listKey] = newName;
-                saveListNames();
-            }
+        longPressTimer = setTimeout(async () => {
             if(navigator.vibrate) navigator.vibrate(50);
+            
+            const listName = listNames[listKey];
+            const text = prompt(`Adicionar nova tarefa em "${listName}":`);
+            
+            if(text) {
+                const newItem = { id: Date.now(), text: text, status: listKey };
+                items.push(newItem);
+                
+                // Se for Calendário ou Delegar, precisamos pedir a data imediatamente
+                if (listKey === 'calendar' || listKey === 'waiting') {
+                    const dateStr = await askDate();
+                    if(dateStr) {
+                        newItem.date = dateStr;
+                        if(listKey === 'waiting') {
+                            const note = prompt("Delegar para quem?");
+                            if(note) newItem.note = "Delegado: " + note;
+                        }
+                        await handleCalendarEvents(newItem, null, listKey);
+                    }
+                }
+                
+                sync();
+            }
         }, 600);
     }
 
@@ -485,10 +499,10 @@
             card.ondrop = (e) => drop(e, key);
             card.ondragover = (e) => allowDrop(e);
 
-            // Cabeçalho da Lista (Agora com evento de clique longo)
+            // Cabeçalho da Lista
             const headerHtml = `
                 <div class="list-header" 
-                     title="Segure para renomear a caixa"
+                     title="Segure para adicionar tarefa aqui"
                      onmousedown="startListTitlePress('${key}')" ontouchstart="startListTitlePress('${key}')"
                      onmouseup="cancelPress()" ontouchend="cancelPress()" onmouseleave="cancelPress()">
                     <h3>${listNames[key]}</h3>
@@ -529,7 +543,7 @@
                     meta += `<span class="meta" style="color:var(--success)">Feito: ${d.toLocaleString()}</span>`;
                 }
 
-                // Layout - REMOVIDO startEditPress da task-content
+                // Layout
                 li.innerHTML = `
                     <div class="task-content">
                         <span class="task-text">${item.text}</span>
