@@ -3,8 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>GTD Fukuoka (v8.4)</title>
-    <!-- DragDropTouch para compatibilidade mobile do arrastar -->
+    <title>GTD Fukuoka (v8.5)</title>
     <script src="https://bernardo-castilho.github.io/DragDropTouch/DragDropTouch.js"></script>
     <style>
         :root { --primary: #2c3e50; --accent: #3498db; --success: #27ae60; --warning: #f39c12; --danger: #e74c3c; --google: #4285f4; --gray: #95a5a6; --ai: #8e44ad; }
@@ -48,20 +47,7 @@
         .card-do-now { background-color: #fff3cd !important; border: 1px solid #ffeeba !important; }
 
         ul { list-style: none; padding: 0; margin: 0; min-height: 50px; flex-grow: 1; }
-        li { 
-            padding: 8px 10px; 
-            border: 1px solid #e9ecef; 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-            background: #ffffff; 
-            border-radius: 6px; 
-            margin-bottom: 6px; 
-            /* Importante: permite rolagem vertical sem travar */
-            touch-action: pan-y; 
-            position: relative; 
-            gap: 8px; 
-        }
+        li { padding: 8px 10px; border: 1px solid #e9ecef; display: flex; justify-content: space-between; align-items: center; background: #ffffff; border-radius: 6px; margin-bottom: 6px; touch-action: pan-y; position: relative; gap: 8px; }
         li.ready-to-drag { background-color: #e3f2fd; border: 2px solid #3498db; transform: scale(1.02); z-index: 50; }
         li.dragging { opacity: 0.4; }
         
@@ -70,8 +56,7 @@
         .meta { font-size: 0.75rem; color: #666; display: block; margin-top: 2px; pointer-events: none; }
         
         .task-actions { display: flex; gap: 4px; align-items: center; }
-        /* Usamos z-index maior para garantir que o toque vá para o botão */
-        .btn-icon { background: none; border: none; padding: 0; font-size: 1.1rem; cursor: pointer; border-radius: 4px; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; transition: background 0.2s; position: relative; z-index: 2; }
+        .btn-icon { background: none; border: none; padding: 0; font-size: 1.1rem; cursor: pointer; border-radius: 4px; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; transition: background 0.2s; }
         .btn-icon:hover { background-color: #f1f3f5; }
         .btn-icon.del:hover { color: var(--danger); background-color: #ffebee; }
         .btn-icon.edit:hover { color: var(--accent); background-color: #e3f2fd; }
@@ -176,7 +161,7 @@
 <div id="loadingOverlay"><div class="spinner"></div><p style="margin-top:10px" id="loadingText">Carregando...</p></div>
 <div id="toast">Notificação</div>
 
-<!-- SCRIPT BASE (UI e Lógica Local) -->
+<!-- SCRIPT BASE -->
 <script>
     // Globals
     var items = [];
@@ -189,10 +174,8 @@
     };
     var activeItemIdx = null;
     var longPressTimer;
-    var touchStartY = 0; // Para detectar rolagem
     var dateRes;
 
-    // --- CONFIG UI HANDLERS ---
     function openConfig() { 
         document.getElementById('cfgClientId').value = config.googleClientId || ''; 
         document.getElementById('cfgGemini').value = config.geminiKey || '';
@@ -212,7 +195,6 @@
         location.reload();
     }
 
-    // --- HISTORY RENDER ---
     function renderHistory() {
         const dl = document.getElementById('historyList');
         dl.innerHTML = '';
@@ -223,7 +205,6 @@
         });
     }
 
-    // --- RENDER MAIN ---
     function render() {
         const listKeys = Object.keys(listNames);
         const grid = document.querySelector('.lists-grid');
@@ -242,7 +223,7 @@
 
             card.innerHTML = `
                 <div class="list-header" 
-                     onmousedown="startListTitlePress(event, '${key}')" ontouchstart="startListTitlePress(event, '${key}')"
+                     onmousedown="startListTitlePress('${key}')" ontouchstart="startListTitlePress('${key}')"
                      onmouseup="cancelPress()" ontouchend="cancelPress()" onmouseleave="cancelPress()" ontouchmove="cancelPressOnMove(event)">
                     <h3>${listNames[key]}</h3>
                     <div>
@@ -263,15 +244,12 @@
                 li.draggable = true;
                 li.ondragstart = (e) => e.dataTransfer.setData("text", idx);
                 
-                // EVENTOS DE TOQUE REFINADOS PARA PERMITIR SCROLL
                 li.onmousedown = (e) => startMovePress(e, idx);
                 li.ontouchstart = (e) => startMovePress(e, idx);
-                
                 li.onmouseup = cancelPress; 
                 li.ontouchend = cancelPress; 
                 li.onmouseleave = cancelPress; 
-                li.ontouchmove = (e) => cancelPressOnMove(e); // Cancela se mover o dedo (scroll)
-                
+                li.ontouchmove = (e) => cancelPressOnMove(e);
                 li.oncontextmenu = (e) => e.preventDefault(); 
 
                 let meta = "";
@@ -317,7 +295,6 @@
         }
     }
 
-    // --- STANDARD ACTIONS ---
     function addToInbox() {
         const val = document.getElementById('inboxInput').value;
         if(val) { 
@@ -333,33 +310,27 @@
         }
     }
 
-    // --- INIT ---
     window.addEventListener('load', function() {
         render();
         renderHistory();
         if(!config.fbApiKey && !items.length) setTimeout(openConfig, 500);
         if(!config.googleClientId) document.getElementById('loadingOverlay').style.display = 'none';
         
-        // Listener global para scroll cancela cliques longos
-        window.addEventListener('scroll', cancelPress, true);
+        // Auto-Check Due Dates every 60s
+        window.checkDueDates();
+        setInterval(window.checkDueDates, 60000);
     });
 
-    // --- HELPERS ---
     function showToast(msg) { 
         const t = document.getElementById('toast'); t.innerText = msg; t.className = 'show'; 
         setTimeout(() => t.className = '', 3000); 
     }
     
-    // LOGICA DE CANCELAR CLIQUE LONGO AO ROLAR
     function cancelPress() { clearTimeout(longPressTimer); }
-    
+    var touchStartY = 0;
     function cancelPressOnMove(e) {
-        // Se for toque e moveu mais que 10px, considera scroll e cancela
         if(e.touches && e.touches[0]) {
-            let moveY = e.touches[0].clientY;
-            if(Math.abs(moveY - touchStartY) > 10) {
-                clearTimeout(longPressTimer);
-            }
+            if(Math.abs(e.touches[0].clientY - touchStartY) > 10) clearTimeout(longPressTimer);
         }
     }
 
@@ -367,7 +338,7 @@
     function resolveDate(val) { document.getElementById('dateModal').style.display='none'; dateRes(val); }
     
     function startMovePress(e, idx) {
-        if(e.touches && e.touches[0]) touchStartY = e.touches[0].clientY; // Salva pos inicial
+        if(e.touches && e.touches[0]) touchStartY = e.touches[0].clientY;
         longPressTimer = setTimeout(() => {
             activeItemIdx = idx; document.getElementById('moveModal').style.display = 'flex';
             if(navigator.vibrate) navigator.vibrate(50);
@@ -413,7 +384,6 @@
     }
     function allowDrop(ev) { ev.preventDefault(); ev.currentTarget.classList.add('drag-over'); }
     
-    // Lista Titulo Long Press
     function startListTitlePress(e, listKey) {
         if(e.touches && e.touches[0]) touchStartY = e.touches[0].clientY;
         longPressTimer = setTimeout(async () => {
@@ -436,7 +406,6 @@
     }
     function clearCompletedHistory() { if(confirm("Limpar histórico?")) { items = items.filter(i=>i.status!=='completed'); if(window.sync) window.sync(); else render(); } }
     
-    // Processamento
     let procIdx = null;
     function startProcessing() {
         procIdx = items.findIndex(i => i.status === 'inbox');
@@ -451,14 +420,33 @@
             if(confirm("É Lixo?")) changeItemStatus(items[procIdx], 'trash'); else changeItemStatus(items[procIdx], 'someday'); 
         } else document.getElementById('moveModal').style.display = 'flex';
     }
+
+    // --- AUTO-MOVE FUNCTION ---
+    window.checkDueDates = function() {
+        const now = new Date();
+        let changed = false;
+        items.forEach(item => {
+            if ((item.status === 'calendar' || item.status === 'waiting') && item.date) {
+                const taskDate = new Date(item.date);
+                // Se a data/hora já passou ou é agora
+                if (taskDate <= now) {
+                    item.status = 'next';
+                    // Mantem googleEventId como histórico, mas a tarefa vai para Next
+                    changed = true;
+                }
+            }
+        });
+        if (changed) {
+            if(window.sync) window.sync(); else render();
+            showToast("Tarefas vencidas movidas para Próximas Ações");
+        }
+    }
 </script>
 
-<!-- MODULE SCRIPT (Firebase & IA) -->
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getFirestore, doc, onSnapshot, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-    // --- FIREBASE INIT ---
     let db;
     if(config.fbApiKey && config.fbProjectId) {
         try {
@@ -499,7 +487,6 @@
         document.getElementById('dbStatus').innerText = "Sem Config";
     }
 
-    // Expose Sync to Global
     window.sync = function() {
         if(db) {
             document.getElementById('dbDot').className = "dot syncing";
@@ -510,9 +497,8 @@
         render(); 
     }
 
-    // --- IA Breakdown ---
     window.breakdownItem = async function(e, idx) {
-        e.stopPropagation(); // Impede clique no LI
+        e.stopPropagation();
         if(!config.geminiKey) return alert("Configure a API Key do Gemini.");
         document.getElementById('loadingText').innerText = "IA Pensando...";
         document.getElementById('loadingOverlay').style.display = 'flex';
@@ -534,7 +520,6 @@
     }
 </script>
 
-<!-- GOOGLE CALENDAR SCRIPT -->
 <script src="https://apis.google.com/js/api.js"></script>
 <script src="https://accounts.google.com/gsi/client"></script>
 <script>
@@ -555,10 +540,8 @@
                         document.getElementById('btnAuthCalendar').innerText = "📅 Agenda OK";
                         document.getElementById('btnAuthCalendar').style.background = "var(--success)";
                         document.getElementById('btnAuthCalendar').style.color = "white";
-                        window.checkRemoteCalendarDeletions();
                     }
                 });
-                // Auto Login
                 const stored = JSON.parse(localStorage.getItem('gtd_cal_token'));
                 if(stored && Date.now() < stored.exp) {
                     gapi.client.setToken({ access_token: stored.token });
@@ -609,17 +592,12 @@
         for (const item of syncedItems) {
             try {
                 const res = await gapi.client.calendar.events.get({ calendarId: 'primary', eventId: item.googleEventId });
-                if (res.result.status === 'cancelled') { deleteLocalTask(item.id); changed = true; }
+                if (res.result.status === 'cancelled') { items.splice(items.indexOf(item), 1); changed = true; }
             } catch (err) {
-                if (err.status === 404 || err.status === 410) { deleteLocalTask(item.id); changed = true; }
+                if (err.status === 404 || err.status === 410) { items.splice(items.indexOf(item), 1); changed = true; }
             }
         }
         if (changed) window.sync();
-    }
-
-    function deleteLocalTask(id) {
-        const idx = items.findIndex(i => i.id === id);
-        if(idx > -1) items.splice(idx, 1);
     }
 </script>
 </body>
