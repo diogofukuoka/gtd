@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>GTD Fukuoka (v7.4 - Full)</title>
+    <title>GTD Fukuoka</title>
     <script src="https://bernardo-castilho.github.io/DragDropTouch/DragDropTouch.js"></script>
     <style>
         :root { --primary: #2c3e50; --accent: #3498db; --success: #27ae60; --warning: #f39c12; --danger: #e74c3c; --google: #4285f4; --gray: #95a5a6; --ai: #8e44ad; }
@@ -83,7 +83,7 @@
 
 <div class="container">
     <header>
-        <h1>GTD Fukuoka v7.4</h1>
+        <h1>GTD Fukuoka</h1>
         <div class="status-bar">
             <div><div id="driveDot" class="dot"></div><span id="driveStatus">Off</span></div>
             <div>
@@ -104,14 +104,13 @@
         <button onclick="magicProcess()" id="btnMagic" class="btn-config hidden" style="flex:1; background:linear-gradient(135deg, #8e44ad, #3498db); color:white;">✨ Auto-IA</button>
     </div>
 
-    <!-- ÁREA DE PROCESSAMENTO (WIZARD) - Simplificada para economizar espaço -->
+    <!-- ÁREA DE PROCESSAMENTO (WIZARD) - Simplificada -->
     <div id="processing-zone" style="display:none; border:2px solid var(--accent); padding:15px; border-radius:10px; margin-bottom:20px;">
         <h3 id="currentItem" style="margin-top:0; background:#fff8e1; padding:10px; border-left:4px solid var(--warning);"></h3>
         <div id="step-1">
             <p>É passível de ação?</p>
             <div style="display:flex; gap:10px;"><button class="btn-config" style="background:var(--danger); color:white; flex:1" onclick="handleActionable(false)">Não</button><button class="btn-config" style="background:var(--success); color:white; flex:1" onclick="handleActionable(true)">Sim</button></div>
         </div>
-        <!-- Os outros passos são manipulados via JS para brevidade -->
     </div>
 
     <!-- LISTAS -->
@@ -215,8 +214,9 @@
 <script>
     // --- DADOS & CONFIG ---
     let items = JSON.parse(localStorage.getItem('gtd_data')) || [];
-    let config = JSON.parse(localStorage.getItem('gtd_config')) || { clientId: '', gemini: '' };
-    let activeItemIdx = null; // Item sendo editado/movido/long-pressed
+    // Mantendo nomes das chaves compatíveis com v7.3 para não quebrar a config
+    let config = JSON.parse(localStorage.getItem('gtd_config')) || { googleClientId: '', geminiKey: '' };
+    let activeItemIdx = null; 
     
     // --- GOOGLE API SETUP ---
     let tokenClient;
@@ -231,7 +231,7 @@
             gapiInited = true; checkAuth();
         });
         tokenClient = google.accounts.oauth2.initTokenClient({
-            client_id: config.clientId, scope: SCOPES,
+            client_id: config.googleClientId, scope: SCOPES,
             callback: (resp) => {
                 if(resp.error) return;
                 const exp = Date.now() + (resp.expires_in * 1000);
@@ -250,12 +250,12 @@
         if(stored && Date.now() < stored.exp) {
             gapi.client.setToken({ access_token: stored.token });
             updateStatus(true);
-            setTimeout(() => driveSync(false), 2000); // Sync silencioso ao abrir
+            setTimeout(() => driveSync(false), 2000); 
         }
     }
     
     function handleAuthClick() {
-        if(!config.clientId) return alert("Salve o Client ID primeiro.");
+        if(!config.googleClientId) return alert("Salve o Client ID primeiro.");
         tokenClient.requestAccessToken({prompt: ''});
     }
 
@@ -272,7 +272,7 @@
             if(list.result.files.length > 0) {
                 driveFileId = list.result.files[0].id;
                 localStorage.setItem('gtd_drive_file_id', driveFileId);
-                driveSync(true); // Download inicial
+                driveSync(true); 
             } else {
                 const create = await gapi.client.drive.files.create({
                     resource: { name: DB_NAME, parents: ['appDataFolder'] },
@@ -319,27 +319,27 @@
         window.syncTimer = setTimeout(() => driveSync(false), 3000);
     }
 
-    // --- CALENDAR LOGIC (ADD/REMOVE EVENTS) ---
+    // --- CALENDAR LOGIC ---
     async function handleCalendarEvents(item, oldStatus, newStatus) {
-        if(!config.clientId || !gapi.client.getToken()) return;
+        if(!config.googleClientId || !gapi.client.getToken()) return;
 
-        // 1. SE SAIR DE CALENDÁRIO/DELEGAR -> REMOVER EVENTO
+        // 1. REMOVER
         if ((oldStatus === 'calendar' || oldStatus === 'waiting') && 
             (newStatus !== 'calendar' && newStatus !== 'waiting')) {
             if (item.googleEventId) {
                 try {
                     await gapi.client.calendar.events.delete({ calendarId: 'primary', eventId: item.googleEventId });
                     showToast("Evento removido do Agenda.");
-                } catch(e) { console.log("Evento já não existia."); }
+                } catch(e) { console.log("Evento não encontrado."); }
                 delete item.googleEventId;
             }
         }
 
-        // 2. SE ENTRAR EM CALENDÁRIO/DELEGAR -> CRIAR EVENTO
+        // 2. CRIAR
         if ((newStatus === 'calendar' || newStatus === 'waiting') && item.date) {
             try {
                 const start = new Date(item.date);
-                const end = new Date(start.getTime() + 30 * 60000); // 30 min
+                const end = new Date(start.getTime() + 30 * 60000); 
                 const event = {
                     summary: `GTD: ${item.text} ${newStatus === 'waiting' ? '(Delegado)' : ''}`,
                     description: item.note || '',
@@ -347,7 +347,6 @@
                     end: { dateTime: end.toISOString() }
                 };
                 
-                // Se já tem ID, tenta atualizar, senão cria
                 if(item.googleEventId) {
                     try {
                         await gapi.client.calendar.events.update({ calendarId: 'primary', eventId: item.googleEventId, resource: event });
@@ -364,7 +363,7 @@
         }
     }
 
-    // --- INTERAÇÃO (LONG PRESS, DRAG) ---
+    // --- INTERAÇÃO (LONG PRESS) ---
     let longPressTimer;
     
     function startLongPress(idx) {
@@ -372,7 +371,7 @@
             activeItemIdx = idx;
             openContextMenu();
             if(navigator.vibrate) navigator.vibrate(50);
-        }, 600); // 600ms = Long Press
+        }, 600);
     }
     
     function cancelLongPress() { clearTimeout(longPressTimer); }
@@ -400,13 +399,13 @@
     async function ctxBreakdown() {
         closeContextMenu();
         const item = items[activeItemIdx];
-        if(!config.gemini) return alert("Configure a API Key do Gemini.");
+        if(!config.geminiKey) return alert("Configure a API Key do Gemini.");
         
         document.getElementById('loadingOverlay').style.display = 'flex';
         const prompt = `Quebre a tarefa "${item.text}" em etapas acionáveis (passos físicos). Retorne APENAS um Array JSON de strings. Ex: ["Passo 1", "Passo 2"]`;
         
         try {
-            const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${config.gemini}`, {
+            const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${config.geminiKey}`, {
                 method: 'POST', headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
             });
@@ -426,7 +425,7 @@
         closeContextMenu();
         if(confirm("Excluir tarefa?")) {
             const item = items[activeItemIdx];
-            handleCalendarEvents(item, item.status, 'trash'); // Remove do agenda se tiver
+            handleCalendarEvents(item, item.status, 'trash'); 
             items.splice(activeItemIdx, 1);
             sync();
         }
@@ -455,27 +454,20 @@
     async function changeItemStatus(item, newStatus) {
         const oldStatus = item.status;
         
-        // Se for para Completed, carimba data
         if(newStatus === 'completed') {
             item.completedAt = new Date().toISOString();
         } else {
             delete item.completedAt;
         }
 
-        // Se for para Calendário ou Delegar, EXIGE data
         if(newStatus === 'calendar' || newStatus === 'waiting') {
             const dateStr = await askDate();
-            if(!dateStr) return; // Cancelou
+            if(!dateStr) return; 
             item.date = dateStr;
             if(newStatus === 'waiting') {
                 const note = prompt("Delegar para quem?");
                 if(note) item.note = "Delegado: " + note;
             }
-        } else {
-            // Se saiu dessas listas, limpamos a data para não confundir, ou mantemos como histórico? 
-            // GTD diz: se está em "Next", não tem data obrigatória.
-            // Mas vamos manter a propriedade date caso o usuário mova de volta, 
-            // PORÉM o evento do Google Agenda será apagado no handleCalendarEvents.
         }
 
         await handleCalendarEvents(item, oldStatus, newStatus);
@@ -502,13 +494,12 @@
                 li.draggable = true;
                 li.ondragstart = (e) => e.dataTransfer.setData("text", idx);
                 
-                // Eventos de Long Press
                 li.onmousedown = () => startLongPress(idx);
                 li.ontouchstart = () => startLongPress(idx);
                 li.onmouseup = cancelLongPress;
                 li.ontouchend = cancelLongPress;
                 li.onmouseleave = cancelLongPress;
-                li.oncontextmenu = (e) => { e.preventDefault(); }; // Bloqueia menu nativo
+                li.oncontextmenu = (e) => { e.preventDefault(); }; 
 
                 let meta = "";
                 if(item.note) meta += `<span class="meta">${item.note}</span>`;
@@ -529,7 +520,6 @@
         lists.forEach(l => document.getElementById('c-'+l).innerText = counts[l]);
         document.getElementById('inboxCount').innerText = counts['inbox'];
         
-        // Show/Hide Process Buttons
         if(counts['inbox'] > 0) {
             document.getElementById('btnProcess').classList.remove('hidden');
             document.getElementById('btnMagic').classList.remove('hidden');
@@ -546,37 +536,35 @@
         if(val) { items.push({id:Date.now(), text:val, status:'inbox'}); document.getElementById('inboxInput').value=''; sync(); }
     }
     
-    // Funções de Wizard simplificadas para não estourar o limite de caracteres, 
-    // mas a lógica principal está no Drag/Context Menu agora.
     let procIdx = null;
     function startProcessing() {
         procIdx = items.findIndex(i => i.status === 'inbox');
         if(procIdx > -1) {
             document.getElementById('processing-zone').style.display = 'block';
             document.getElementById('currentItem').innerText = items[procIdx].text;
-            activeItemIdx = procIdx; // Para usar as mesmas funcoes de status
+            activeItemIdx = procIdx; 
         }
     }
     function handleActionable(bool) {
         if(!bool) { 
             if(confirm("É Lixo? (Cancelar para Talvez/Ref)")) { changeItemStatus(items[procIdx], 'trash'); } 
-            else { changeItemStatus(items[procIdx], 'someday'); } // Simplificado
+            else { changeItemStatus(items[procIdx], 'someday'); } 
         } else {
-            // Se for acionavel, manda para move modal para decidir
             document.getElementById('moveModal').style.display = 'flex';
         }
     }
 
     // Config Helpers
     function openConfig() { 
-        document.getElementById('cfgClientId').value = config.clientId; 
-        document.getElementById('cfgGemini').value = config.gemini;
+        // Usando || '' para evitar "undefined"
+        document.getElementById('cfgClientId').value = config.googleClientId || ''; 
+        document.getElementById('cfgGemini').value = config.geminiKey || '';
         document.getElementById('configModal').style.display = 'flex'; 
     }
     function closeConfig() { document.getElementById('configModal').style.display = 'none'; }
     function saveConfig() {
-        config.clientId = document.getElementById('cfgClientId').value;
-        config.gemini = document.getElementById('cfgGemini').value;
+        config.googleClientId = document.getElementById('cfgClientId').value;
+        config.geminiKey = document.getElementById('cfgGemini').value;
         localStorage.setItem('gtd_config', JSON.stringify(config));
         closeConfig(); location.reload();
     }
