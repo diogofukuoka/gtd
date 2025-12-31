@@ -18,6 +18,7 @@
         .dot { width: 10px; height: 10px; border-radius: 50%; background: #ccc; display:inline-block; margin-right:5px; }
         .dot.online { background: var(--success); box-shadow: 0 0 5px var(--success); }
         .dot.syncing { background: var(--warning); animation: pulse 1s infinite; }
+        .dot.error { background: var(--danger); }
         
         button { padding: 0 15px; height: 40px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; transition: 0.2s; }
         button:active { transform: scale(0.96); }
@@ -34,6 +35,7 @@
         .list-card.drag-over { background-color: #e3f2fd; border: 2px dashed #3498db; }
         .list-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #dee2e6; padding-bottom: 8px; margin-bottom: 10px; cursor: pointer; }
         .list-header h3 { margin: 0; font-size: 1rem; }
+        .list-header:active { opacity: 0.6; background-color: #e9ecef; border-radius: 4px; }
         .badge { background: #fff; padding: 2px 8px; border-radius: 10px; font-size: 0.75rem; font-weight: bold; border: 1px solid #ccc; }
         
         .card-inbox { border-top: 4px solid var(--danger); }
@@ -161,7 +163,6 @@
     let items = JSON.parse(localStorage.getItem('gtd_data')) || [];
     let config = JSON.parse(localStorage.getItem('gtd_config')) || { googleClientId: '', geminiKey: '' };
     
-    // Nomes das listas
     const listNames = {
         'inbox': '📥 Entrada', 'do-now': '⚡ Fazer Agora', 'next': '🔥 Próximas Ações',
         'project': '📂 Projetos', 'calendar': '📅 Calendário', 'waiting': '⏳ Delegar',
@@ -191,7 +192,7 @@
                 localStorage.setItem('gtd_token', JSON.stringify({ token: resp.access_token, exp: exp }));
                 gapi.client.setToken(resp);
                 updateStatus(true);
-                initDrive(true); // Força busca do arquivo
+                initDrive(true); 
                 startAutoSync();
             }
         });
@@ -217,7 +218,7 @@
         document.getElementById('driveStatus').innerText = online ? 'Online' : 'Off';
     }
 
-    // --- DRIVE & SYNC (MERGE LOGIC) ---
+    // --- DRIVE & SYNC (MERGE) ---
     async function initDrive(forceSearch = false) {
         if(!gapi.client.getToken()) return;
         try {
@@ -227,7 +228,7 @@
             if(list.result.files.length > 0) {
                 driveFileId = list.result.files[0].id;
                 localStorage.setItem('gtd_drive_file_id', driveFileId);
-                driveSync(true); // Download e Merge inicial
+                driveSync(true); 
             } else {
                 const create = await gapi.client.drive.files.create({
                     resource: { name: DB_NAME, parents: ['appDataFolder'] },
@@ -239,7 +240,6 @@
         } catch(e) { console.error(e); }
     }
 
-    // Função de Sincronia Principal
     async function driveSync(download = false) {
         if(!driveFileId || !gapi.client.getToken() || syncInProgress) return;
         syncInProgress = true;
@@ -247,18 +247,14 @@
         
         try {
             if(download) {
-                // DOWNLOAD
                 const res = await gapi.client.drive.files.get({ fileId: driveFileId, alt: 'media' });
                 const remoteData = res.result || res.body;
-                
                 if(Array.isArray(remoteData)) { 
-                    // MERGE INTELIGENTE (Uni listas baseada em ID e Data)
                     mergeLists(remoteData);
                     render();
                     await checkRemoteCalendarDeletions();
                 }
             } else {
-                // UPLOAD
                 const body = JSON.stringify(items);
                 await fetch(`https://www.googleapis.com/upload/drive/v3/files/${driveFileId}?uploadType=media`, {
                     method: 'PATCH',
@@ -267,57 +263,27 @@
                 });
             }
             document.getElementById('driveDot').className = 'dot online';
-        } catch(e) { 
-            console.error(e); 
-            document.getElementById('driveDot').className = 'dot error'; 
-        } finally {
-            syncInProgress = false;
-        }
+        } catch(e) { console.error(e); document.getElementById('driveDot').className = 'dot error'; } 
+        finally { syncInProgress = false; }
     }
 
-    // Algoritmo de Fusão
     function mergeLists(remoteItems) {
         const itemMap = new Map();
-        
-        // Adiciona itens locais ao mapa
         items.forEach(i => itemMap.set(i.id, i));
-        
         let hasChanges = false;
-
-        // Mescla com remotos
         remoteItems.forEach(remote => {
             if (itemMap.has(remote.id)) {
                 const local = itemMap.get(remote.id);
-                // Se remoto for mais novo, atualiza local
-                if ((remote.updatedAt || 0) > (local.updatedAt || 0)) {
-                    itemMap.set(remote.id, remote);
-                }
-                // Se local for mais novo, mantemos local (e vamos subir depois)
-            } else {
-                // Se não tem no local, adiciona do remoto
-                itemMap.set(remote.id, remote);
-            }
+                if ((remote.updatedAt || 0) > (local.updatedAt || 0)) itemMap.set(remote.id, remote);
+            } else itemMap.set(remote.id, remote);
         });
-
-        // Atualiza lista principal
         const newItems = Array.from(itemMap.values());
-        
-        // Verifica se houve mudança para disparar upload de volta
-        if (JSON.stringify(newItems) !== JSON.stringify(items) || newItems.length !== remoteItems.length) {
-            hasChanges = true;
-        }
-        
+        if (JSON.stringify(newItems) !== JSON.stringify(items) || newItems.length !== remoteItems.length) hasChanges = true;
         items = newItems;
         localStorage.setItem('gtd_data', JSON.stringify(items));
-        
-        // Se a fusão gerou uma lista nova, sobe de volta para o Drive para convergir
-        if(hasChanges) {
-            // Pequeno delay para não colidir
-            setTimeout(() => driveSync(false), 1000);
-        }
+        if(hasChanges) setTimeout(() => driveSync(false), 1000);
     }
 
-    // Salva Local e Sobe Imediato
     function sync() {
         localStorage.setItem('gtd_data', JSON.stringify(items));
         render();
@@ -331,13 +297,10 @@
         if(autoSyncInterval) clearInterval(autoSyncInterval);
         autoSyncInterval = setInterval(() => {
             if(gapi.client.getToken()) driveSync(true); 
-        }, 15000); // 15s check
+        }, 15000);
     }
 
-    // --- UTILS ---
-    function updateItemTimestamp(item) {
-        item.updatedAt = Date.now();
-    }
+    function updateItemTimestamp(item) { item.updatedAt = Date.now(); }
 
     // --- CALENDAR ---
     async function checkRemoteCalendarDeletions() {
@@ -348,13 +311,9 @@
         for (const item of syncedItems) {
             try {
                 const res = await gapi.client.calendar.events.get({ calendarId: 'primary', eventId: item.googleEventId });
-                if (res.result.status === 'cancelled') {
-                    deleteLocalTask(item); changed = true;
-                }
+                if (res.result.status === 'cancelled') { deleteLocalTask(item); changed = true; }
             } catch (err) {
-                if (err.status === 404 || err.status === 410) {
-                    deleteLocalTask(item); changed = true;
-                }
+                if (err.status === 404 || err.status === 410) { deleteLocalTask(item); changed = true; }
             }
         }
         if (changed) sync(); 
@@ -548,7 +507,7 @@
             const headerHtml = `
                 <div class="list-header" 
                      onmousedown="startListTitlePress('${key}')" ontouchstart="startListTitlePress('${key}')"
-                     onmouseup="cancelPress()" ontouchend="cancelPress()" onmouseleave="cancelPress()">
+                     onmouseup="cancelPress()" ontouchend="cancelPress()" onmouseleave="cancelPress()" ontouchmove="cancelPress()">
                     <h3>${listNames[key]}</h3>
                     <div>
                         ${key === 'completed' ? `<button class="btn-config" onclick="clearCompletedHistory()" style="font-size:0.7rem; padding:2px 5px;">🗑️</button>` : ''}
@@ -570,7 +529,7 @@
                 li.ondragstart = (e) => e.dataTransfer.setData("text", idx);
                 li.onmousedown = () => startMovePress(idx);
                 li.ontouchstart = () => startMovePress(idx);
-                li.onmouseup = cancelPress; li.ontouchend = cancelPress; li.onmouseleave = cancelPress;
+                li.onmouseup = cancelPress; li.ontouchend = cancelPress; li.onmouseleave = cancelPress; li.ontouchmove = cancelPress;
                 li.oncontextmenu = (e) => e.preventDefault(); 
 
                 let meta = "";
