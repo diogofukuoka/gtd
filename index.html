@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>GTD Fukuoka (v8.8 - AI Processing)</title>
+    <title>GTD Fukuoka (v8.9)</title>
     <script src="https://bernardo-castilho.github.io/DragDropTouch/DragDropTouch.js"></script>
     <style>
         :root { --primary: #2c3e50; --accent: #3498db; --success: #27ae60; --warning: #f39c12; --danger: #e74c3c; --google: #4285f4; --gray: #95a5a6; --ai: #8e44ad; }
@@ -106,9 +106,10 @@
         <button class="btn-add" onclick="addToInbox()">+</button>
     </div>
 
-    <div style="display:flex; gap:10px; margin-bottom:20px;">
-        <button onclick="startProcessing()" id="btnProcess" class="btn-config hidden" style="flex:1; background:var(--primary); color:white;">⚡ Processar Manual</button>
-        <button onclick="magicProcess()" id="btnMagic" class="btn-config hidden" style="flex:1; background:linear-gradient(135deg, #8e44ad, #3498db); color:white;">✨ Auto-IA (Contexto)</button>
+    <!-- BOTÕES DE PROCESSAMENTO (Sempre visíveis se houver item na entrada) -->
+    <div id="processButtons" class="hidden" style="display:flex; gap:10px; margin-bottom:20px;">
+        <button onclick="startProcessing()" id="btnProcess" class="btn-config" style="flex:1; background:var(--primary); color:white;">⚡ Processar Manual</button>
+        <button onclick="magicProcess()" id="btnMagic" class="btn-config" style="flex:1; background:linear-gradient(135deg, #8e44ad, #3498db); color:white;">✨ Processar pela IA</button>
     </div>
 
     <!-- WIZARD MANUAL -->
@@ -335,20 +336,29 @@
             }
         });
 
+        // Update Badges
         listKeys.forEach(l => {
              const badge = document.getElementById('c-'+l);
              if(badge) badge.innerText = counts[l];
         });
         
-        document.getElementById('inboxCount').innerText = counts['inbox'];
+        // Update Dashboard (Buttons)
+        updateDashboard(counts['inbox']);
+    }
+
+    // --- NOVA FUNÇÃO PARA CONTROLAR VISIBILIDADE DOS BOTÕES ---
+    function updateDashboard(inboxCount) {
+        const btnContainer = document.getElementById('processButtons');
+        const processingZone = document.getElementById('processing-zone');
         
-        if(counts['inbox'] > 0) {
-            document.getElementById('btnProcess').classList.remove('hidden');
-            document.getElementById('btnMagic').classList.remove('hidden');
+        if(inboxCount > 0) {
+            btnContainer.classList.remove('hidden');
+            // Remove display: none do estilo inline se existir
+            btnContainer.style.display = 'flex'; 
         } else {
-            document.getElementById('btnProcess').classList.add('hidden');
-            document.getElementById('btnMagic').classList.add('hidden');
-            document.getElementById('processing-zone').style.display = 'none';
+            btnContainer.classList.add('hidden');
+            btnContainer.style.display = 'none';
+            processingZone.style.display = 'none'; // Fecha wizard se acabar
         }
     }
 
@@ -664,7 +674,8 @@
             const decisions = JSON.parse(txt.replace(/```json|```/g, '').trim());
 
             for (const d of decisions) {
-                const item = items.find(i => i.id == d.id); // Loose equality for string/number id mismatch
+                // Conversão de ID para número se necessário, já que Date.now() é numero
+                const item = items.find(i => i.id == d.id); 
                 if(item) {
                     await changeItemStatus(item, d.status, d.date, d.note);
                 }
