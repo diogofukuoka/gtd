@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>GTD Fukuoka (v6.6 - Fix Google)</title>
+    <title>GTD Fukuoka (v6.7)</title>
     <script src="https://bernardo-castilho.github.io/DragDropTouch/DragDropTouch.js"></script>
     <style>
         :root { --primary: #2c3e50; --accent: #3498db; --success: #27ae60; --warning: #f39c12; --danger: #e74c3c; --light: #ecf0f1; --cloud: #8e44ad; --google: #4285f4; --gray: #95a5a6; }
@@ -227,6 +227,12 @@
     </div>
 </div>
 
+<!-- Loading -->
+<div id="loadingOverlay">
+    <div class="spinner"></div>
+    <p style="margin-top:15px; font-weight:bold; color:#555;">IA Pensando...</p>
+</div>
+
 <!-- Modal / Toast -->
 <div id="toast">Notificação</div>
 <div id="configModal">
@@ -267,26 +273,32 @@
     const DISCOVERY_DOC = 'https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest';
     let longPressTimer, longPressItem, dateResolver, headerPressTimer;
 
-    // --- AI INTEGRATION (GEMINI - FIXED MODEL) ---
+    // --- AI INTEGRATION (GEMINI - FLASH) ---
     async function callGemini(prompt) {
-        if (!config.geminiKey) {
-            alert("Configure a chave do Gemini em Configurações para usar IA.");
-            return null;
-        }
+        if (!config.geminiKey) { alert("Configure a chave do Gemini em Configurações para usar IA."); return null; }
         document.getElementById('loadingOverlay').style.display = 'flex';
         try {
+            // USANDO GEMINI-1.5-FLASH
             const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${config.geminiKey}`;
             const response = await fetch(url, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+                body: JSON.stringify({ 
+                    contents: [{ parts: [{ text: prompt }] }],
+                    generationConfig: { responseMimeType: "application/json" }
+                })
             });
             const data = await response.json();
             if (data.error) throw new Error(data.error.message);
-            if (!data.candidates || !data.candidates[0] || !data.candidates[0].content) throw new Error("Resposta da IA vazia.");
+            if (!data.candidates || !data.candidates[0] || !data.candidates[0].content) throw new Error("Resposta vazia.");
             return data.candidates[0].content.parts[0].text;
-        } catch (e) { console.error(e); alert("Erro na IA: " + e.message); return null; } 
-        finally { document.getElementById('loadingOverlay').style.display = 'none'; }
+        } catch (e) {
+            console.error(e);
+            alert("Erro na IA: " + e.message);
+            return null;
+        } finally {
+            document.getElementById('loadingOverlay').style.display = 'none';
+        }
     }
 
     async function magicProcess() {
@@ -299,43 +311,45 @@
 
         const prompt = `
             Hoje é: ${dateStr}.
-            Você é um assistente GTD expert. Analise estes itens da caixa de entrada:
+            Você é um especialista em GTD. Analise estes itens da caixa de entrada:
             ${tasksText}
             
             Regras de Processamento (RIGOROSAS):
+            
             1. **PRIORIDADE 1: DELEGAÇÃO**
-               Se começa com nome/apelido (ex: "Je ver", "João enviar"), status: 'waiting'.
+               Se começa com nome/apelido (ex: "Je ver", "João enviar", "Maria ligar"), status: 'waiting'.
                Note: "Delegado: [Nome]". Extraia data ISO se houver.
             
             2. **PRIORIDADE 2: CALENDÁRIO**
-               Se tem data/hora específica (ex: "Agendar médico", "Reunião amanhã"), status: 'calendar'.
-               Extraia data ISO.
+               Se tem data/hora específica (ex: "Agendar médico", "Reunião amanhã 14h"), status: 'calendar'.
+               Extraia data ISO (YYYY-MM-DDTHH:MM).
             
             3. **PRIORIDADE 3: FAZER AGORA (< 2 min)**
-               Ação rápida sem local específico (ex: "Responder email", "Ligar para X"), status: 'do-now'.
+               Ação rápida sem local específico (ex: "Responder email", "Pagar conta"), status: 'do-now'.
                Se depende de local (ex: "Ligar a TV em casa"), status: 'next', note: "Casa".
             
             4. **OUTROS**
                - Material leitura -> 'reference'
-               - Ideia vaga -> 'someday'
+               - Ideia vaga/sonho -> 'someday'
                - Projeto -> 'project'
                - Ação sem data -> 'next'
             
-            Retorne APENAS um array JSON válido. Formato: [{"id": "...", "status": "...", "note": "...", "date": "..."}]
+            Retorne APENAS um array JSON válido:
+            [{"id": "...", "status": "...", "note": "...", "date": "..."}]
         `;
 
         const result = await callGemini(prompt);
         if (!result) return;
 
         try {
-            const cleanJson = result.replace(/```json/g, '').replace(/```/g, '').trim();
-            const decisions = JSON.parse(cleanJson);
+            const decisions = JSON.parse(result);
             let count = 0;
             for (const d of decisions) {
                 const item = items.find(i => i.id == d.id);
                 if (item) {
                     item.status = d.status;
                     if (d.note) item.note = d.note;
+                    
                     if ((d.status === 'calendar' || d.status === 'waiting') && d.date && config.googleClientId) {
                         item.date = d.date;
                         try { const eid = await createCalendarEvent(item); if (eid) item.googleEventId = eid; } catch(e) { console.error(e); }
@@ -346,17 +360,16 @@
             }
             syncSave();
             showToast(`${count} itens processados! ✨`);
-        } catch (e) { alert("Erro ao ler resposta da IA."); }
+        } catch (e) { alert("Erro ao processar resposta da IA."); }
     }
 
     async function breakdownProject(idx) {
         const project = items[idx];
-        const prompt = `Projeto: "${project.text}". Liste 3 a 5 próximas ações físicas concretas. Responda em Português. Retorne APENAS um array JSON de strings. Sem markdown.`;
+        const prompt = `Projeto: "${project.text}". Liste 3 a 5 próximas ações físicas concretas. Responda em Português.`;
         const result = await callGemini(prompt);
         if (!result) return;
         try {
-            const cleanJson = result.replace(/```json/g, '').replace(/```/g, '').trim();
-            const actions = JSON.parse(cleanJson);
+            const actions = JSON.parse(result);
             actions.forEach(actionText => {
                 items.push({ id: Date.now() + Math.random(), text: actionText, status: 'next', note: `De: ${project.text}` });
             });
@@ -369,9 +382,12 @@
         const completed = items.filter(i => i.status === 'completed');
         if (completed.length === 0) return alert("Nada concluído.");
         const tasks = completed.map(i => i.text).join(', ');
-        const prompt = `Tarefas concluídas: ${tasks}. Dê um resumo motivacional curto em Português.`;
-        const feedback = await callGemini(prompt);
-        if (feedback) alert("🤖 Relatório da IA:\n\n" + feedback);
+        const prompt = `Tarefas concluídas: ${tasks}. Dê um resumo motivacional curto em Português e 1 sugestão. Retorne JSON: {"text": "..."}`;
+        const feedbackJson = await callGemini(prompt);
+        if (feedbackJson) {
+            const fb = JSON.parse(feedbackJson);
+            alert("🤖 Relatório da IA:\n\n" + fb.text);
+        }
     }
 
     // --- STANDARD FUNCTIONS ---
