@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>GTD Fukuoka (v8.7)</title>
+    <title>GTD Fukuoka (v8.8 - AI Processing)</title>
     <script src="https://bernardo-castilho.github.io/DragDropTouch/DragDropTouch.js"></script>
     <style>
         :root { --primary: #2c3e50; --accent: #3498db; --success: #27ae60; --warning: #f39c12; --danger: #e74c3c; --google: #4285f4; --gray: #95a5a6; --ai: #8e44ad; }
@@ -56,11 +56,20 @@
         .meta { font-size: 0.75rem; color: #666; display: block; margin-top: 2px; pointer-events: none; }
         
         .task-actions { display: flex; gap: 4px; align-items: center; }
-        .btn-icon { background: none; border: none; padding: 0; font-size: 1.1rem; cursor: pointer; border-radius: 4px; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; transition: background 0.2s; }
+        .btn-icon { background: none; border: none; padding: 0; font-size: 1.1rem; cursor: pointer; border-radius: 4px; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; transition: background 0.2s; position: relative; z-index: 2; }
         .btn-icon:hover { background-color: #f1f3f5; }
         .btn-icon.del:hover { color: var(--danger); background-color: #ffebee; }
         .btn-icon.edit:hover { color: var(--accent); background-color: #e3f2fd; }
         .btn-icon.ai:hover { color: var(--ai); background-color: #f3e5f5; }
+
+        /* WIZARD STYLES */
+        #processing-zone { display:none; border:2px solid var(--accent); padding:15px; border-radius:10px; margin-bottom:20px; background: white; }
+        .step { display: none; animation: fadeIn 0.3s; }
+        .step.active { display: block; }
+        .decision-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+        .btn-yes { background: var(--success); color: white; }
+        .btn-no { background: var(--danger); color: white; }
+        .btn-opt { background: var(--primary); color: white; }
 
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 3000; align-items: center; justify-content: center; }
         .modal-content { background: white; width: 90%; max-width: 400px; padding: 20px; border-radius: 10px; }
@@ -72,7 +81,7 @@
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         @keyframes fadein { from {bottom: 0; opacity: 0;} to {bottom: 30px; opacity: 1;} }
         @keyframes fadeout { from {bottom: 30px; opacity: 1;} to {bottom: 0; opacity: 0;} }
-        @keyframes pulse-red { 0% { background: #c0392b; box-shadow: 0 0 0 0 rgba(192, 57, 43, 0.7); } 70% { background: #e74c3c; box-shadow: 0 0 0 10px rgba(192, 57, 43, 0); } 100% { background: #c0392b; box-shadow: 0 0 0 0 rgba(192, 57, 43, 0); } }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         .hidden { display: none !important; }
     </style>
 </head>
@@ -98,15 +107,60 @@
     </div>
 
     <div style="display:flex; gap:10px; margin-bottom:20px;">
-        <button onclick="startProcessing()" id="btnProcess" class="btn-config hidden" style="flex:1; background:var(--primary); color:white;">⚡ Processar (<span id="inboxCount">0</span>)</button>
-        <button onclick="magicProcess()" id="btnMagic" class="btn-config hidden" style="flex:1; background:linear-gradient(135deg, #8e44ad, #3498db); color:white;">✨ Auto-IA</button>
+        <button onclick="startProcessing()" id="btnProcess" class="btn-config hidden" style="flex:1; background:var(--primary); color:white;">⚡ Processar Manual</button>
+        <button onclick="magicProcess()" id="btnMagic" class="btn-config hidden" style="flex:1; background:linear-gradient(135deg, #8e44ad, #3498db); color:white;">✨ Auto-IA (Contexto)</button>
     </div>
 
-    <div id="processing-zone" style="display:none; border:2px solid var(--accent); padding:15px; border-radius:10px; margin-bottom:20px;">
-        <h3 id="currentItem" style="margin-top:0; background:#fff8e1; padding:10px; border-left:4px solid var(--warning);"></h3>
-        <div id="step-1">
-            <p>É passível de ação?</p>
-            <div style="display:flex; gap:10px;"><button class="btn-config" style="background:var(--danger); color:white; flex:1" onclick="handleActionable(false)">Não</button><button class="btn-config" style="background:var(--success); color:white; flex:1" onclick="handleActionable(true)">Sim</button></div>
+    <!-- WIZARD MANUAL -->
+    <div id="processing-zone">
+        <div style="border-bottom:1px solid #eee; padding-bottom:10px; margin-bottom:10px; text-align:center; font-weight:bold; color:#888;">PROCESSANDO ITEM:</div>
+        <h3 id="currentItem" style="margin:0 0 15px 0; background:#fff3cd; padding:15px; border-left:5px solid var(--warning); border-radius:4px;"></h3>
+        
+        <!-- Passos -->
+        <div id="step-1" class="step active">
+            <p style="text-align:center; font-weight:bold;">É passível de ação?</p>
+            <div class="decision-grid">
+                <button class="btn-no" onclick="toStep('step-no')">NÃO</button>
+                <button class="btn-yes" onclick="toStep('step-yes')">SIM</button>
+            </div>
+        </div>
+
+        <div id="step-no" class="step">
+            <p style="text-align:center; font-weight:bold;">O que fazer com isso?</p>
+            <div class="decision-grid">
+                <button class="btn-no" onclick="finalizeProc('trash')">Lixo 🗑️</button>
+                <button class="btn-opt" onclick="finalizeProc('someday')">Talvez 💡</button>
+                <button class="btn-opt" style="grid-column:span 2" onclick="finalizeProc('reference')">Referência 📚</button>
+            </div>
+            <button class="btn-config" style="width:100%; margin-top:10px" onclick="toStep('step-1')">Voltar</button>
+        </div>
+
+        <div id="step-yes" class="step">
+            <p style="text-align:center; font-weight:bold;">Leva menos de 2 minutos?</p>
+            <div class="decision-grid">
+                <button class="btn-yes" onclick="finalizeProc('do-now')">SIM (Faça Agora)</button>
+                <button class="btn-no" onclick="toStep('step-delegate')">NÃO</button>
+            </div>
+            <button class="btn-config" style="width:100%; margin-top:10px" onclick="toStep('step-1')">Voltar</button>
+        </div>
+
+        <div id="step-delegate" class="step">
+            <p style="text-align:center; font-weight:bold;">Você é a melhor pessoa para fazer?</p>
+            <div class="decision-grid">
+                <button class="btn-no" onclick="finalizeProc('waiting')">NÃO (Delegar)</button>
+                <button class="btn-yes" onclick="toStep('step-defer')">SIM (Eu faço)</button>
+            </div>
+            <button class="btn-config" style="width:100%; margin-top:10px" onclick="toStep('step-yes')">Voltar</button>
+        </div>
+
+        <div id="step-defer" class="step">
+            <p style="text-align:center; font-weight:bold;">Tem dia ou hora específica?</p>
+            <div class="decision-grid">
+                <button class="btn-opt" onclick="finalizeProc('calendar')">SIM (Agenda)</button>
+                <button class="btn-opt" onclick="finalizeProc('next')">NÃO (Assim que der)</button>
+                <button class="btn-opt" style="grid-column:span 2" onclick="finalizeProc('project')">É complexo (Projeto)</button>
+            </div>
+            <button class="btn-config" style="width:100%; margin-top:10px" onclick="toStep('step-delegate')">Voltar</button>
         </div>
     </div>
 
@@ -176,6 +230,7 @@
     var activeItemIdx = null;
     var longPressTimer;
     var dateRes;
+    var touchStartY = 0;
 
     // --- CONFIG UI HANDLERS ---
     function openConfig() { 
@@ -197,7 +252,6 @@
         location.reload();
     }
 
-    // --- HISTORY RENDER ---
     function renderHistory() {
         const dl = document.getElementById('historyList');
         dl.innerHTML = '';
@@ -208,7 +262,6 @@
         });
     }
 
-    // --- RENDER MAIN ---
     function render() {
         const listKeys = Object.keys(listNames);
         const grid = document.querySelector('.lists-grid');
@@ -299,7 +352,6 @@
         }
     }
 
-    // --- STANDARD ACTIONS ---
     function addToInbox() {
         const val = document.getElementById('inboxInput').value;
         if(val) { 
@@ -315,43 +367,31 @@
         }
     }
 
-    // --- INIT ---
     window.addEventListener('load', function() {
         render();
         renderHistory();
         if(!config.fbApiKey && !items.length) setTimeout(openConfig, 500);
         if(!config.googleClientId) document.getElementById('loadingOverlay').style.display = 'none';
-        
-        // Auto-Check Due Dates every 60s
         window.checkDueDates();
         setInterval(window.checkDueDates, 60000);
     });
 
-    // --- VOICE RECOGNITION ---
+    // --- VOICE ---
     let recognition;
     if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
         recognition = new SpeechRecognition();
         recognition.lang = 'pt-BR';
         recognition.continuous = false;
-        
-        recognition.onstart = function() { 
-            document.getElementById('voiceBtn').classList.add('listening'); 
-        };
-        
-        recognition.onend = function() { 
-            document.getElementById('voiceBtn').classList.remove('listening'); 
-        };
-        
+        recognition.onstart = function() { document.getElementById('voiceBtn').classList.add('listening'); };
+        recognition.onend = function() { document.getElementById('voiceBtn').classList.remove('listening'); };
         recognition.onresult = function(event) {
             const text = event.results[0][0].transcript;
             const input = document.getElementById('inboxInput');
             input.value = text.charAt(0).toUpperCase() + text.slice(1);
             input.focus();
         };
-    } else {
-        document.getElementById('voiceBtn').style.display = 'none';
-    }
+    } else { document.getElementById('voiceBtn').style.display = 'none'; }
 
     window.toggleVoice = function() {
         if(!recognition) return alert("Navegador sem suporte a voz.");
@@ -365,7 +405,6 @@
     }
     
     function cancelPress() { clearTimeout(longPressTimer); }
-    var touchStartY = 0;
     function cancelPressOnMove(e) {
         if(e.touches && e.touches[0]) {
             if(Math.abs(e.touches[0].clientY - touchStartY) > 10) clearTimeout(longPressTimer);
@@ -402,15 +441,24 @@
         document.getElementById('moveModal').style.display = 'none';
         changeItemStatus(items[activeItemIdx], newStatus);
     }
-    async function changeItemStatus(item, newStatus) {
+    async function changeItemStatus(item, newStatus, aiDate = null, aiNote = null) {
         const oldStatus = item.status;
         if(newStatus === 'completed') item.completedAt = new Date().toISOString(); else delete item.completedAt;
+        
+        // Se vier da IA, usa data da IA, senão pergunta
         if(newStatus === 'calendar' || newStatus === 'waiting') {
-            const dateStr = await askDate();
-            if(!dateStr) return; 
+            let dateStr = aiDate;
+            if(!dateStr) dateStr = await askDate();
+            
+            if(!dateStr) return; // Cancelou
             item.date = dateStr;
-            if(newStatus === 'waiting') { const n = prompt("Delegar para?"); if(n) item.note = "Delegado: "+n; }
+            
+            if(newStatus === 'waiting') { 
+                if(aiNote) item.note = aiNote;
+                else { const n = prompt("Delegar para?"); if(n) item.note = "Delegado: "+n; }
+            }
         }
+        
         if(window.handleCalendarEvents) await window.handleCalendarEvents(item, oldStatus, newStatus);
         item.status = newStatus;
         if(window.sync) window.sync(); else render();
@@ -422,7 +470,6 @@
     }
     function allowDrop(ev) { ev.preventDefault(); ev.currentTarget.classList.add('drag-over'); }
     
-    // Lista Titulo Long Press CORRIGIDO
     function startListTitlePress(e, listKey) {
         if(e.touches && e.touches[0]) touchStartY = e.touches[0].clientY;
         longPressTimer = setTimeout(async () => {
@@ -448,20 +495,35 @@
     }
     function clearCompletedHistory() { if(confirm("Limpar histórico?")) { items = items.filter(i=>i.status!=='completed'); if(window.sync) window.sync(); else render(); } }
     
-    // Processamento
+    // --- MANUAL PROCESSING LOGIC ---
     let procIdx = null;
     function startProcessing() {
         procIdx = items.findIndex(i => i.status === 'inbox');
         if(procIdx > -1) {
             document.getElementById('processing-zone').style.display = 'block';
             document.getElementById('currentItem').innerText = items[procIdx].text;
-            activeItemIdx = procIdx; 
+            activeItemIdx = procIdx;
+            // Reseta wizard para passo 1
+            toStep('step-1');
         }
     }
-    function handleActionable(bool) {
-        if(!bool) { 
-            if(confirm("É Lixo?")) changeItemStatus(items[procIdx], 'trash'); else changeItemStatus(items[procIdx], 'someday'); 
-        } else document.getElementById('moveModal').style.display = 'flex';
+    
+    function toStep(stepId) {
+        document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+        document.getElementById(stepId).classList.add('active');
+    }
+
+    function finalizeProc(newStatus) {
+        changeItemStatus(items[procIdx], newStatus);
+        // Após processar, tenta o próximo
+        setTimeout(() => {
+            if (items.some(i => i.status === 'inbox')) {
+                startProcessing();
+            } else {
+                document.getElementById('processing-zone').style.display = 'none';
+                showToast("Entrada zerada!");
+            }
+        }, 500); // Pequeno delay para salvar
     }
 
     // --- AUTO-MOVE FUNCTION ---
@@ -560,6 +622,64 @@
         } catch(e) { alert("Erro IA: " + e); }
         document.getElementById('loadingOverlay').style.display = 'none';
     }
+
+    // --- AUTO IA PROCESSOR (MAGIC) ---
+    window.magicProcess = async function() {
+        if(!config.geminiKey) return alert("Configure a API Key do Gemini.");
+        
+        const inboxItems = items.filter(i => i.status === 'inbox');
+        if(inboxItems.length === 0) return alert("Caixa de entrada vazia.");
+
+        document.getElementById('loadingText').innerText = "IA Processando Caixa de Entrada...";
+        document.getElementById('loadingOverlay').style.display = 'flex';
+
+        // Constroi prompt
+        const tasksTxt = inboxItems.map(i => `- ID:${i.id} | TEXTO: ${i.text}`).join('\n');
+        const now = new Date().toISOString();
+        
+        const prompt = `
+            Hoje é ${now}. Analise estas tarefas GTD e classifique-as.
+            ${tasksTxt}
+            
+            Regras de Saída (JSON Array):
+            [{"id": "...", "status": "...", "date": "YYYY-MM-DDTHH:MM", "note": "..."}]
+            
+            Regras de Status:
+            1. Se tiver data/hora específica no texto -> 'calendar'. Extraia data ISO.
+            2. Se citar outra pessoa (ex: cobrar Fulano) -> 'waiting'. Note: "Delegado: Fulano".
+            3. Se for ação rápida (<2min) -> 'do-now'.
+            4. Se for vago/sonho -> 'someday'.
+            5. Se for referência/leitura -> 'reference'.
+            6. Se for complexo -> 'project'.
+            7. Padrão -> 'next'.
+        `;
+
+        try {
+            const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${config.geminiKey}`, {
+                method: 'POST', headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+            });
+            const data = await res.json();
+            const txt = data.candidates[0].content.parts[0].text;
+            const decisions = JSON.parse(txt.replace(/```json|```/g, '').trim());
+
+            for (const d of decisions) {
+                const item = items.find(i => i.id == d.id); // Loose equality for string/number id mismatch
+                if(item) {
+                    await changeItemStatus(item, d.status, d.date, d.note);
+                }
+            }
+            
+            window.sync();
+            showToast("Processamento IA Concluído!");
+
+        } catch(e) {
+            console.error(e);
+            alert("Erro IA: " + e.message);
+        } finally {
+            document.getElementById('loadingOverlay').style.display = 'none';
+        }
+    }
 </script>
 
 <script src="https://apis.google.com/js/api.js"></script>
@@ -635,17 +755,12 @@
         for (const item of syncedItems) {
             try {
                 const res = await gapi.client.calendar.events.get({ calendarId: 'primary', eventId: item.googleEventId });
-                if (res.result.status === 'cancelled') { deleteLocalTask(item.id); changed = true; }
+                if (res.result.status === 'cancelled') { items.splice(items.indexOf(item), 1); changed = true; }
             } catch (err) {
-                if (err.status === 404 || err.status === 410) { deleteLocalTask(item.id); changed = true; }
+                if (err.status === 404 || err.status === 410) { items.splice(items.indexOf(item), 1); changed = true; }
             }
         }
         if (changed) window.sync();
-    }
-
-    function deleteLocalTask(id) {
-        const idx = items.findIndex(i => i.id === id);
-        if(idx > -1) items.splice(idx, 1);
     }
 </script>
 </body>
