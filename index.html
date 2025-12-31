@@ -133,9 +133,7 @@
     </div>
 
     <!-- LISTAS -->
-    <div class="lists-grid">
-        <!-- Renderização dinâmica via JS -->
-    </div>
+    <div class="lists-grid"></div>
 </div>
 
 <!-- MODAL MOVER -->
@@ -189,26 +187,19 @@
 <script src="https://apis.google.com/js/api.js"></script>
 <script src="https://accounts.google.com/gsi/client"></script>
 <script>
-    // --- DADOS & CONFIG ---
     let items = JSON.parse(localStorage.getItem('gtd_data')) || [];
     let config = JSON.parse(localStorage.getItem('gtd_config')) || { googleClientId: '', geminiKey: '' };
     
     const listNames = {
-        'inbox': '📥 Entrada',
-        'do-now': '⚡ Fazer Agora',
-        'next': '🔥 Próximas Ações',
-        'project': '📂 Projetos',
-        'calendar': '📅 Calendário',
-        'waiting': '⏳ Delegar',
-        'someday': '💡 Talvez',
-        'reference': '📚 Referência',
-        'completed': '✅ Concluídas'
+        'inbox': '📥 Entrada', 'do-now': '⚡ Fazer Agora', 'next': '🔥 Próximas Ações',
+        'project': '📂 Projetos', 'calendar': '📅 Calendário', 'waiting': '⏳ Delegar',
+        'someday': '💡 Talvez', 'reference': '📚 Referência', 'completed': '✅ Concluídas'
     };
 
     let activeItemIdx = null; 
     let autoSyncInterval;
     
-    // --- GOOGLE API SETUP ---
+    // Google API
     let tokenClient;
     let driveFileId = localStorage.getItem('gtd_drive_file_id');
     const SCOPES = 'https://www.googleapis.com/auth/calendar.events https://www.googleapis.com/auth/drive.appdata';
@@ -253,7 +244,7 @@
         document.getElementById('driveStatus').innerText = online ? 'Online' : 'Off';
     }
 
-    // --- DRIVE SYNC & AUTO SYNC ---
+    // --- DRIVE & SYNC ---
     async function initDrive() {
         if(!gapi.client.getToken()) return;
         try {
@@ -273,24 +264,22 @@
         } catch(e) { console.error(e); }
     }
 
-    // Sync Central
     async function driveSync(download = false) {
         if(!driveFileId || !gapi.client.getToken()) return;
         document.getElementById('driveDot').className = 'dot syncing';
         try {
             if(download) {
-                // DOWNLOAD (Nuvem -> Local)
                 const res = await gapi.client.drive.files.get({ fileId: driveFileId, alt: 'media' });
                 const remote = res.result || res.body;
                 if(Array.isArray(remote)) { 
                     items = remote; 
                     localStorage.setItem('gtd_data', JSON.stringify(items)); 
                     render(); 
-                    // Checagem automática do GCal após baixar dados novos
-                    checkRemoteCalendarDeletions();
+                    // Checagem robusta de agenda
+                    showToast("Verificando integridade da agenda...");
+                    await checkRemoteCalendarDeletions();
                 }
             } else {
-                // UPLOAD (Local -> Nuvem)
                 const body = JSON.stringify(items);
                 await fetch(`https://www.googleapis.com/upload/drive/v3/files/${driveFileId}?uploadType=media`, {
                     method: 'PATCH',
@@ -305,42 +294,78 @@
     function sync() {
         localStorage.setItem('gtd_data', JSON.stringify(items));
         render();
-        // Upload rápido
         if(window.syncTimer) clearTimeout(window.syncTimer);
         window.syncTimer = setTimeout(() => driveSync(false), 3000);
     }
     
-    function manualSync() {
-        driveSync(true);
-    }
+    function manualSync() { driveSync(true); }
     
-    // Auto Sync Loop (30s)
     function startAutoSync() {
         if(autoSyncInterval) clearInterval(autoSyncInterval);
         autoSyncInterval = setInterval(() => {
-            if(gapi.client.getToken()) {
-                console.log("Auto-Sync: Verificando...");
-                // Baixa dados do Drive E verifica exclusões no GCal
-                driveSync(true); 
-            }
+            if(gapi.client.getToken()) driveSync(true); 
         }, 30000);
     }
 
-    // --- CALENDAR LOGIC (BIDIRECIONAL AUTO) ---
+    // --- CALENDAR: AUTO-DELETE LOGIC ---
     
-    // 1. App -> Agenda: Cria/Atualiza eventos (NUNCA deleta do GCal se remover do App, apenas desvincula)
-    async function handleCalendarEvents(item, oldStatus, newStatus) {
+    async function checkRemoteCalendarDeletions() {
         if(!config.googleClientId || !gapi.client.getToken()) return;
+        
+        let changed = false;
+        // Pega IDs que tem evento vinculado
+        const syncedItems = items.filter(i => (i.status === 'calendar' || i.status === 'waiting') && i.googleEventId);
 
-        // Se sair da caixa de agendamento: Desvincula (remove ID), não apaga do GCal
-        if ((oldStatus === 'calendar' || oldStatus === 'waiting') && 
-            (newStatus !== 'calendar' && newStatus !== 'waiting')) {
-            if (item.googleEventId) {
-                delete item.googleEventId; // Perde o link, evento vira histórico
+        // Verifica cada um
+        for (const item of syncedItems) {
+            // Verifica se o item ainda existe na lista principal (segurança)
+            if(!items.includes(item)) continue;
+
+            try {
+                const res = await gapi.client.calendar.events.get({
+                    calendarId: 'primary',
+                    eventId: item.googleEventId
+                });
+                
+                // Se retornou, mas status é cancelled (na lixeira)
+                if (res.result.status === 'cancelled') {
+                    console.log("Evento cancelado encontrado: " + item.text);
+                    deleteLocalTask(item);
+                    changed = true;
+                }
+            } catch (err) {
+                // Se der erro 404 (Not Found) ou 410 (Gone) - Excluído permanentemente
+                const code = err.status || (err.result && err.result.error && err.result.error.code);
+                if (code == 404 || code == 410) {
+                    console.log("Evento não encontrado (404/410): " + item.text);
+                    deleteLocalTask(item);
+                    changed = true;
+                }
             }
         }
 
-        // Se entrar (ou permanecer editado) em caixa de agendamento: Cria/Atualiza
+        if (changed) {
+            sync(); // Salva e sobe
+            showToast("Tarefas removidas (apagadas no Agenda).");
+        }
+    }
+
+    function deleteLocalTask(item) {
+        const idx = items.indexOf(item);
+        if(idx > -1) items.splice(idx, 1);
+    }
+
+    // --- CALENDAR: CREATE/UPDATE (App -> Google) ---
+    async function handleCalendarEvents(item, oldStatus, newStatus) {
+        if(!config.googleClientId || !gapi.client.getToken()) return;
+
+        // Se sair da caixa de agendamento: Desvincula apenas (Não apaga do Google)
+        if ((oldStatus === 'calendar' || oldStatus === 'waiting') && 
+            (newStatus !== 'calendar' && newStatus !== 'waiting')) {
+            if (item.googleEventId) delete item.googleEventId;
+        }
+
+        // Se entrar/manter em caixa de agendamento: Cria/Atualiza
         if ((newStatus === 'calendar' || newStatus === 'waiting') && item.date) {
             try {
                 const start = new Date(item.date);
@@ -356,7 +381,6 @@
                     try {
                         await gapi.client.calendar.events.update({ calendarId: 'primary', eventId: item.googleEventId, resource: event });
                     } catch {
-                         // Se falhar update (ex: deletado no GCal), cria novo
                          const res = await gapi.client.calendar.events.insert({ calendarId: 'primary', resource: event });
                          item.googleEventId = res.result.id;
                     }
@@ -368,49 +392,9 @@
         }
     }
 
-    // 2. Agenda -> App: Se deletar no Google, deleta a tarefa no App automaticamente
-    async function checkRemoteCalendarDeletions() {
-        if(!config.googleClientId || !gapi.client.getToken()) return;
-        
-        let changed = false;
-        const syncedItems = items.filter(i => (i.status === 'calendar' || i.status === 'waiting') && i.googleEventId);
-
-        for (const item of syncedItems) {
-            try {
-                const res = await gapi.client.calendar.events.get({
-                    calendarId: 'primary',
-                    eventId: item.googleEventId
-                });
-                if (res.result.status === 'cancelled') {
-                    // Deletado no GCal -> Deleta Tarefa
-                    const idx = items.indexOf(item);
-                    if(idx > -1) {
-                        items.splice(idx, 1);
-                        changed = true;
-                    }
-                }
-            } catch (err) {
-                // 404/410 -> Deleta Tarefa
-                if (err.status === 404 || err.status === 410) {
-                    const idx = items.indexOf(item);
-                    if(idx > -1) {
-                        items.splice(idx, 1);
-                        changed = true;
-                    }
-                }
-            }
-        }
-
-        if (changed) {
-            sync(); // Salva local e sobe atualização pro Drive
-            showToast("Sync: Tarefas removidas (apagadas no Agenda).");
-        }
-    }
-
     // --- INTERAÇÕES ---
     let longPressTimer;
     
-    // Mover: Long press no background
     function startMovePress(idx) {
         longPressTimer = setTimeout(() => {
             activeItemIdx = idx;
@@ -419,17 +403,14 @@
         }, 500);
     }
 
-    // ADICIONAR NA LISTA: Long press no cabeçalho
     function startListTitlePress(listKey) {
         longPressTimer = setTimeout(async () => {
             if(navigator.vibrate) navigator.vibrate(50);
-            
             const listName = listNames[listKey];
             const text = prompt(`Adicionar nova tarefa em "${listName}":`);
             
             if(text) {
                 const newItem = { id: Date.now(), text: text, status: listKey };
-                
                 if (listKey === 'calendar' || listKey === 'waiting') {
                     const dateStr = await askDate();
                     if(dateStr) {
@@ -440,26 +421,21 @@
                         }
                         items.push(newItem);
                         await handleCalendarEvents(newItem, null, listKey);
-                    } else {
-                        return; // Cancelou data
-                    }
+                    } else { return; }
                 } else {
                     items.push(newItem);
                 }
-                
                 sync();
             }
         }, 600);
     }
 
-    // Editar Título (Atualiza GCal também)
     async function triggerEdit(idx) {
         activeItemIdx = idx;
         const item = items[idx];
         const newTxt = prompt("Editar Título da Tarefa:", item.text);
         if(newTxt && newTxt !== item.text) { 
             item.text = newTxt; 
-            // Se tiver evento, atualiza o título lá também
             if(item.status === 'calendar' || item.status === 'waiting') {
                 await handleCalendarEvents(item, item.status, item.status);
             }
@@ -474,7 +450,6 @@
     
     function cancelPress() { clearTimeout(longPressTimer); }
 
-    // Desmembrar IA
     async function breakdownItem(e, idx) {
         e.stopPropagation();
         if(!config.geminiKey) return alert("Configure a API Key do Gemini.");
@@ -497,11 +472,11 @@
         document.getElementById('loadingOverlay').style.display = 'none';
     }
 
-    // Deletar
     function deleteItem(e, idx) {
         e.stopPropagation();
         if(confirm("Excluir tarefa?")) {
             const item = items[idx];
+            // NÃO deleta do agenda, apenas remove do app
             handleCalendarEvents(item, item.status, 'trash'); 
             items.splice(idx, 1);
             sync();
@@ -514,7 +489,6 @@
         await changeItemStatus(item, newStatus);
     }
 
-    // Drag & Drop
     async function drop(ev, newStatus) {
         ev.preventDefault();
         ev.currentTarget.classList.remove('drag-over');
@@ -523,7 +497,6 @@
     }
     function allowDrop(ev) { ev.preventDefault(); ev.currentTarget.classList.add('drag-over'); }
 
-    // Status Change
     async function changeItemStatus(item, newStatus) {
         const oldStatus = item.status;
         if(newStatus === 'completed') item.completedAt = new Date().toISOString();
