@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>GTD Fukuoka (v7.3 - Drive Sync)</title>
+    <!-- Script para Drag and Drop funcionar no Mobile -->
     <script src="https://bernardo-castilho.github.io/DragDropTouch/DragDropTouch.js"></script>
     <style>
         :root { --primary: #2c3e50; --accent: #3498db; --success: #27ae60; --warning: #f39c12; --danger: #e74c3c; --google: #4285f4; --gray: #95a5a6; }
@@ -13,20 +14,27 @@
         
         header { text-align: center; margin-bottom: 20px; }
         h1 { margin: 0; color: var(--primary); font-size: 1.5rem; }
+        
+        /* Barra de Status */
         .status-bar { background: #f8f9fa; border: 1px solid #e9ecef; padding: 10px; border-radius: 8px; margin-top: 15px; font-size: 0.85rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
+        .status-left { display: flex; align-items: center; gap: 10px; }
         .dot { width: 10px; height: 10px; border-radius: 50%; background: #ccc; transition: 0.3s; display:inline-block; margin-right:5px; }
         .dot.online { background: var(--success); box-shadow: 0 0 5px var(--success); }
         .dot.syncing { background: var(--warning); animation: pulse 1s infinite; }
         .dot.error { background: var(--danger); }
         
-        .btn-config { background: none; border: 1px solid #ccc; border-radius: 4px; padding: 5px 10px; cursor: pointer; font-size: 0.8rem; }
-        .input-group { display: flex; gap: 8px; margin-bottom: 20px; width: 100%; }
-        input[type="text"], input[type="datetime-local"] { flex: 1; min-width: 0; padding: 12px; border: 2px solid #ddd; border-radius: 8px; font-size: 16px; }
-        button { padding: 0 20px; height: 46px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; transition: 0.2s; flex-shrink: 0; }
+        /* Botões */
+        button { padding: 0 15px; height: 40px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; transition: 0.2s; flex-shrink: 0; }
         button:active { transform: scale(0.96); }
-        .btn-add { background: var(--accent); color: white; min-width: 50px; font-size: 1.2rem; }
-        .btn-mic { background: #607d8b; color: white; min-width: 46px; font-size: 1.2rem; }
+        .btn-config { background: white; border: 1px solid #ccc; color: #333; font-size: 0.85rem; }
+        .btn-sync { background: white; border: 1px solid var(--accent); color: var(--accent); font-size: 0.85rem; margin-right: 5px; }
+        .btn-add { background: var(--accent); color: white; min-width: 50px; font-size: 1.2rem; height: 46px; }
+        .btn-mic { background: #607d8b; color: white; min-width: 46px; font-size: 1.2rem; height: 46px; }
         .btn-mic.listening { background: #e74c3c; animation: pulse-red 1.5s infinite; }
+        
+        /* Inputs */
+        .input-group { display: flex; gap: 8px; margin-bottom: 20px; width: 100%; }
+        input[type="text"], input[type="datetime-local"], input[type="password"] { flex: 1; min-width: 0; padding: 12px; border: 2px solid #ddd; border-radius: 8px; font-size: 16px; }
         
         /* Wizard & Lists */
         #processing-zone { background: #fff; border: 2px solid var(--accent); padding: 20px; border-radius: 12px; margin-bottom: 25px; display: none; }
@@ -34,12 +42,16 @@
         .step { animation: fadeIn 0.3s; }
         .decision-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
         .full-width { grid-column: span 2; }
+        
+        /* Botões do Wizard */
         .btn-yes { background: var(--success); color: white; }
         .btn-no { background: var(--danger); color: white; }
         .btn-opt { background: var(--primary); color: white; }
         .btn-back { background: transparent; color: #777; text-decoration: underline; margin-top: 15px; width: 100%; }
-        .btn-ai-magic { background: linear-gradient(135deg, #8e44ad, #3498db); color: white; border: none; font-weight: bold; }
-        
+        .btn-ai-magic { background: linear-gradient(135deg, #8e44ad, #3498db); color: white; border: none; font-weight: bold; flex: 1; height: 46px; }
+        .btn-opt-main { background: var(--primary); color: white; flex: 1; height: 46px; }
+
+        /* Grid de Listas */
         .lists-grid { display: grid; grid-template-columns: 1fr; gap: 20px; }
         @media(min-width: 700px) { .lists-grid { grid-template-columns: 1fr 1fr; } }
         .list-card { background-color: #f1f3f5; border: 1px solid #ced4da; border-radius: 8px; padding: 15px; min-height: 100px; display: flex; flex-direction: column; }
@@ -47,6 +59,7 @@
         .list-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #dee2e6; padding-bottom: 8px; margin-bottom: 10px; cursor: pointer; }
         .badge { background: #fff; padding: 2px 8px; border-radius: 10px; font-size: 0.75rem; font-weight: bold; border: 1px solid #ccc; }
         
+        /* Cores das Listas */
         .card-inbox { border-top: 4px solid var(--danger); }
         .card-next { border-top: 4px solid var(--success); }
         .card-waiting { border-top: 4px solid var(--warning); }
@@ -54,7 +67,9 @@
         .card-calendar { border-top: 4px solid var(--google); }
         .card-completed { border-top: 4px solid var(--gray); opacity: 0.8; }
         .card-do-now { background-color: #fff3cd !important; border: 1px solid #ffeeba !important; }
+        .card-do-now h3 { color: #856404; }
 
+        /* Itens da Lista */
         ul { list-style: none; padding: 0; margin: 0; min-height: 50px; flex-grow: 1; }
         li { padding: 12px 10px; border: 1px solid #e9ecef; display: flex; justify-content: space-between; align-items: center; background: #ffffff; border-radius: 6px; margin-bottom: 6px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); touch-action: pan-y; }
         li.ready-to-drag { background-color: #e3f2fd; border: 2px solid #3498db; transform: scale(1.02); }
@@ -65,19 +80,20 @@
         .actions-group { display: flex; gap: 5px; }
         .icon-btn { color: #bdc3c7; font-size: 1.1rem; padding: 5px; cursor: pointer; }
         .icon-btn:hover { color: var(--accent); }
-        
-        .btn-refresh { background: #fff; border: 1px solid #dadce0; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 0.75rem; color: var(--google); margin-left: 5px; }
+        .btn-refresh-small { background: #fff; border: 1px solid #dadce0; padding: 2px 6px; border-radius: 4px; cursor: pointer; font-size: 0.7rem; color: var(--google); margin-left: 5px; }
 
-        /* Modal/Toast */
+        /* Modals e Overlays */
         #toast { visibility: hidden; min-width: 250px; background-color: #333; color: #fff; text-align: center; border-radius: 4px; padding: 16px; position: fixed; z-index: 9999; left: 50%; bottom: 30px; transform: translateX(-50%); }
         #toast.show { visibility: visible; animation: fadein 0.5s, fadeout 0.5s 2.5s; }
-        #configModal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; overflow-y: auto; }
-        .modal-content { background: white; width: 90%; max-width: 500px; margin: 5% auto; padding: 20px; border-radius: 10px; }
-        .modal-content input { width: 100%; padding: 10px; margin: 5px 0 15px; border: 1px solid #ddd; }
-        .modal-footer { text-align: right; margin-top: 20px; display: flex; justify-content: flex-end; gap: 10px; }
-        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; }
+        
+        #configModal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 2000; overflow-y: auto; }
+        .modal-content { background: white; width: 90%; max-width: 500px; margin: 5% auto; padding: 20px; border-radius: 10px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
+        .modal-content h3 { margin-top: 0; color: var(--primary); }
+        .modal-content label { display: block; margin-top: 15px; font-weight: 600; font-size: 0.9rem; }
+        
         #loadingOverlay { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.8); z-index: 9999; align-items: center; justify-content: center; flex-direction: column; }
         .spinner { border: 4px solid #f3f3f3; border-top: 4px solid var(--accent); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; }
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 3000; align-items: center; justify-content: center; }
 
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         @keyframes fadein { from {bottom: 0; opacity: 0;} to {bottom: 30px; opacity: 1;} }
@@ -95,12 +111,12 @@
     <header>
         <h1>GTD Fukuoka</h1>
         <div class="status-bar">
-            <div class="status-indicator">
+            <div class="status-left">
                 <div id="driveDot" class="dot"></div>
                 <span id="driveStatus">Drive: Off</span>
             </div>
             <div>
-                <button class="btn-refresh" onclick="driveSync(true)">☁️ Forçar Sync</button>
+                <button class="btn-sync" onclick="driveSync(true)">☁️ Forçar Sync</button>
                 <button class="btn-config" onclick="openConfig()">⚙️ Config</button>
             </div>
         </div>
@@ -114,11 +130,11 @@
     </div>
 
     <div style="display: flex; gap: 10px; margin-bottom: 20px;">
-        <button onclick="startProcessing()" id="btnProcess" class="btn-opt hidden" style="flex: 1;">⚡ Processar (<span id="inboxCount">0</span>)</button>
-        <button onclick="magicProcess()" id="btnMagic" class="btn-ai-magic hidden" style="flex: 1;">✨ Auto-IA</button>
+        <button onclick="startProcessing()" id="btnProcess" class="btn-opt-main hidden">⚡ Processar (<span id="inboxCount">0</span>)</button>
+        <button onclick="magicProcess()" id="btnMagic" class="btn-ai-magic hidden">✨ Auto-IA</button>
     </div>
 
-    <!-- WIZARD DE PROCESSAMENTO -->
+    <!-- WIZARD -->
     <div id="processing-zone">
         <div class="processing-header"><div style="text-align:center; color:#888; font-size:0.8rem;">PROCESSANDO:</div><div id="currentItem" class="current-item"></div></div>
         <div id="step-1" class="step"><h3 style="text-align:center">É passível de ação?</h3><div class="decision-grid"><button class="btn-no" onclick="handleActionable(false)">NÃO</button><button class="btn-yes" onclick="handleActionable(true)">SIM</button></div></div>
@@ -161,20 +177,20 @@
         <div class="list-card card-calendar" ondrop="dropContainer(event, 'calendar')" ondragover="allowDropContainer(event)" ondragleave="leaveDropContainer(event)">
             <div class="list-header" onmousedown="handleHeaderPress('calendar')" ontouchstart="handleHeaderPress('calendar')" onmouseup="clearHeaderPress()" ontouchend="clearHeaderPress()">
                 <h3>📅 Calendário</h3>
-                <div><button class="btn-refresh" onclick="checkDeletedEvents(true)">🔄</button><span class="badge" id="c-calendar">0</span></div>
+                <div><button class="btn-refresh-small" onclick="checkDeletedEvents(true)">🔄 Sync</button><span class="badge" id="c-calendar">0</span></div>
             </div>
             <ul id="l-calendar"></ul>
         </div>
         <div class="list-card card-waiting" ondrop="dropContainer(event, 'waiting')" ondragover="allowDropContainer(event)" ondragleave="leaveDropContainer(event)">
             <div class="list-header" onmousedown="handleHeaderPress('waiting')" ontouchstart="handleHeaderPress('waiting')" onmouseup="clearHeaderPress()" ontouchend="clearHeaderPress()">
                 <h3>⏳ Delegar</h3>
-                <div><button class="btn-refresh" onclick="checkDeletedEvents(true)">🔄</button><span class="badge" id="c-waiting">0</span></div>
+                <div><button class="btn-refresh-small" onclick="checkDeletedEvents(true)">🔄 Sync</button><span class="badge" id="c-waiting">0</span></div>
             </div>
             <ul id="l-waiting"></ul>
         </div>
         <div class="list-card card-someday" ondrop="dropContainer(event, 'someday')" ondragover="allowDropContainer(event)" ondragleave="leaveDropContainer(event)">
             <div class="list-header" onmousedown="handleHeaderPress('someday')" ontouchstart="handleHeaderPress('someday')" onmouseup="clearHeaderPress()" ontouchend="clearHeaderPress()">
-                <h3>💡 Um Dia/Talvez</h3><span class="badge" id="c-someday">0</span>
+                <h3>💡 Talvez</h3><span class="badge" id="c-someday">0</span>
             </div>
             <ul id="l-someday"></ul>
         </div>
@@ -188,8 +204,8 @@
             <div class="list-header">
                 <h3>✅ Concluídas</h3>
                 <div>
-                    <button class="btn-refresh" style="color:var(--ai);" onclick="aiReview()">🤖 IA</button>
-                    <button class="btn-refresh" onclick="clearCompletedHistory()" style="color:var(--danger)">🗑️</button>
+                    <button class="btn-refresh-small" style="color:var(--ai);" onclick="aiReview()">🤖 IA</button>
+                    <button class="btn-refresh-small" onclick="clearCompletedHistory()" style="color:var(--danger)">🗑️ Limpar</button>
                     <span class="badge" id="c-completed">0</span>
                 </div>
             </div>
@@ -198,24 +214,31 @@
     </div>
 </div>
 
-<div id="loadingOverlay"><div class="spinner"></div><p style="margin-top:15px;">Carregando...</p></div>
+<!-- Loading -->
+<div id="loadingOverlay"><div class="spinner"></div><p style="margin-top:15px; font-weight:bold;">Carregando...</p></div>
 <div id="toast">Notificação</div>
 
 <!-- Config Modal -->
 <div id="configModal">
     <div class="modal-content">
         <h3>☁️ Configurações</h3>
-        <p style="font-size:0.8rem; color:#666;">Para sincronizar entre Computador, Celular e Tablet, faça login no Google. Os dados serão salvos no seu <b>Google Drive</b> (arquivo oculto).</p>
+        <p style="font-size:0.85rem; color:#666; line-height:1.4;">
+            Para sincronizar entre seus dispositivos (PC, Celular, Tablet), preencha o Client ID e conecte-se ao Google Drive.
+        </p>
         
         <label>Google Client ID:</label>
         <input type="text" id="cfgGoogleClientId" placeholder="Cole seu Client ID aqui">
         
-        <div id="loginSection" style="margin-bottom:20px; text-align:center;">
-             <button id="authBtn" onclick="handleAuthClick()" style="background:var(--google); color:white; width:100%;">Conectar Google Drive</button>
+        <div id="loginSection" style="margin-bottom:20px; margin-top:10px;">
+             <button id="authBtn" onclick="handleAuthClick()" style="background:var(--google); color:white; width:100%; border-radius:6px; padding:12px;">
+                Conectar com Google Drive
+             </button>
         </div>
 
-        <hr style="margin:15px 0; border:0; border-top:1px dashed #ccc;">
-        <label>Gemini API Key (IA):</label><input type="password" id="cfgGeminiKey">
+        <hr style="margin:20px 0; border:0; border-top:1px solid #eee;">
+        
+        <label>Gemini API Key (IA):</label>
+        <input type="password" id="cfgGeminiKey" placeholder="Opcional">
         
         <div class="modal-footer">
             <button class="btn-no" onclick="closeConfig()">Fechar</button>
@@ -224,6 +247,7 @@
     </div>
 </div>
 
+<!-- Date Picker Modal -->
 <div id="dateModal" class="modal-overlay">
     <div class="modal-content">
         <h3>📅 Agendar</h3>
@@ -235,7 +259,7 @@
     </div>
 </div>
 
-<!-- SCRIPTS -->
+<!-- SCRIPTS GOOGLE -->
 <script async defer src="https://apis.google.com/js/api.js" onload="gapiLoaded()"></script>
 <script async defer src="https://accounts.google.com/gsi/client" onload="gisLoaded()"></script>
 
@@ -269,6 +293,7 @@
     }
     
     function enableGoogleAuth() {
+        if(!config.googleClientId) return;
         tokenClient = google.accounts.oauth2.initTokenClient({
             client_id: config.googleClientId,
             scope: SCOPES,
@@ -293,7 +318,6 @@
                 gapi.client.setToken({ access_token: tokenData.access_token });
                 updateDriveStatus(true);
                 if(config.googleClientId) {
-                    // Sync silencioso no inicio
                     setTimeout(() => driveSync(false), 1000); 
                 }
             } else {
@@ -304,7 +328,7 @@
     }
 
     function handleAuthClick() {
-        if (!config.googleClientId) return alert("Configure o Client ID primeiro.");
+        if (!config.googleClientId) return alert("Por favor, cole o Client ID primeiro e clique em Salvar.");
         if (!tokenClient) enableGoogleAuth();
         tokenClient.requestAccessToken({prompt: ''});
     }
@@ -316,12 +340,12 @@
         if(online) {
             el.innerText = 'Drive: Conectado';
             dot.className = 'dot online';
-            btn.innerText = 'Conectado (Clique para Renovar)';
+            btn.innerText = '✅ Conectado ao Google Drive';
             btn.style.background = 'var(--success)';
         } else {
             el.innerText = 'Drive: Off';
             dot.className = 'dot';
-            btn.innerText = 'Conectar Google Drive';
+            btn.innerText = 'Conectar com Google Drive';
             btn.style.background = 'var(--google)';
         }
     }
@@ -332,7 +356,6 @@
     async function findOrCreateDriveFile() {
         if(!gapi.client.getToken()) return;
         try {
-            // Procura arquivo na pasta oculta appDataFolder
             const res = await gapi.client.drive.files.list({
                 spaces: 'appDataFolder',
                 q: `name = '${DB_FILENAME}' and trashed = false`,
@@ -342,18 +365,10 @@
             if (res.result.files && res.result.files.length > 0) {
                 driveFileId = res.result.files[0].id;
                 localStorage.setItem('gtd_drive_file_id', driveFileId);
-                console.log("Arquivo Drive Encontrado:", driveFileId);
             } else {
-                console.log("Criando novo arquivo no Drive...");
                 const createRes = await gapi.client.drive.files.create({
-                    resource: {
-                        name: DB_FILENAME,
-                        parents: ['appDataFolder']
-                    },
-                    media: {
-                        mimeType: 'application/json',
-                        body: JSON.stringify({ gtd_tasks: items })
-                    },
+                    resource: { name: DB_FILENAME, parents: ['appDataFolder'] },
+                    media: { mimeType: 'application/json', body: JSON.stringify({ gtd_tasks: items }) },
                     fields: 'id'
                 });
                 driveFileId = createRes.result.id;
@@ -361,7 +376,6 @@
             }
         } catch (e) {
             console.error("Erro Drive Init:", e);
-            showToast("Erro ao iniciar Drive.");
         }
     }
 
@@ -369,34 +383,25 @@
         if (!gapi.client.getToken() || !driveFileId) return;
         
         document.getElementById('driveDot').className = 'dot syncing';
-        document.getElementById('driveStatus').innerText = 'Sync...';
+        if(forceDownload) showToast("Sincronizando...");
 
         try {
             if (forceDownload) {
                 // DOWNLOAD
-                const res = await gapi.client.drive.files.get({
-                    fileId: driveFileId,
-                    alt: 'media'
-                });
-                // Verifica se o resultado é válido
+                const res = await gapi.client.drive.files.get({ fileId: driveFileId, alt: 'media' });
                 const data = res.result || res.body; 
                 let remoteItems = typeof data === 'string' ? JSON.parse(data) : data;
-                
                 if (remoteItems.gtd_tasks) remoteItems = remoteItems.gtd_tasks;
                 
                 if (Array.isArray(remoteItems)) {
-                    // Estrategia simples: Última versão vence (para simplicidade)
-                    // Num uso real, faríamos merge. Aqui, assumimos que se baixou, é o mais novo.
                     items = remoteItems;
                     localStorage.setItem('gtd_data', JSON.stringify(items));
                     render();
-                    checkDeletedEvents(); // Check calendar sync
-                    showToast("Dados baixados do Drive!");
+                    checkDeletedEvents();
+                    showToast("Dados atualizados!");
                 }
             } else {
-                // UPLOAD (SAVE)
-                // Para update via GAPI JS Client simples, o endpoint 'upload' é chato.
-                // Usamos fetch direto com o token para facilitar o PATCH
+                // UPLOAD
                 const token = gapi.client.getToken().access_token;
                 const metadata = { name: DB_FILENAME, mimeType: 'application/json' };
                 const fileContent = JSON.stringify({ gtd_tasks: items });
@@ -405,36 +410,44 @@
                 form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
                 form.append('file', new Blob([fileContent], { type: 'application/json' }));
 
-                const updateUrl = `https://www.googleapis.com/upload/drive/v3/files/${driveFileId}?uploadType=multipart`;
-                
-                await fetch(updateUrl, {
+                await fetch(`https://www.googleapis.com/upload/drive/v3/files/${driveFileId}?uploadType=multipart`, {
                     method: 'PATCH',
                     headers: new Headers({ 'Authorization': 'Bearer ' + token }),
                     body: form
                 });
                 console.log("Salvo no Drive.");
             }
-            updateDriveStatus(true);
+            document.getElementById('driveDot').className = 'dot online';
         } catch (e) {
             console.error("Erro Sync:", e);
             document.getElementById('driveDot').className = 'dot error';
-            document.getElementById('driveStatus').innerText = 'Erro Sync';
+            if(forceDownload) showToast("Erro na sincronia.");
         }
     }
 
-    // Salva Local e Tenta Sync na Nuvem
+    // --- FUNÇÕES PRINCIPAIS ---
     function syncSave() {
         localStorage.setItem('gtd_data', JSON.stringify(items));
         render();
-        // Debounce simples para não flodar a API
+        // Debounce para não sobrecarregar API
         if(window.saveTimer) clearTimeout(window.saveTimer);
-        window.saveTimer = setTimeout(() => {
-            driveSync(false); // Upload
-        }, 2000);
+        window.saveTimer = setTimeout(() => { driveSync(false); }, 2000);
     }
 
-    // --- FUNÇÕES GTD (Mantidas e Otimizadas) ---
-    // (Mesma lógica de antes, apenas chamando syncSave())
+    function openConfig() { 
+        document.getElementById('cfgGoogleClientId').value = config.googleClientId || ''; 
+        document.getElementById('cfgGeminiKey').value = config.geminiKey || ''; 
+        document.getElementById('configModal').style.display='block'; 
+    }
+    function closeConfig() { document.getElementById('configModal').style.display='none'; }
+    function saveConfig() { 
+        config.googleClientId = document.getElementById('cfgGoogleClientId').value.trim(); 
+        config.geminiKey = document.getElementById('cfgGeminiKey').value.trim(); 
+        localStorage.setItem('gtd_config', JSON.stringify(config)); 
+        closeConfig(); 
+        location.reload(); 
+    }
+
     function addToInbox() { const val = document.getElementById('inboxInput').value.trim(); if(val) { items.push({ id: Date.now(), text: val, status: 'inbox' }); document.getElementById('inboxInput').value = ''; syncSave(); } }
     
     // AI Integration
@@ -454,3 +467,132 @@
         if(!inbox.length) return alert("Nada na entrada.");
         const txt = inbox.map(i => `- ${i.text} (ID: ${i.id})`).join('\n');
         const prompt = `Analise GTD. Hoje: ${new Date().toLocaleString()}. Itens:\n${txt}\nJSON Output: [{"id":"...", "status":"(inbox|next|waiting|calendar|someday|project|trash|reference|do-now)", "note":"", "date":"YYYY-MM-DDTHH:MM"}]. Regras: Nome próprio=waiting; Data específica=calendar; <2min=do-now.`;
+        const res = await callGemini(prompt);
+        if(!res) return;
+        try {
+            const list = JSON.parse(res.replace(/```json|```/g, '').trim());
+            for(const d of list) {
+                const i = items.find(x => x.id == d.id);
+                if(i) {
+                    i.status = d.status; i.note = d.note || ''; i.date = d.date || '';
+                    if((i.status==='calendar'||i.status==='waiting') && i.date && config.googleClientId) {
+                        const eid = await createCalendarEvent(i); if(eid) i.googleEventId = eid;
+                    }
+                    if(d.status === 'trash') items = items.filter(x => x.id != d.id);
+                }
+            }
+            syncSave(); showToast("Auto-processamento concluído!");
+        } catch(e){ alert("Erro ao ler IA."); }
+    }
+
+    // Google Calendar
+    async function createCalendarEvent(item) {
+        if (!gapi.client.getToken()) return null;
+        try {
+            const start = new Date(item.date); const end = new Date(start.getTime() + 30*60000);
+            const res = await gapi.client.calendar.events.insert({ calendarId: 'primary', resource: { summary: "GTD: " + item.text, start: { dateTime: start.toISOString() }, end: { dateTime: end.toISOString() } } });
+            return res.result.id;
+        } catch(e) { console.error(e); return null; }
+    }
+    async function checkDeletedEvents(manual) {
+        if(!gapi.client.getToken()) return;
+        if(manual) showToast("Verificando agenda...");
+        const calItems = items.filter(i => i.googleEventId);
+        let changed = false;
+        for(const item of calItems) {
+            try {
+                const res = await gapi.client.calendar.events.get({ calendarId: 'primary', eventId: item.googleEventId });
+                if(res.result.status === 'cancelled') { items = items.filter(x => x.id !== item.id); changed = true; }
+            } catch(e) { if(e.status===404||e.status===410) { items = items.filter(x => x.id !== item.id); changed = true; } }
+        }
+        if(changed) syncSave();
+        if(manual) showToast("Agenda sincronizada.");
+    }
+
+    // UI Rendering
+    function render() {
+        const ids = ['inbox', 'do-now', 'next', 'project', 'waiting', 'calendar', 'someday', 'reference', 'completed'];
+        const counts = {}; ids.forEach(k => { document.getElementById('l-'+k).innerHTML=''; counts[k]=0; });
+        items.forEach((item, idx) => {
+            const list = item.status;
+            if(document.getElementById('l-'+list)) {
+                counts[list]++;
+                const li = document.createElement('li');
+                li.innerHTML = `<div><span class="task-text">${item.text}</span>${item.note?`<span class="meta">${item.note}</span>`:''}${item.date?`<span class="meta">📅 ${new Date(item.date).toLocaleString()}</span>`:''}</div>`;
+                
+                let btns = `<span class="icon-btn" onclick="deleteItem(${idx})">🗑️</span>`;
+                if(list !== 'inbox' && list !== 'completed') btns = `<span class="icon-btn" onclick="completeItem(${idx})">✔</span>` + btns;
+                
+                // Drag Events
+                li.draggable = true;
+                li.ondragstart = (e) => { e.dataTransfer.setData("text", idx); li.classList.add('dragging'); };
+                li.ondragend = () => li.classList.remove('dragging');
+                li.ondragover = (e) => { e.preventDefault(); };
+                li.ondrop = (e) => { e.preventDefault(); /* Implementar reorder se quiser */ };
+                
+                li.innerHTML += `<div class="actions-group">${btns}</div>`;
+                document.getElementById('l-'+list).appendChild(li);
+            }
+        });
+        ids.forEach(k => document.getElementById('c-'+k).innerText = counts[k]);
+        document.getElementById('inboxCount').innerText = counts['inbox'];
+        if(counts['inbox']>0) { document.getElementById('btnProcess').classList.remove('hidden'); document.getElementById('btnMagic').classList.remove('hidden'); }
+        else { document.getElementById('btnProcess').classList.add('hidden'); document.getElementById('btnMagic').classList.add('hidden'); document.getElementById('processing-zone').style.display='none'; }
+    }
+
+    // Utils
+    function deleteItem(idx) { if(confirm("Apagar?")) { const it = items[idx]; if(it.googleEventId) gapi.client.calendar.events.delete({calendarId:'primary', eventId:it.googleEventId}); items.splice(idx,1); syncSave(); } }
+    function completeItem(idx) { items[idx].status = 'completed'; items[idx].completedAt = new Date().toISOString(); syncSave(); }
+    function clearCompletedHistory() { if(confirm("Limpar histórico?")) { items = items.filter(i=>i.status!=='completed'); syncSave(); } }
+    
+    // Processamento
+    let currentItemIdx = null;
+    function startProcessing() { currentItemIdx = items.findIndex(i=>i.status==='inbox'); if(currentItemIdx<0) return; document.getElementById('processing-zone').style.display='block'; document.getElementById('currentItem').innerText = items[currentItemIdx].text; resetSteps(); document.getElementById('processing-zone').scrollIntoView({behavior:'smooth'}); }
+    function resetSteps() { document.querySelectorAll('.step').forEach(e=>e.classList.add('hidden')); document.getElementById('step-1').classList.remove('hidden'); }
+    function toStep(id) { document.querySelectorAll('.step').forEach(e=>e.classList.add('hidden')); document.getElementById(id).classList.remove('hidden'); }
+    function handleActionable(bool) { toStep(bool ? 'step-yes' : 'step-no'); }
+    async function finalize(status) {
+        if(currentItemIdx==null) return;
+        const item = items[currentItemIdx]; item.status = status;
+        if(status==='waiting') { const w = document.getElementById('delInput').value; item.note = "Delegado: "+w; document.getElementById('delInput').value=''; const d=await openDateModal(); if(d) item.date=d; }
+        if(status==='calendar') { item.date = document.getElementById('calInput').value; }
+        if(item.date && config.googleClientId) { const eid = await createCalendarEvent(item); if(eid) item.googleEventId = eid; }
+        if(status==='done') { item.status='completed'; item.completedAt=new Date().toISOString(); }
+        if(status==='trash') items.splice(currentItemIdx,1);
+        syncSave(); 
+        if(items.some(i=>i.status==='inbox')) startProcessing(); 
+        else { document.getElementById('processing-zone').style.display='none'; showToast("Entrada vazia!"); }
+    }
+
+    // Date Modal
+    let dateResolver;
+    function openDateModal() { return new Promise(r => { document.getElementById('dateModal').style.display='flex'; dateResolver=r; }); }
+    function closeDateModal() { document.getElementById('dateModal').style.display='none'; if(dateResolver) dateResolver(null); }
+    function confirmDate() { const d = document.getElementById('modalDateInput').value; if(dateResolver) dateResolver(d); document.getElementById('dateModal').style.display='none'; }
+    
+    // Drag Drop containers
+    function allowDropContainer(ev) { ev.preventDefault(); ev.currentTarget.classList.add('drag-over-container'); }
+    function leaveDropContainer(ev) { ev.currentTarget.classList.remove('drag-over-container'); }
+    function dropContainer(ev, status) { ev.preventDefault(); ev.currentTarget.classList.remove('drag-over-container'); const idx = ev.dataTransfer.getData("text"); if(idx) { items[idx].status = status; syncSave(); } }
+
+    // Init Header Press (Long press sim)
+    let headerPressTimer;
+    function handleHeaderPress(status) { headerPressTimer = setTimeout(async () => { const text = prompt(`Adicionar em "${status}":`); if (text) { items.push({ id: Date.now(), text: text, status: status }); syncSave(); } }, 500); }
+    function clearHeaderPress() { clearTimeout(headerPressTimer); }
+    
+    // Voice
+    let recognition;
+    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        recognition = new SpeechRecognition(); recognition.lang = 'pt-BR';
+        recognition.onstart = function() { document.getElementById('voiceBtn').classList.add('listening'); };
+        recognition.onend = function() { document.getElementById('voiceBtn').classList.remove('listening'); };
+        recognition.onresult = function(event) { let t = event.results[0][0].transcript; t = t.charAt(0).toUpperCase() + t.slice(1); document.getElementById('inboxInput').value = t; };
+    } else { document.getElementById('voiceBtn').style.display = 'none'; }
+    function toggleVoice() { if (!recognition) return alert("Sem suporte voz."); try { recognition.start(); } catch(e) { recognition.stop(); } }
+
+    window.onload = () => { render(); if(config.googleClientId) updateDriveStatus(false); }
+    function showToast(msg) { const t=document.getElementById("toast"); t.textContent=msg; t.className="show"; setTimeout(()=>t.className="", 3000); }
+</script>
+</body>
+</html>
