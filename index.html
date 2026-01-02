@@ -3,9 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>GTD Glória a Deus!(v8.16)</title>
-    <!-- DragDropTouch não é mais necessário, mas mantido se quiser reativar no futuro -->
-    <script src="https://bernardo-castilho.github.io/DragDropTouch/DragDropTouch.js"></script>
+    <title>GTD Fukuoka (v8.18 - Recovery)</title>
     <style>
         :root { --primary: #2c3e50; --accent: #3498db; --success: #27ae60; --warning: #f39c12; --danger: #e74c3c; --google: #4285f4; --gray: #95a5a6; --ai: #8e44ad; }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -33,7 +31,6 @@
         .lists-grid { display: grid; grid-template-columns: 1fr; gap: 20px; }
         @media(min-width: 700px) { .lists-grid { grid-template-columns: 1fr 1fr; } }
         .list-card { background-color: #f1f3f5; border: 1px solid #ced4da; border-radius: 8px; padding: 15px; min-height: 100px; display: flex; flex-direction: column; }
-        .list-card.drag-over { background-color: #e3f2fd; border: 2px dashed #3498db; }
         .list-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #dee2e6; padding-bottom: 8px; margin-bottom: 10px; cursor: pointer; }
         .list-header h3 { margin: 0; font-size: 1rem; }
         .list-header:active { opacity: 0.6; background-color: #e9ecef; }
@@ -95,13 +92,15 @@
         @keyframes fadeout { from {bottom: 30px; opacity: 1;} to {bottom: 0; opacity: 0;} }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         .hidden { display: none !important; }
+
+        footer { text-align: center; margin-top: 30px; margin-bottom: 20px; font-size: 0.8rem; color: var(--gray); font-weight: 500; }
     </style>
 </head>
 <body>
 
 <div class="container">
     <header>
-        <h1>GTD Glória a Deus!</h1>
+        <h1>GTD Fukuoka</h1>
         <div class="status-bar">
             <div><div id="dbDot" class="dot"></div><span id="dbStatus">DB: Off</span></div>
             <div>
@@ -129,7 +128,7 @@
         <div style="border-bottom:1px solid #eee; padding-bottom:10px; margin-bottom:10px; text-align:center; font-weight:bold; color:#888;">PROCESSANDO ITEM:</div>
         <h3 id="currentItem" style="margin:0 0 15px 0; background:#fff3cd; padding:15px; border-left:5px solid var(--warning); border-radius:4px;"></h3>
         <div id="step-1" class="step active"><p style="text-align:center; font-weight:bold;">É passível de ação?</p><div class="decision-grid"><button class="btn-no" onclick="toStep('step-no')">NÃO</button><button class="btn-yes" onclick="toStep('step-yes')">SIM</button></div></div>
-        <div id="step-no" class="step"><p style="text-align:center; font-weight:bold;">O que fazer com isso?</p><div class="decision-grid"><button class="btn-no" onclick="finalizeProc('trash')">Lixo 🗑️</button><button class="btn-opt" onclick="finalizeProc('someday')">Talvez um dia 💡</button><button class="btn-opt" style="grid-column:span 2" onclick="finalizeProc('reference')">Referência 📚</button></div><button class="btn-config" style="width:100%; margin-top:10px" onclick="toStep('step-1')">Voltar</button></div>
+        <div id="step-no" class="step"><p style="text-align:center; font-weight:bold;">O que fazer com isso?</p><div class="decision-grid"><button class="btn-no" onclick="finalizeProc('trash')">Lixo 🗑️</button><button class="btn-opt" onclick="finalizeProc('someday')">Talvez 💡</button><button class="btn-opt" style="grid-column:span 2" onclick="finalizeProc('reference')">Referência 📚</button></div><button class="btn-config" style="width:100%; margin-top:10px" onclick="toStep('step-1')">Voltar</button></div>
         <div id="step-yes" class="step"><p style="text-align:center; font-weight:bold;">Leva menos de 2 minutos?</p><div class="decision-grid"><button class="btn-yes" onclick="finalizeProc('do-now')">SIM (Faça Agora)</button><button class="btn-no" onclick="toStep('step-delegate')">NÃO</button></div><button class="btn-config" style="width:100%; margin-top:10px" onclick="toStep('step-1')">Voltar</button></div>
         <div id="step-delegate" class="step"><p style="text-align:center; font-weight:bold;">Você é a melhor pessoa para fazer?</p><div class="decision-grid"><button class="btn-no" onclick="finalizeProc('waiting')">NÃO (Delegar)</button><button class="btn-yes" onclick="toStep('step-defer')">SIM (Eu faço)</button></div><button class="btn-config" style="width:100%; margin-top:10px" onclick="toStep('step-yes')">Voltar</button></div>
         <div id="step-defer" class="step"><p style="text-align:center; font-weight:bold;">Tem dia ou hora específica?</p><div class="decision-grid"><button class="btn-opt" onclick="finalizeProc('calendar')">SIM (Agenda)</button><button class="btn-opt" onclick="finalizeProc('next')">NÃO (Assim que der)</button><button class="btn-opt" style="grid-column:span 2" onclick="finalizeProc('project')">É complexo (Projeto)</button></div><button class="btn-config" style="width:100%; margin-top:10px" onclick="toStep('step-delegate')">Voltar</button></div>
@@ -138,18 +137,20 @@
     <div class="lists-grid"></div>
 </div>
 
+<footer><p>Desenvolvido por Diogo Fukuoka &copy; 2025</p></footer>
+
 <div id="moveModal" class="modal-overlay">
     <div class="modal-content">
         <h3>Mover tarefa para:</h3>
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
             <button class="btn-config" onclick="finalizeCtx('inbox')">📥 Entrada</button>
-            <button class="btn-config" onclick="finalizeCtx('do-now')">⚡Fazer Agora</button>
+            <button class="btn-config" onclick="finalizeCtx('do-now')">⚡ Agora</button>
             <button class="btn-config" onclick="finalizeCtx('next')">🔥 Próx. Ações</button>
             <button class="btn-config" onclick="finalizeCtx('project')">📂 Projetos</button>
             <button class="btn-config" onclick="finalizeCtx('calendar')">📅 Calendário</button>
             <button class="btn-config" onclick="finalizeCtx('waiting')">⏳ Delegar</button>
-            <button class="btn-config" onclick="finalizeCtx('someday')">💡 Talvez um dia</button>
-            <button class="btn-config" onclick="finalizeCtx('reference')">📚 Referência.</button>
+            <button class="btn-config" onclick="finalizeCtx('someday')">💡 Talvez</button>
+            <button class="btn-config" onclick="finalizeCtx('reference')">📚 Ref.</button>
             <button class="btn-config" onclick="finalizeCtx('completed')">✅ Feito</button>
         </div>
         <button class="btn-config" style="width:100%; margin-top:10px;" onclick="document.getElementById('moveModal').style.display='none'">Cancelar</button>
@@ -189,10 +190,11 @@
 
 <!-- SCRIPT BASE -->
 <script>
-    var items = [];
+    // Carrega dados locais (Salvamento de emergência)
+    var items = JSON.parse(localStorage.getItem('gtd_data')) || [];
     var config = JSON.parse(localStorage.getItem('gtd_config')) || {};
     var inputHistory = JSON.parse(localStorage.getItem('gtd_history')) || [];
-    var listNames = { 'inbox': '📥 Entrada', 'do-now': '⚡ Fazer Agora', 'next': '🔥 Próximas Ações', 'project': '📂 Projetos', 'calendar': '📅 Calendário', 'waiting': '⏳ Delegar', 'someday': '💡 Talvez um dia', 'reference': '📚 Referência', 'completed': '✅ Concluídas' };
+    var listNames = { 'inbox': '📥 Entrada', 'do-now': '⚡ Fazer Agora', 'next': '🔥 Próximas Ações', 'project': '📂 Projetos', 'calendar': '📅 Calendário', 'waiting': '⏳ Delegar', 'someday': '💡 Talvez', 'reference': '📚 Referência', 'completed': '✅ Concluídas' };
     var activeItemIdx = null;
     var longPressTimer;
     var dateRes;
@@ -262,15 +264,14 @@
             if(ul) {
                 counts[item.status]++;
                 const li = document.createElement('li');
-                li.draggable = true;
-                li.ondragstart = (e) => e.dataTransfer.setData("text", idx);
                 
-                li.onmousedown = (e) => startMovePress(e, idx, 'mouse');
+                // EVENTOS DE TOQUE E MOUSE
                 li.ontouchstart = (e) => startMovePress(e, idx, 'touch');
-                li.onmouseup = cancelPress; 
-                li.ontouchend = cancelPress; 
-                li.onmouseleave = cancelPress; 
                 li.ontouchmove = (e) => cancelPressOnMove(e);
+                li.ontouchend = cancelPress;
+                li.ontouchcancel = cancelPress;
+                
+                li.onmousedown = (e) => { if(!e.touches) startMovePress(e, idx, 'mouse'); };
                 li.oncontextmenu = (e) => e.preventDefault(); 
 
                 let meta = "";
@@ -299,13 +300,10 @@
             }
         });
 
-        // Update Badges
         listKeys.forEach(l => {
              const badge = document.getElementById('c-'+l);
              if(badge) badge.innerText = counts[l];
         });
-        
-        // Update Dashboard (Buttons)
         updateDashboard(counts['inbox']);
     }
 
@@ -382,7 +380,7 @@
         if(e.touches && e.touches[0]) {
             var moveX = e.touches[0].clientX;
             var moveY = e.touches[0].clientY;
-            if(Math.abs(moveX - touchStartX) > 10 || Math.abs(moveY - touchStartY) > 10) {
+            if(Math.abs(moveX - touchStartX) > 5 || Math.abs(moveY - touchStartY) > 5) {
                 clearTimeout(longPressTimer);
                 isScrolling = true;
             }
@@ -393,7 +391,6 @@
     function resolveDate(val) { document.getElementById('dateModal').style.display='none'; dateRes(val); }
     
     function startMovePress(e, idx, type) {
-        // SEGURANÇA: Se tocar em botão, não abre menu de mover
         if (e.target.tagName === 'BUTTON' || e.target.closest('button')) return;
 
         if(type === 'touch' && e.touches && e.touches[0]) {
@@ -491,16 +488,11 @@
     }
     function toStep(stepId) { document.querySelectorAll('.step').forEach(s => s.classList.remove('active')); document.getElementById(stepId).classList.add('active'); }
     
-    // CORREÇÃO AQUI: finalizeProc agora é async para esperar o usuário
     async function finalizeProc(newStatus) {
         await changeItemStatus(items[procIdx], newStatus);
-        
-        // Verifica se a tarefa saiu da inbox (ou seja, se a data foi confirmada)
-        // Se o usuário cancelou a data, a tarefa continua na inbox no index 'procIdx'
-        // Se moveu, o próximo item da inbox assumirá o lugar (ou o array diminui)
         setTimeout(() => {
             if (items.some(i => i.status === 'inbox')) {
-                startProcessing(); // Recarrega o próximo (ou o mesmo se cancelou)
+                startProcessing(); 
             } else {
                 document.getElementById('processing-zone').style.display = 'none';
                 showToast("Entrada zerada!");
@@ -535,14 +527,19 @@
             onSnapshot(doc(db, "gtd", "my_tasks"), (docSnap) => {
                 if (docSnap.exists()) {
                     const data = docSnap.data();
-                    if(data.tasks) {
+                    if(data.tasks && data.tasks.length > 0) {
                         items = data.tasks;
                         render();
                         if(window.checkRemoteCalendarDeletions) window.checkRemoteCalendarDeletions();
+                    } else if (items.length > 0) {
+                        // RECOVERY MODE: Se nuvem vazia e local cheio, sobe local.
+                        setDoc(doc(db, "gtd", "my_tasks"), { tasks: items });
                     }
                     document.getElementById('dbDot').className = "dot online";
                     document.getElementById('dbStatus').innerText = "Online";
-                } else { setDoc(doc(db, "gtd", "my_tasks"), { tasks: [] }); }
+                } else { 
+                    setDoc(doc(db, "gtd", "my_tasks"), { tasks: items }); 
+                }
                 document.getElementById('loadingOverlay').style.display = 'none';
             }, (error) => { console.error("Erro Sync:", error); document.getElementById('dbDot').className = "dot error"; document.getElementById('dbStatus').innerText = "Erro Auth"; document.getElementById('loadingOverlay').style.display = 'none'; });
         } catch(e) { console.error("Erro Firebase", e); document.getElementById('loadingOverlay').style.display = 'none'; }
@@ -555,6 +552,7 @@
                 .then(() => document.getElementById('dbDot').className = "dot online")
                 .catch(e => console.error("Erro ao salvar", e));
         }
+        localStorage.setItem('gtd_data', JSON.stringify(items));
         render(); 
     }
 
