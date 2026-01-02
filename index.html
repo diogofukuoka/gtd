@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>GTD Fukuoka (v9.0 GitHub)</title>
+    <title>GTD Fukuoka (v9.1 - Turbo)</title>
     <style>
         :root { --primary: #2c3e50; --accent: #3498db; --success: #27ae60; --warning: #f39c12; --danger: #e74c3c; --google: #4285f4; --gray: #95a5a6; --ai: #8e44ad; --github: #24292e; }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -147,7 +147,7 @@
         <h3>Configurações (GitHub)</h3>
         <p style="font-size:0.8rem; color:#666;">Seus dados ficarão salvos no seu repositório.</p>
         <label>GitHub Username (Dono):</label><input type="text" id="ghOwner" placeholder="Ex: diogofukuoka">
-        <label>Nome do Repositório:</label><input type="text" id="ghRepo" placeholder="Ex: gtd-backup">
+        <label>Nome do Repositório:</label><input type="text" id="ghRepo" placeholder="Ex: gtd">
         <label>Token (PAT) Clássico:</label><input type="password" id="ghToken" placeholder="ghp_...">
         <label>Nome do Arquivo:</label><input type="text" id="ghPath" value="gtd_tasks.json">
         <hr>
@@ -186,7 +186,7 @@
     var touchStartX = 0;
     var touchStartY = 0;
     var isScrolling = false;
-    var ghSha = null; // Para controlar versão do GitHub
+    var ghSha = null;
 
     function openConfig() { 
         document.getElementById('cfgClientId').value = config.googleClientId || ''; 
@@ -321,8 +321,8 @@
         }
     }
 
-    // --- GITHUB SYNC LOGIC ---
-    async function loadFromGitHub() {
+    // --- GITHUB SYNC LOGIC (TURBO MODE) ---
+    async function loadFromGitHub(silent = false) {
         if (!config.ghToken || !config.ghOwner || !config.ghRepo) {
             document.getElementById('dbStatus').innerText = "Sem Config";
             if(!items.length) setTimeout(openConfig, 500);
@@ -330,50 +330,47 @@
             return;
         }
 
-        document.getElementById('dbStatus').innerText = "Conectando...";
+        if(!silent) document.getElementById('dbStatus').innerText = "Conectando...";
         const url = `https://api.github.com/repos/${config.ghOwner}/${config.ghRepo}/contents/${config.ghPath}`;
         
         try {
             const res = await fetch(url, {
-                headers: { 'Authorization': `token ${config.ghToken}`, 'Accept': 'application/vnd.github.v3+json' }
+                headers: { 'Authorization': `token ${config.ghToken}`, 'Accept': 'application/vnd.github.v3+json', 'Cache-Control': 'no-cache' }
             });
             
             if (res.status === 404) {
-                // Arquivo não existe, vamos criar no primeiro save
-                console.log("Arquivo não existe no GitHub, será criado.");
+                if(!silent) console.log("Arquivo não existe no GitHub, será criado.");
                 document.getElementById('dbDot').className = "dot online";
                 document.getElementById('dbStatus').innerText = "GitHub (Novo)";
-                // Se temos itens locais, forçamos um save para criar o arquivo
                 if(items.length > 0) window.sync();
             } else if (res.ok) {
                 const data = await res.json();
-                ghSha = data.sha; // Importante para updates
-                // Decode Base64 (com suporte a UTF-8)
-                const content = decodeURIComponent(escape(atob(data.content)));
-                const remoteItems = JSON.parse(content);
                 
-                // Merge simples: se remoto tem mais itens ou é diferente, atualiza
-                // (Para uso pessoal simples, assumimos que o cloud é a verdade ao carregar)
-                items = remoteItems;
-                localStorage.setItem('gtd_data', JSON.stringify(items));
-                render();
+                // Só atualiza se o SHA mudou (significa que houve alteração externa)
+                if(data.sha !== ghSha) {
+                    ghSha = data.sha;
+                    const content = decodeURIComponent(escape(atob(data.content)));
+                    const remoteItems = JSON.parse(content);
+                    
+                    // Smart update: só renderiza se os dados forem diferentes
+                    if(JSON.stringify(remoteItems) !== JSON.stringify(items)) {
+                        items = remoteItems;
+                        localStorage.setItem('gtd_data', JSON.stringify(items));
+                        render();
+                        if(window.checkRemoteCalendarDeletions) window.checkRemoteCalendarDeletions();
+                    }
+                }
                 document.getElementById('dbDot').className = "dot online";
                 document.getElementById('dbStatus').innerText = "GitHub Online";
-                
-                if(window.checkRemoteCalendarDeletions) window.checkRemoteCalendarDeletions();
-            } else {
-                throw new Error("Erro GitHub: " + res.status);
             }
         } catch (e) {
             console.error(e);
             document.getElementById('dbDot').className = "dot error";
-            document.getElementById('dbStatus').innerText = "Erro GitHub";
         }
         document.getElementById('loadingOverlay').style.display = 'none';
     }
 
     window.sync = async function() {
-        // Salva Local
         localStorage.setItem('gtd_data', JSON.stringify(items));
         render();
 
@@ -382,19 +379,18 @@
         document.getElementById('dbDot').className = "dot syncing";
         
         const url = `https://api.github.com/repos/${config.ghOwner}/${config.ghRepo}/contents/${config.ghPath}`;
-        // Encode Base64 (UTF-8 safe)
         const content = btoa(unescape(encodeURIComponent(JSON.stringify(items, null, 2))));
         
         const body = {
-            message: "Update via GTD App",
+            message: "Update via GTD App (Turbo)",
             content: content,
-            sha: ghSha // Necessário para update. Se null, cria novo (se não existir)
+            sha: ghSha
         };
 
         try {
-            // Se não temos SHA, tentamos um GET antes para não dar conflito (caso tenha sido criado por outro device)
+            // Se não temos SHA, tentamos pegar antes de salvar
             if (!ghSha) {
-                 const checkRes = await fetch(url, { headers: { 'Authorization': `token ${config.ghToken}` } });
+                 const checkRes = await fetch(url, { headers: { 'Authorization': `token ${config.ghToken}`, 'Cache-Control': 'no-cache' } });
                  if(checkRes.ok) {
                      const checkData = await checkRes.json();
                      body.sha = checkData.sha;
@@ -413,10 +409,16 @@
 
             if (res.ok) {
                 const data = await res.json();
-                ghSha = data.content.sha; // Atualiza SHA para o próximo save
+                ghSha = data.content.sha;
                 document.getElementById('dbDot').className = "dot online";
             } else {
-                console.error("Erro Save GitHub", await res.text());
+                // Se der conflito (409), baixa a versão mais nova e tenta de novo (simples)
+                if(res.status === 409) {
+                    console.log("Conflito de versão, baixando e tentando novamente...");
+                    await loadFromGitHub(true);
+                    // Não chamamos sync recursivo imediatamente para evitar loop infinito,
+                    // mas na próxima ação do usuário estará corrigido.
+                }
                 document.getElementById('dbDot').className = "dot error";
             }
         } catch (e) {
@@ -425,16 +427,15 @@
         }
     }
 
-    // Auto-Sync (Polling simples para simular realtime)
+    // Turbo Polling (4s)
     setInterval(() => {
-        // Apenas recarrega se o usuário não estiver interagindo para evitar sobrescrever edição
-        if(!document.hidden) loadFromGitHub(); 
-    }, 60000); // Checa a cada 60s
+        if(!document.hidden) loadFromGitHub(true); 
+    }, 4000);
 
     window.addEventListener('load', function() {
         render();
         renderHistory();
-        loadFromGitHub(); // Carrega do GitHub ao iniciar
+        loadFromGitHub(); 
         if(!config.googleClientId) document.getElementById('loadingOverlay').style.display = 'none';
         window.checkDueDates();
         setInterval(window.checkDueDates, 60000);
@@ -445,9 +446,7 @@
         }, true);
     });
 
-    // --- DEMAIS FUNÇÕES (VOZ, TOUCH, CALENDÁRIO, IA) MANTIDAS IGUAIS ---
-    
-    // ... [Voice code] ...
+    // --- UTILS ---
     let recognition;
     if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -475,7 +474,7 @@
         if(e.touches && e.touches[0]) {
             var moveX = e.touches[0].clientX;
             var moveY = e.touches[0].clientY;
-            if(Math.abs(moveX - touchStartX) > 5 || Math.abs(moveY - touchStartY) > 5) {
+            if(Math.abs(moveX - touchStartX) > 10 || Math.abs(moveY - touchStartY) > 10) {
                 clearTimeout(longPressTimer);
                 isScrolling = true;
             }
@@ -585,7 +584,6 @@
             else { document.getElementById('processing-zone').style.display = 'none'; showToast("Entrada zerada!"); }
         }, 300); 
     }
-    
     window.checkDueDates = function() {
         const now = new Date();
         let changed = false;
