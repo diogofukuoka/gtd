@@ -79,7 +79,8 @@
   {
     "id": 1767400860484,
     "text": "Teste",
-    "status": "inbox",
-    "updatedAt": 1767400860484
+    "status": "completed",
+    "updatedAt": 1767400860484,
+    "completedAt": "2026-01-03T00:41:06.843Z"
   }
 ]
