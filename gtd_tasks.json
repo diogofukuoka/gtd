@@ -41,13 +41,11 @@
     "order": null
   },
   {
-    "id": 1767400580444,
-    "text": "Ver se Scooter caiu próximo sábado às 12:00",
+    "id": 1767403045355,
+    "text": "Aprender a falar no ritmo do pensamento (NotebookLM)",
     "status": "next",
-    "updatedAt": 1767400580444,
-    "date": "2026-01-03T12:00",
-    "googleEventId": "mkdfviumcbegb7chulcvg9pdn4",
-    "order": null
+    "updatedAt": 1767403045355,
+    "order": 1
   },
   {
     "id": 1767400758556,
@@ -82,11 +80,13 @@
     "googleEventId": "vhsvr99omshnk5tch4mqps3k4s"
   },
   {
-    "id": 1767403045355,
-    "text": "Aprender a falar no ritmo do pensamento (NotebookLM)",
+    "id": 1767400580444,
+    "text": "Ver se Scooter caiu próximo sábado às 12:00",
     "status": "next",
-    "updatedAt": 1767403045355,
-    "order": 1
+    "updatedAt": 1767400580444,
+    "date": "2026-01-03T12:00",
+    "googleEventId": "mkdfviumcbegb7chulcvg9pdn4",
+    "order": null
   },
   {
     "id": 1767401612331,
