@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="theme-color" content="#2c3e50">
-    <title>GTD Fukuoka Enterprise (v10.4)</title>
+    <title>GTD Fukuoka Enterprise (v10.5)</title>
     <style>
         :root { --primary: #2c3e50; --accent: #3498db; --success: #27ae60; --warning: #f39c12; --danger: #e74c3c; --bg: #f4f6f8; --card: #ffffff; --text: #2c3e50; --border: #dfe6e9; }
         @media (prefers-color-scheme: dark) { :root { --bg: #1a1a1a; --card: #2d3436; --text: #dfe6e9; --border: #444; } }
@@ -12,7 +12,6 @@
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
         body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 10px; padding-bottom: 80px; transition: background 0.3s; }
         
-        /* Layout */
         .container { max-width: 1200px; margin: 0 auto; }
         .header-controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
         .sync-badge { font-size: 0.75rem; padding: 4px 8px; border-radius: 12px; background: #eee; color: #555; display: flex; align-items: center; gap: 5px; font-weight: 600; border: 1px solid var(--border); cursor: pointer; }
@@ -20,24 +19,20 @@
         .sync-badge.syncing { color: var(--accent); border-color: var(--accent); background: rgba(52, 152, 219, 0.1); }
         .sync-badge.error { color: var(--danger); border-color: var(--danger); background: rgba(231, 76, 60, 0.1); }
         
-        /* Inputs */
         .input-wrapper { display: flex; gap: 8px; margin-bottom: 15px; background: var(--card); padding: 8px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
         input[type="text"] { flex: 1; border: none; font-size: 16px; background: transparent; color: var(--text); padding: 8px; }
         button { border: none; cursor: pointer; border-radius: 8px; font-weight: 600; transition: transform 0.1s; display: flex; align-items: center; justify-content: center; }
         button:active { transform: scale(0.95); }
         .btn-main { background: var(--accent); color: white; width: 44px; height: 44px; font-size: 1.2rem; }
         
-        /* Lists */
         .lists-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 15px; }
         .list-column { background: var(--card); border-radius: 10px; border: 1px solid var(--border); display: flex; flex-direction: column; max-height: 80vh; }
         .list-header { padding: 12px; border-bottom: 1px solid var(--border); font-weight: bold; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; background: var(--card); border-radius: 10px 10px 0 0; z-index: 10; cursor: pointer; user-select: none; }
         .list-body { overflow-y: auto; padding: 5px; flex-grow: 1; min-height: 50px; }
         
-        /* Task Item */
         .task { background: var(--bg); border: 1px solid var(--border); margin-bottom: 6px; padding: 10px; border-radius: 6px; display: flex; gap: 8px; align-items: center; animation: slideIn 0.2s; position: relative; }
         .task:hover { border-color: #ccc; }
         
-        /* SEQUENCING UI */
         .seq-num { background: var(--primary); color: white; font-size: 0.75rem; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; flex-shrink: 0; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
         .order-col { display: flex; flex-direction: column; gap: 2px; margin-right: 4px; }
         .btn-order { font-size: 0.6rem; height: 22px; width: 26px; background: rgba(0,0,0,0.03); border: 1px solid var(--border); border-radius: 4px; color: var(--text); cursor: pointer; display: flex; align-items: center; justify-content: center; }
@@ -51,14 +46,12 @@
         .btn-act:hover { background: var(--accent); color: white; }
         .btn-act.del:hover { background: var(--danger); }
 
-        /* Badges */
         .badge { background: #eee; padding: 2px 8px; border-radius: 10px; font-size: 0.7rem; color: #555; }
         .border-inbox { border-top: 3px solid var(--danger); }
         .border-next { border-top: 3px solid var(--success); }
         .border-waiting { border-top: 3px solid var(--warning); }
         .border-calendar { border-top: 3px solid #4285f4; }
         
-        /* Modals & Utils */
         .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(2px); z-index: 2000; display: none; align-items: center; justify-content: center; }
         .modal { background: var(--card); width: 90%; max-width: 450px; padding: 20px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); max-height: 90vh; overflow-y: auto; }
         .modal h3 { margin-top: 0; color: var(--text); }
@@ -78,7 +71,7 @@
 
 <div class="container">
     <div class="header-controls">
-        <h2 style="margin:0; font-size:1.3rem;">GTD Fukuoka <span style="font-size:0.6em; opacity:0.6;">v10.4</span></h2>
+        <h2 style="margin:0; font-size:1.3rem;">GTD Fukuoka <span style="font-size:0.6em; opacity:0.6;">v10.5</span></h2>
         <div style="display:flex; gap:10px;">
             <div id="syncStatus" class="sync-badge" onclick="App.sync(true)">
                 <span class="dot">●</span> <span>Offline</span>
@@ -130,17 +123,15 @@
 
 <script>
 /** 
- * GTD FUKUOKA ENTERPRISE v10.4
- * - Architecture: Single File Component (SFC)
- * - Feature: Sequencing (1-N) for Next Actions
- * - Security: Smart Sync & SHA Check
+ * GTD FUKUOKA ENTERPRISE v10.5
+ * - Fix: "Failed to fetch" sanitizer
+ * - Fix: Sequencing UI robustness
  */
 
 // --- UTILS & SECURITY ---
 const Utils = {
     uuid: () => Date.now().toString(36) + Math.random().toString(36).substr(2),
     now: () => new Date().toISOString(),
-    // Ofuscação Leve (XOR) para não guardar tokens em texto plano no localStorage
     obscure: (s) => { if(!s)return'';try{return btoa(s.split('').map(c=>String.fromCharCode(c.charCodeAt(0)^123)).join(''))}catch(e){return s} },
     reveal: (s) => { if(!s)return'';try{return atob(s).split('').map(c=>String.fromCharCode(c.charCodeAt(0)^123)).join('')}catch(e){return s} },
     debounce: (f, w) => { let t; return function(...a) { clearTimeout(t); t = setTimeout(() => f.apply(this, a), w); }; }
@@ -151,8 +142,9 @@ const Config = {
     data: {},
     load: () => { const s = localStorage.getItem('gtd_cfg_v1'); Config.data = s ? JSON.parse(s) : {}; },
     save: () => {
+        // AGRESSIVE TRIM PARA EVITAR ERROS DE ESPAÇO
         const d = {
-            ghUser: document.getElementById('cfgUser').value.trim(),
+            ghUser: document.getElementById('cfgUser').value.replace(/\s/g,''), // Remove TODOS os espaços
             ghRepo: document.getElementById('cfgRepo').value.trim(),
             ghToken: Utils.obscure(document.getElementById('cfgToken').value.trim()),
             ghPath: document.getElementById('cfgPath').value.trim() || 'gtd_tasks.json',
@@ -164,7 +156,7 @@ const Config = {
     get: (k) => k.includes('Token')||k.includes('Key') ? Utils.reveal(Config.data[k]) : Config.data[k]
 };
 
-// --- DATA STORE (The Truth Source) ---
+// --- DATA STORE ---
 const Store = {
     items: [],
     sha: null,
@@ -174,65 +166,38 @@ const Store = {
         Store.items = l ? JSON.parse(l) : [];
         Store.sha = localStorage.getItem('gtd_sha');
         
-        // Migração: Adicionar 'order' se não existir
+        // Migration: ensure order
         let needsSave = false;
         Store.items.forEach((item, idx) => {
-            if (typeof item.order === 'undefined') {
-                item.order = idx * 1000;
-                needsSave = true;
-            }
+            if (typeof item.order === 'undefined') { item.order = idx * 1000; needsSave = true; }
         });
         if(needsSave) Store.persist();
     },
     
-    // Merge Estratégico (Last Write Wins por Item)
     merge: (remote) => {
         let changes = 0;
         const map = new Map(Store.items.map(i => [i.id, i]));
-        
         remote.forEach(r => {
             const l = map.get(r.id);
-            // Aceita remoto se local não existe OU remoto é mais recente
-            if (!l || new Date(r.updatedAt) > new Date(l.updatedAt)) { 
-                map.set(r.id, r); 
-                changes++; 
-            }
+            if (!l || new Date(r.updatedAt) > new Date(l.updatedAt)) { map.set(r.id, r); changes++; }
         });
-        
-        // Remove deletados antigos (>24h)
         Store.items = Array.from(map.values()).filter(i => !i._deleted || (new Date()-new Date(i.updatedAt)<86400000));
         Store.persist();
         return changes > 0;
     },
 
     add: (text, status = 'inbox') => {
-        // Busca o maior order para inserir no final
         const maxOrder = Store.items.reduce((max, i) => (i.order && i.order > max) ? i.order : max, 0);
-        Store.items.push({ 
-            id: Utils.uuid(), 
-            text, 
-            status, 
-            order: maxOrder + 1000, 
-            updatedAt: Utils.now(), 
-            createdAt: Utils.now() 
-        });
+        Store.items.push({ id: Utils.uuid(), text, status, order: maxOrder + 1000, updatedAt: Utils.now(), createdAt: Utils.now() });
         Store.persist(); Sync.trigger();
     },
     update: (id, pl) => {
         const i = Store.items.findIndex(x => x.id === id);
-        if (i > -1) { 
-            Store.items[i] = { ...Store.items[i], ...pl, updatedAt: Utils.now() }; 
-            Store.persist(); Sync.trigger(); 
-        }
+        if (i > -1) { Store.items[i] = { ...Store.items[i], ...pl, updatedAt: Utils.now() }; Store.persist(); Sync.trigger(); }
     },
     delete: (id) => {
         const i = Store.items.findIndex(x => x.id === id);
-        if (i > -1) { 
-            // Soft Delete para sync
-            Store.items[i]._deleted = true; 
-            Store.items[i].updatedAt = Utils.now(); 
-            Store.persist(); Sync.trigger(); 
-        }
+        if (i > -1) { Store.items[i]._deleted = true; Store.items[i].updatedAt = Utils.now(); Store.persist(); Sync.trigger(); }
     },
     persist: () => {
         localStorage.setItem('gtd_items', JSON.stringify(Store.items));
@@ -241,7 +206,7 @@ const Store = {
     }
 };
 
-// --- SYNC ENGINE (GitHub API) ---
+// --- SYNC ENGINE ---
 const Sync = {
     status: 'offline',
     setStatus: (s, m) => {
@@ -264,7 +229,7 @@ const Sync = {
         Sync.setStatus('syncing');
         
         try {
-            // 1. GET (Download & Check SHA)
+            // GET
             const getUrl = `https://api.github.com/repos/${user}/${repo}/contents/${path}`;
             const res = await fetch(getUrl, { 
                 headers: { 'Authorization': `token ${token}`, 'Accept': 'application/vnd.github.v3+json', 'Cache-Control': 'no-cache' } 
@@ -282,14 +247,15 @@ const Sync = {
                 needsCreation = true;
             } else {
                 if(res.status === 401) throw new Error("401 Token Inválido");
-                throw new Error(`Erro GitHub ${res.status}`);
+                if(res.status === 404) throw new Error("404 Repo não achado");
+                throw new Error(`GitHub ${res.status}`);
             }
             
-            // 2. MERGE
+            // MERGE
             Store.merge(remoteItems);
             Store.sha = remoteSha;
 
-            // 3. PUT (Upload apenas se houve mudanças)
+            // PUT
             const localStr = JSON.stringify(Store.items);
             const remoteStr = JSON.stringify(remoteItems);
             
@@ -312,9 +278,11 @@ const Sync = {
                     Store.persist();
                     Sync.setStatus('online');
                 } else if (putRes.status === 409) {
-                    // Conflict Resolution: Tenta novamente
                     setTimeout(() => Sync.perform(true), 1500);
                 } else {
+                    const txt = await putRes.text();
+                    // Se falhar PUT no 404, significa que o user não tem permissão de escrita
+                    if(needsCreation) throw new Error("Erro ao Criar: Verifique Token");
                     throw new Error(`Save ${putRes.status}`);
                 }
             } else {
@@ -323,8 +291,10 @@ const Sync = {
 
         } catch (e) {
             console.error(e);
-            Sync.setStatus('error', e.message.substring(0, 15));
-            UI.toast("Erro Sync: " + e.message);
+            let msg = e.message;
+            if(msg.includes('Failed to fetch')) msg = "Erro Rede/CORS";
+            Sync.setStatus('error', msg.substring(0, 15));
+            UI.toast("Erro Sync: " + msg + ". Verifique se o Repo existe.");
         }
     }
 };
@@ -344,26 +314,17 @@ const UI = {
         else UI.openConfig();
     },
     render: () => {
-        // Limpa
         UI.lists.forEach(k => { document.getElementById(`list-${k}`).innerHTML = ''; document.getElementById(`badge-${k}`).innerText = '0'; });
-        
-        // Filtra ativos
         const items = Store.items.filter(i => !i._deleted);
         
-        // Ordenação Central
         items.sort((a,b) => {
-            // Lógica Especial: Next Actions ordenadas por 'order' (crescente)
-            if(a.status === 'next' && b.status === 'next') {
-                return (a.order || 0) - (b.order || 0);
-            }
-            // Calendário por Data
+            if(a.status === 'next' && b.status === 'next') return (a.order || 0) - (b.order || 0);
             if(a.status === 'calendar' && a.date && b.date) return new Date(a.date) - new Date(b.date);
-            // Default: Mais recente primeiro
             return new Date(b.updatedAt) - new Date(a.updatedAt);
         });
 
         const counts = {};
-        let seqCounter = 1; // Contador visual para Next Actions
+        let seqCounter = 1;
 
         items.forEach(item => {
             const t = document.getElementById(`list-${item.status}`);
@@ -375,7 +336,6 @@ const UI = {
                 if (item.date) meta += `📅 ${new Date(item.date).toLocaleString().slice(0,-3)} `;
                 if (item.note) meta += `📝 ${item.note}`;
                 
-                // Controles de Ordenação (Apenas para Next)
                 let leftControls = '';
                 if (item.status === 'next') {
                     leftControls = `
@@ -395,17 +355,14 @@ const UI = {
                         <button class="btn-act del" onclick="App.deleteItem('${item.id}')">✕</button>
                     </div>
                 `;
-                // Insere no container
                 t.appendChild(el);
             }
         });
-        
-        // Atualiza Badges
         Object.keys(counts).forEach(k => { const b = document.getElementById(`badge-${k}`); if(b) b.innerText = counts[k]; });
     },
     openConfig: () => document.getElementById('configModal').style.display = 'flex',
     closeModal: (id) => document.getElementById(id).style.display = 'none',
-    toast: (m) => { const t = document.getElementById('toast'); t.innerText = m; t.classList.add('visible'); setTimeout(() => t.classList.remove('visible'), 3000); }
+    toast: (m) => { const t = document.getElementById('toast'); t.innerText = m; t.classList.add('visible'); setTimeout(() => t.classList.remove('visible'), 5000); }
 };
 
 // --- AI ENGINE ---
@@ -434,11 +391,6 @@ const App = {
         Sync.trigger = Utils.debounce(()=>Sync.perform(), 2000); 
         Sync.perform(); 
         setInterval(()=>Sync.perform(), 60000);
-        
-        // Google Calendar Init Stub
-        if(Config.get('googleId') && window.gapi) {
-            // Em um app real SFC, a inicialização do GAPI ocorreria aqui
-        }
     },
     addItem: () => { const i = document.getElementById('quickInput'); if(i.value.trim()){ Store.add(i.value.trim()); i.value=''; } },
     addToList: (l) => { const t = prompt(`Add em ${UI.names[l]}:`); if(t) Store.add(t, l); },
@@ -447,35 +399,18 @@ const App = {
     openContext: (id) => { App.activeId = id; document.getElementById('ctxButtons').innerHTML = UI.lists.map(k => `<button class="full-btn" style="margin:0; background:${k===Store.items.find(i=>i.id===id).status ? '#2c3e50':'#95a5a6'}" onclick="App.moveItem('${k}')">${UI.names[k]}</button>`).join(''); document.getElementById('contextModal').style.display = 'flex'; },
     moveItem: (s) => { Store.update(App.activeId, {status:s}); UI.closeModal('contextModal'); if(s==='calendar'){const d=prompt("Data (YYYY-MM-DD HH:MM):",new Date().toISOString().slice(0,16));if(d)Store.update(App.activeId,{date:d});} },
     sync: (f) => Sync.perform(f),
-    
-    // --- LÓGICA DE REORDENAÇÃO (SEQUENCING) ---
     reorder: (id, direction) => {
-        // 1. Isola lista 'next' ordenada
-        const list = Store.items
-            .filter(i => i.status === 'next' && !i._deleted)
-            .sort((a,b) => (a.order||0) - (b.order||0));
-            
+        const list = Store.items.filter(i => i.status === 'next' && !i._deleted).sort((a,b) => (a.order||0) - (b.order||0));
         const currentIndex = list.findIndex(i => i.id === id);
         if (currentIndex === -1) return;
-        
         const targetIndex = currentIndex + direction;
-        
-        // 2. Verifica limites
         if (targetIndex >= 0 && targetIndex < list.length) {
             const currentItem = list[currentIndex];
             const targetItem = list[targetIndex];
-            
-            // 3. Swap de valores 'order'
             const tempOrder = currentItem.order;
             const targetOrderVal = targetItem.order;
-            
-            // Se por acaso forem iguais (legacy), força diferença
-            if (tempOrder === targetOrderVal) {
-                Store.update(currentItem.id, { order: tempOrder + direction });
-            } else {
-                Store.update(currentItem.id, { order: targetOrderVal });
-                Store.update(targetItem.id, { order: tempOrder });
-            }
+            if (tempOrder === targetOrderVal) { Store.update(currentItem.id, { order: tempOrder + direction }); }
+            else { Store.update(currentItem.id, { order: targetOrderVal }); Store.update(targetItem.id, { order: tempOrder }); }
         }
     }
 };
