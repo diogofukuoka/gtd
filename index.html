@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="theme-color" content="#2c3e50">
-    <title>GTD Fukuoka Enterprise (v10.2)</title>
+    <title>GTD Fukuoka v10.3 (Stable)</title>
     <style>
         :root { --primary: #2c3e50; --accent: #3498db; --success: #27ae60; --warning: #f39c12; --danger: #e74c3c; --bg: #f4f6f8; --card: #ffffff; --text: #2c3e50; --border: #dfe6e9; }
         @media (prefers-color-scheme: dark) { :root { --bg: #1a1a1a; --card: #2d3436; --text: #dfe6e9; --border: #444; } }
@@ -12,7 +12,6 @@
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
         body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 10px; padding-bottom: 80px; transition: background 0.3s; }
         
-        /* Layout */
         .container { max-width: 1200px; margin: 0 auto; }
         .header-controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
         .sync-badge { font-size: 0.75rem; padding: 4px 8px; border-radius: 12px; background: #eee; color: #555; display: flex; align-items: center; gap: 5px; font-weight: 600; border: 1px solid var(--border); cursor: pointer; }
@@ -20,25 +19,20 @@
         .sync-badge.syncing { color: var(--accent); border-color: var(--accent); background: rgba(52, 152, 219, 0.1); }
         .sync-badge.error { color: var(--danger); border-color: var(--danger); background: rgba(231, 76, 60, 0.1); }
         
-        /* Inputs */
         .input-wrapper { display: flex; gap: 8px; margin-bottom: 15px; background: var(--card); padding: 8px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
         input[type="text"] { flex: 1; border: none; font-size: 16px; background: transparent; color: var(--text); padding: 8px; }
         button { border: none; cursor: pointer; border-radius: 8px; font-weight: 600; transition: transform 0.1s; display: flex; align-items: center; justify-content: center; }
         button:active { transform: scale(0.95); }
         .btn-main { background: var(--accent); color: white; width: 44px; height: 44px; font-size: 1.2rem; }
         
-        /* Lists */
         .lists-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 15px; }
         .list-column { background: var(--card); border-radius: 10px; border: 1px solid var(--border); display: flex; flex-direction: column; max-height: 80vh; }
         .list-header { padding: 12px; border-bottom: 1px solid var(--border); font-weight: bold; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; background: var(--card); border-radius: 10px 10px 0 0; z-index: 10; cursor: pointer; user-select: none; }
         .list-body { overflow-y: auto; padding: 5px; flex-grow: 1; min-height: 50px; }
         
-        /* Task Item */
         .task { background: var(--bg); border: 1px solid var(--border); margin-bottom: 6px; padding: 10px; border-radius: 6px; display: flex; gap: 8px; align-items: center; animation: slideIn 0.2s; position: relative; }
         .task:hover { border-color: #ccc; }
-        
-        .seq-num { background: var(--primary); color: white; font-size: 0.7rem; width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; flex-shrink: 0; }
-        
+        .seq-num { background: var(--primary); color: white; font-size: 0.7rem; width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; flex-shrink: 0; }
         .task-content { flex: 1; overflow-wrap: anywhere; font-size: 0.95rem; line-height: 1.4; cursor: pointer; }
         .task-meta { font-size: 0.75rem; color: #888; margin-top: 4px; display: block; }
         
@@ -46,17 +40,16 @@
         .btn-act { width: 28px; height: 28px; border-radius: 4px; font-size: 0.8rem; background: rgba(0,0,0,0.05); color: var(--text); }
         .btn-act:hover { background: var(--accent); color: white; }
         .btn-act.del:hover { background: var(--danger); }
-        .btn-order { font-size: 0.6rem; height: 20px; width: 24px; background: transparent; border: 1px solid #ddd; }
+        .btn-order { font-size: 0.6rem; height: 20px; width: 24px; background: transparent; border: 1px solid #ddd; cursor: pointer; }
+        .btn-order:hover { background: #eee; }
         .order-col { display: flex; flex-direction: column; gap: 2px; }
 
-        /* Badges */
         .badge { background: #eee; padding: 2px 8px; border-radius: 10px; font-size: 0.7rem; color: #555; }
         .border-inbox { border-top: 3px solid var(--danger); }
         .border-next { border-top: 3px solid var(--success); }
         .border-waiting { border-top: 3px solid var(--warning); }
         .border-calendar { border-top: 3px solid #4285f4; }
         
-        /* Modals & Utils */
         .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(2px); z-index: 2000; display: none; align-items: center; justify-content: center; }
         .modal { background: var(--card); width: 90%; max-width: 450px; padding: 20px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); max-height: 90vh; overflow-y: auto; }
         .modal h3 { margin-top: 0; color: var(--text); }
@@ -76,7 +69,7 @@
 
 <div class="container">
     <div class="header-controls">
-        <h2 style="margin:0; font-size:1.3rem;">GTD Fukuoka <span style="font-size:0.6em; opacity:0.6;">v10.2</span></h2>
+        <h2 style="margin:0; font-size:1.3rem;">GTD Fukuoka <span style="font-size:0.6em; opacity:0.6;">v10.3</span></h2>
         <div style="display:flex; gap:10px;">
             <div id="syncStatus" class="sync-badge" onclick="App.sync(true)">
                 <span class="dot">●</span> <span>Offline</span>
@@ -127,7 +120,7 @@
 
 <script>
 /** 
- * GTD FUKUOKA ENTERPRISE v10.2 - REORDERING UPDATE
+ * GTD FUKUOKA ENTERPRISE v10.3 - STABLE SYNC FIX
  */
 
 const Utils = {
@@ -163,23 +156,39 @@ const Store = {
         const l = localStorage.getItem('gtd_items');
         Store.items = l ? JSON.parse(l) : [];
         Store.sha = localStorage.getItem('gtd_sha');
+        
+        // CORREÇÃO: Garante que todos os itens tenham 'order'
+        let fixed = false;
+        Store.items.forEach((item, idx) => {
+            if (typeof item.order === 'undefined') {
+                item.order = idx * 1000;
+                fixed = true;
+            }
+        });
+        if(fixed) Store.persist();
     },
     
     merge: (remote) => {
         let changes = 0;
         const map = new Map(Store.items.map(i => [i.id, i]));
+        
         remote.forEach(r => {
             const l = map.get(r.id);
-            if (!l || new Date(r.updatedAt) > new Date(l.updatedAt)) { map.set(r.id, r); changes++; }
+            // Se local não existe ou remoto é mais novo
+            if (!l || new Date(r.updatedAt) > new Date(l.updatedAt)) { 
+                map.set(r.id, r); 
+                changes++; 
+            }
         });
+        
         Store.items = Array.from(map.values()).filter(i => !i._deleted || (new Date()-new Date(i.updatedAt)<86400000));
         Store.persist();
         return changes > 0;
     },
 
     add: (text, status = 'inbox') => {
-        // Auto-incremento de ordem para novos itens
-        const maxOrder = Store.items.reduce((max, i) => Math.max(max, i.order || 0), 0);
+        // Encontra o maior order atual
+        const maxOrder = Store.items.reduce((max, i) => (i.order && i.order > max) ? i.order : max, 0);
         Store.items.push({ id: Utils.uuid(), text, status, order: maxOrder + 1000, updatedAt: Utils.now(), createdAt: Utils.now() });
         Store.persist(); Sync.trigger();
     },
@@ -208,30 +217,85 @@ const Sync = {
         else { el.innerHTML = '<span class="dot">●</span> Offline'; el.className = 'sync-badge'; }
     },
     trigger: null,
+    
     perform: async (force = false) => {
-        const t = Config.get('ghToken'), u = Config.get('ghUser'), r = Config.get('ghRepo'), p = Config.get('ghPath')||'gtd_tasks.json';
-        if (!t || !u || !r) return Sync.setStatus('offline');
+        const token = Config.get('ghToken');
+        const user = Config.get('ghUser');
+        const repo = Config.get('ghRepo');
+        const path = Config.get('ghPath') || 'gtd_tasks.json';
+
+        if (!token || !user || !repo) return Sync.setStatus('offline');
+        
         Sync.setStatus('syncing');
+        
         try {
-            const res = await fetch(`https://api.github.com/repos/${u}/${r}/contents/${p}`, { headers: { 'Authorization': `token ${t}`, 'Accept': 'application/vnd.github.v3+json', 'Cache-Control': 'no-cache' } });
-            let rc = [], rSha = null, create = false;
-            if (res.status === 200) { const d = await res.json(); rSha = d.sha; rc = JSON.parse(decodeURIComponent(escape(atob(d.content)))); }
-            else if (res.status === 404) { create = true; }
-            else throw new Error(`GitHub ${res.status}`);
+            // 1. GET Remoto
+            const getUrl = `https://api.github.com/repos/${user}/${repo}/contents/${path}`;
+            const res = await fetch(getUrl, { 
+                headers: { 'Authorization': `token ${token}`, 'Accept': 'application/vnd.github.v3+json', 'Cache-Control': 'no-cache' } 
+            });
             
-            Store.merge(rc); Store.sha = rSha;
-            const ls = JSON.stringify(Store.items), rs = JSON.stringify(rc);
+            let remoteItems = [];
+            let remoteSha = null;
+            let needsCreation = false;
+
+            if (res.status === 200) {
+                const data = await res.json();
+                remoteSha = data.sha;
+                remoteItems = JSON.parse(decodeURIComponent(escape(atob(data.content))));
+            } else if (res.status === 404) {
+                needsCreation = true;
+            } else {
+                if(res.status === 401) throw new Error("401 Token Inválido");
+                if(res.status === 403) throw new Error("403 Permissão Negada");
+                throw new Error(`Erro GitHub ${res.status}`);
+            }
             
-            if (create || ls !== rs || force) {
-                const pres = await fetch(`https://api.github.com/repos/${u}/${r}/contents/${p}`, {
-                    method: 'PUT', headers: { 'Authorization': `token ${t}`, 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ message: "GTD Sync", content: btoa(unescape(encodeURIComponent(JSON.stringify(Store.items)))), sha: rSha })
+            // 2. MERGE
+            Store.merge(remoteItems);
+            Store.sha = remoteSha; // Atualiza o SHA local com o que veio do servidor
+
+            // 3. PUT (Salvar)
+            // Calculamos as strings para comparar se houve mudança real
+            const localStr = JSON.stringify(Store.items);
+            const remoteStr = JSON.stringify(remoteItems);
+            
+            if (needsCreation || localStr !== remoteStr || force) {
+                const putBody = {
+                    message: "GTD Sync " + Utils.now(),
+                    content: btoa(unescape(encodeURIComponent(JSON.stringify(Store.items, null, 2)))),
+                    sha: remoteSha 
+                };
+
+                const putRes = await fetch(getUrl, {
+                    method: 'PUT',
+                    headers: { 'Authorization': `token ${token}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify(putBody)
                 });
-                if (pres.ok) { const pd = await pres.json(); Store.sha = pd.content.sha; Store.persist(); Sync.setStatus('online'); if(create) UI.toast("Criado!"); }
-                else if (pres.status === 409) setTimeout(() => Sync.perform(), 1000);
-                else throw new Error("Save Error");
-            } else Sync.setStatus('online');
-        } catch (e) { console.error(e); Sync.setStatus('error', e.message); }
+
+                if (putRes.ok) {
+                    const putData = await putRes.json();
+                    Store.sha = putData.content.sha;
+                    Store.persist();
+                    Sync.setStatus('online');
+                    if(needsCreation) UI.toast("Arquivo criado!");
+                } else if (putRes.status === 409) {
+                    console.warn("Conflito SHA. Tentando novamente...");
+                    // Retry automático
+                    setTimeout(() => Sync.perform(true), 1500);
+                } else {
+                    const txt = await putRes.text();
+                    throw new Error(`Save ${putRes.status}: ${txt}`);
+                }
+            } else {
+                Sync.setStatus('online');
+            }
+
+        } catch (e) {
+            console.error(e);
+            Sync.setStatus('error', e.message.substring(0, 15));
+            UI.toast("Erro Sync: " + e.message);
+        }
     }
 };
 
@@ -252,16 +316,19 @@ const UI = {
         UI.lists.forEach(k => { document.getElementById(`list-${k}`).innerHTML = ''; document.getElementById(`badge-${k}`).innerText = '0'; });
         const items = Store.items.filter(i => !i._deleted);
         
-        // ORDENAÇÃO
         items.sort((a,b) => {
-            // Se ambos são 'next', usa o campo 'order' crescente (1, 2, 3...)
-            if(a.status === 'next' && b.status === 'next') return (a.order || 0) - (b.order || 0);
+            // Ordenação especial para Next (Campo order)
+            if(a.status === 'next' && b.status === 'next') {
+                return (a.order || 0) - (b.order || 0);
+            }
+            // Calendário por Data
             if(a.status === 'calendar' && a.date && b.date) return new Date(a.date) - new Date(b.date);
+            // Padrão: Mais recente primeiro
             return new Date(b.updatedAt) - new Date(a.updatedAt);
         });
 
         const counts = {};
-        let seqCounter = 1; // Contador para a lista Next
+        let seqCounter = 1;
 
         items.forEach(item => {
             const t = document.getElementById(`list-${item.status}`);
@@ -273,9 +340,10 @@ const UI = {
                 if (item.date) meta += `📅 ${new Date(item.date).toLocaleString().slice(0,-3)} `;
                 if (item.note) meta += `📝 ${item.note}`;
                 
-                // Botões de Ordem e Número de Sequência apenas para 'next'
                 let orderControls = '';
                 let seqBadge = '';
+                
+                // Controles de Ordenação apenas na lista 'next'
                 if (item.status === 'next') {
                     seqBadge = `<div class="seq-num">${seqCounter++}</div>`;
                     orderControls = `
@@ -315,8 +383,9 @@ const AI = {
         try {
             const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${k}`, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ contents:[{parts:[{text:p}]}]})});
             const d = await r.json();
-            JSON.parse(d.candidates[0].content.parts[0].text.replace(/```json|```/g,'').trim()).forEach(u => Store.update(u.id, {status:u.status, date:u.date||null, note:u.note||null}));
-            UI.toast("Feito!");
+            const txt = d.candidates[0].content.parts[0].text.replace(/```json|```/g,'').trim();
+            JSON.parse(txt).forEach(u => Store.update(u.id, {status:u.status, date:u.date||null, note:u.note||null}));
+            UI.toast("Processamento Concluído!");
         } catch(e) { UI.toast("Erro IA: "+e.message); }
     }
 };
@@ -332,13 +401,17 @@ const App = {
     moveItem: (s) => { Store.update(App.activeId, {status:s}); UI.closeModal('contextModal'); if(s==='calendar'){const d=prompt("Data (YYYY-MM-DD HH:MM):",new Date().toISOString().slice(0,16));if(d)Store.update(App.activeId,{date:d});} },
     sync: (f) => Sync.perform(f),
     
-    // Lógica de Reordenação (Swap)
+    // REORDER (Lógica Fixada)
     reorder: (id, dir) => {
-        const list = Store.items.filter(i => i.status === 'next' && !i._deleted).sort((a,b) => (a.order||0) - (b.order||0));
+        // Pega apenas itens Next e ordena visualmente
+        const list = Store.items
+            .filter(i => i.status === 'next' && !i._deleted)
+            .sort((a,b) => (a.order||0) - (b.order||0));
+            
         const idx = list.findIndex(i => i.id === id);
         if (idx === -1) return;
-        const targetIdx = idx + dir;
         
+        const targetIdx = idx + dir;
         if (targetIdx >= 0 && targetIdx < list.length) {
             const currentItem = list[idx];
             const swapItem = list[targetIdx];
@@ -347,7 +420,7 @@ const App = {
             const tempOrder = currentItem.order || 0;
             const targetOrder = swapItem.order || 0;
             
-            // Se as ordens forem iguais (velhos items), força diferença
+            // Evita colisão se ambos forem iguais (zero)
             if (tempOrder === targetOrder) {
                 Store.update(currentItem.id, { order: tempOrder + dir });
             } else {
