@@ -138,8 +138,9 @@
   {
     "id": 1767462535573,
     "text": "Consultar processo abono",
-    "status": "inbox",
+    "status": "completed",
     "updatedAt": 1767462535573,
-    "order": 1767462535573
+    "order": 1767462535573,
+    "completedAt": "2026-01-03T17:49:10.917Z"
   }
 ]
