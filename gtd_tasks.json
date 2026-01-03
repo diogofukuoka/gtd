@@ -82,10 +82,11 @@
     "googleEventId": "vhsvr99omshnk5tch4mqps3k4s"
   },
   {
-    "id": 1767401556311,
-    "text": "Colocar tala, pesos, cadeira, potes, telas etc para vender",
+    "id": 1767403045355,
+    "text": "Aprender a falar no ritmo do pensamento (NotebookLM)",
     "status": "next",
-    "updatedAt": 1767401556311
+    "updatedAt": 1767403045355,
+    "order": 1
   },
   {
     "id": 1767401612331,
@@ -120,11 +121,10 @@
     "googleEventId": "ng6jf6s8l9c5dg1m15m7fgsv6c"
   },
   {
-    "id": 1767403045355,
-    "text": "Aprender a falar no ritmo do pensamento (NotebookLM)",
+    "id": 1767401556311,
+    "text": "Colocar tala, pesos, cadeira, potes, telas etc para vender",
     "status": "next",
-    "updatedAt": 1767403045355,
-    "order": 1
+    "updatedAt": 1767401556311
   },
   {
     "id": 1767473512276,
