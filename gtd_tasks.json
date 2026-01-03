@@ -123,14 +123,18 @@
   {
     "id": 1767401646788,
     "text": "GTD: Ver sobre os pombos no telhado para 9 de Janeiro 2026 às 8 horas da manhã  ",
-    "status": "inbox",
-    "updatedAt": 1767401646788
+    "status": "calendar",
+    "updatedAt": 1767401646788,
+    "date": "2026-01-09T08:00",
+    "googleEventId": "7vjh3am6oebif79pri199j7esg"
   },
   {
     "id": 1767401710768,
     "text": "Levar Scooter para arrumar no dia 12 de Janeiro 2026 às 7 horas da manhã  ",
-    "status": "inbox",
-    "updatedAt": 1767401710768
+    "status": "calendar",
+    "updatedAt": 1767401710768,
+    "date": "2026-01-12T07:00",
+    "googleEventId": "mhquntqs0bmmf2tgfuaskjjgjo"
   },
   {
     "id": 1767401791356,
