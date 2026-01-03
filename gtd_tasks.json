@@ -133,7 +133,9 @@
   {
     "id": 1767401791356,
     "text": "Permanece com plano mensal Mureka AI ou muda para anual? 14/01/26 às 07:00",
-    "status": "inbox",
-    "updatedAt": 1767401791356
+    "status": "calendar",
+    "updatedAt": 1767401791356,
+    "date": "2026-01-14T07:00",
+    "googleEventId": "ng6jf6s8l9c5dg1m15m7fgsv6c"
   }
 ]
