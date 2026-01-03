@@ -23,7 +23,8 @@
     "text": "Comprar ingredientes para pão",
     "status": "next",
     "date": "2025-12-31T17:00",
-    "googleEventId": "ejonge02q5vbtp3uagmokbdbcg"
+    "googleEventId": "ejonge02q5vbtp3uagmokbdbcg",
+    "order": null
   },
   {
     "id": 1767135597434,
@@ -46,8 +47,7 @@
     "status": "next",
     "updatedAt": 1767400580444,
     "date": "2026-01-03T12:00",
-    "googleEventId": "mkdfviumcbegb7chulcvg9pdn4",
-    "order": null
+    "googleEventId": "mkdfviumcbegb7chulcvg9pdn4"
   },
   {
     "id": 1767400605579,
@@ -55,7 +55,8 @@
     "status": "next",
     "updatedAt": 1767400605579,
     "date": "2026-01-03T10:00",
-    "googleEventId": "8tga1vqj284bbpvkpia6nu85a0"
+    "googleEventId": "8tga1vqj284bbpvkpia6nu85a0",
+    "order": null
   },
   {
     "id": 1767400758556,
