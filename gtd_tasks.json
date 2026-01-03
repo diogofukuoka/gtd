@@ -79,19 +79,23 @@
   {
     "id": 1767400799977,
     "text": "Pagar CRT 04 (ler) 05/01/26 08:30",
-    "status": "inbox",
-    "updatedAt": 1767400799977
+    "status": "calendar",
+    "updatedAt": 1767400799977,
+    "date": "2026-01-05T08:30",
+    "googleEventId": "v975u6miaap7vd6ouelkja7si4"
   },
   {
     "id": 1767401282284,
     "text": "Imprimir faturas da igreja e ir pagar sem falta dia 05/01/26 às 08:00",
-    "status": "inbox",
-    "updatedAt": 1767401282284
+    "status": "calendar",
+    "updatedAt": 1767401282284,
+    "date": "2026-01-05T08:00",
+    "googleEventId": "q119e1odcja88ngrhvmak8ls2c"
   },
   {
     "id": 1767401446108,
     "text": "Colocar tala, pesos, cadeira, potes etc para vender",
-    "status": "inbox",
+    "status": "project",
     "updatedAt": 1767401446108
   },
   {
