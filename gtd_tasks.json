@@ -51,5 +51,11 @@
     "status": "calendar",
     "date": "2026-01-05T08:30:00",
     "googleEventId": "6cl9odrunm55t3eue5pll2b2fs"
+  },
+  {
+    "id": 1767400443518,
+    "text": "Aprender Xadrez no Gemini Aprendizado",
+    "status": "next",
+    "updatedAt": 1767400443518
   }
 ]
