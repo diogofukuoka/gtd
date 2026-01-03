@@ -1,7 +1,7 @@
 [
   {
     "id": 1767047311654,
-    "text": "Estudar assunto para elaborar esboço para se pegar",
+    "text": "Elaborar pregação",
     "status": "project"
   },
   {
@@ -145,5 +145,11 @@
     "text": "Colocar plural na GEM da Bíblia de Estudo ",
     "status": "do-now",
     "updatedAt": 1767480422929
+  },
+  {
+    "id": 1767480832485,
+    "text": "Estudar o assunto para fazer a elaboração do esboço da pregação",
+    "status": "inbox",
+    "updatedAt": 1767480832485
   }
 ]
