@@ -38,8 +38,7 @@
     "id": 1767400465538,
     "text": "Aprender xadrez no Gemin Aprendizado",
     "status": "next",
-    "updatedAt": 1767400465538,
-    "order": 1
+    "updatedAt": 1767400465538
   },
   {
     "id": 1767400580444,
@@ -47,7 +46,8 @@
     "status": "next",
     "updatedAt": 1767400580444,
     "date": "2026-01-03T12:00",
-    "googleEventId": "mkdfviumcbegb7chulcvg9pdn4"
+    "googleEventId": "mkdfviumcbegb7chulcvg9pdn4",
+    "order": null
   },
   {
     "id": 1767400605579,
@@ -55,7 +55,8 @@
     "status": "next",
     "updatedAt": 1767400605579,
     "date": "2026-01-03T10:00",
-    "googleEventId": "8tga1vqj284bbpvkpia6nu85a0"
+    "googleEventId": "8tga1vqj284bbpvkpia6nu85a0",
+    "order": null
   },
   {
     "id": 1767400758556,
@@ -93,8 +94,7 @@
     "id": 1767401556311,
     "text": "Colocar tala, pesos, cadeira, potes, telas etc para vender",
     "status": "next",
-    "updatedAt": 1767401556311,
-    "order": null
+    "updatedAt": 1767401556311
   },
   {
     "id": 1767401612331,
@@ -132,6 +132,14 @@
     "id": 1767403045355,
     "text": "Aprender a falar no ritmo do pensamento (NotebookLM)",
     "status": "next",
-    "updatedAt": 1767403045355
+    "updatedAt": 1767403045355,
+    "order": 1
+  },
+  {
+    "id": 1767462535573,
+    "text": "Consultar processo abono",
+    "status": "inbox",
+    "updatedAt": 1767462535573,
+    "order": 1767462535573
   }
 ]
