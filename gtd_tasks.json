@@ -35,12 +35,10 @@
     "order": 1
   },
   {
-    "id": 1767063414904,
-    "text": "Comprar ingredientes para pão",
+    "id": 1767401556311,
+    "text": "Colocar tala, pesos, cadeira, potes, telas etc para vender",
     "status": "next",
-    "date": "2025-12-31T17:00",
-    "googleEventId": "ejonge02q5vbtp3uagmokbdbcg",
-    "order": null
+    "updatedAt": 1767401556311
   },
   {
     "id": 1767400758556,
@@ -75,10 +73,12 @@
     "googleEventId": "vhsvr99omshnk5tch4mqps3k4s"
   },
   {
-    "id": 1767401556311,
-    "text": "Colocar tala, pesos, cadeira, potes, telas etc para vender",
+    "id": 1767063414904,
+    "text": "Comprar ingredientes para pão",
     "status": "next",
-    "updatedAt": 1767401556311
+    "date": "2025-12-31T17:00",
+    "googleEventId": "ejonge02q5vbtp3uagmokbdbcg",
+    "order": null
   },
   {
     "id": 1767401612331,
