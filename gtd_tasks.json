@@ -55,7 +55,8 @@
     "status": "next",
     "updatedAt": 1767400605579,
     "date": "2026-01-03T10:00",
-    "googleEventId": "8tga1vqj284bbpvkpia6nu85a0"
+    "googleEventId": "8tga1vqj284bbpvkpia6nu85a0",
+    "order": null
   },
   {
     "id": 1767400758556,
@@ -93,8 +94,7 @@
     "id": 1767401556311,
     "text": "Colocar tala, pesos, cadeira, potes, telas etc para vender",
     "status": "next",
-    "updatedAt": 1767401556311,
-    "order": null
+    "updatedAt": 1767401556311
   },
   {
     "id": 1767401612331,
