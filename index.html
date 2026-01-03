@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="theme-color" content="#2c3e50">
-    <title>GTD Fukuoka Enterprise (v10.5)</title>
+    <title>GTD Fukuoka v10.6 (Doctor)</title>
     <style>
         :root { --primary: #2c3e50; --accent: #3498db; --success: #27ae60; --warning: #f39c12; --danger: #e74c3c; --bg: #f4f6f8; --card: #ffffff; --text: #2c3e50; --border: #dfe6e9; }
         @media (prefers-color-scheme: dark) { :root { --bg: #1a1a1a; --card: #2d3436; --text: #dfe6e9; --border: #444; } }
@@ -31,7 +31,6 @@
         .list-body { overflow-y: auto; padding: 5px; flex-grow: 1; min-height: 50px; }
         
         .task { background: var(--bg); border: 1px solid var(--border); margin-bottom: 6px; padding: 10px; border-radius: 6px; display: flex; gap: 8px; align-items: center; animation: slideIn 0.2s; position: relative; }
-        .task:hover { border-color: #ccc; }
         
         .seq-num { background: var(--primary); color: white; font-size: 0.75rem; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; flex-shrink: 0; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
         .order-col { display: flex; flex-direction: column; gap: 2px; margin-right: 4px; }
@@ -60,9 +59,10 @@
         .form-group input { width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); color: var(--text); }
         .grid-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 15px; }
         .full-btn { width: 100%; padding: 12px; margin-top: 10px; background: var(--primary); color: white; }
+        .btn-test { width: 100%; padding: 10px; margin-top: 5px; background: var(--accent); color: white; border-radius: 6px; border: none; font-weight: bold; cursor: pointer; }
+        
         .spinner { width: 14px; height: 14px; border: 2px solid #ccc; border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; display: inline-block; vertical-align: middle; }
         @keyframes spin { to { transform: rotate(360deg); } }
-        @keyframes slideIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
         #toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #333; color: white; padding: 12px 24px; border-radius: 30px; font-size: 0.9rem; z-index: 3000; opacity: 0; transition: opacity 0.3s; pointer-events: none; text-align: center; width: max-content; max-width: 90%; }
         #toast.visible { opacity: 1; }
     </style>
@@ -71,7 +71,7 @@
 
 <div class="container">
     <div class="header-controls">
-        <h2 style="margin:0; font-size:1.3rem;">GTD Fukuoka <span style="font-size:0.6em; opacity:0.6;">v10.5</span></h2>
+        <h2 style="margin:0; font-size:1.3rem;">GTD Fukuoka <span style="font-size:0.6em; opacity:0.6;">v10.6</span></h2>
         <div style="display:flex; gap:10px;">
             <div id="syncStatus" class="sync-badge" onclick="App.sync(true)">
                 <span class="dot">●</span> <span>Offline</span>
@@ -92,14 +92,19 @@
 <div id="configModal" class="overlay">
     <div class="modal">
         <h3>Configurações</h3>
-        <p style="font-size:0.8rem; color:var(--warning)">⚠️ Tokens são ofuscados localmente.</p>
+        <p style="font-size:0.8rem; color:#666">Verifique se o Repo "gtd" existe no seu GitHub.</p>
+        
         <div class="form-group"><label>GitHub User</label><input id="cfgUser" placeholder="Ex: diogofukuoka"></div>
         <div class="form-group"><label>Repo Name</label><input id="cfgRepo" placeholder="Ex: gtd"></div>
-        <div class="form-group"><label>Token (PAT)</label><input type="password" id="cfgToken" placeholder="ghp_..."></div>
+        <div class="form-group"><label>Token (PAT - Clássico)</label><input type="password" id="cfgToken" placeholder="ghp_..."></div>
         <div class="form-group"><label>File Path</label><input id="cfgPath" value="gtd_tasks.json"></div>
-        <hr style="border:0; border-top:1px solid var(--border)">
+        
+        <button class="btn-test" onclick="Doctor.checkConnection()">🧪 Testar Conexão</button>
+        
+        <hr style="border:0; border-top:1px solid var(--border); margin: 15px 0;">
         <div class="form-group"><label>Gemini API Key</label><input type="password" id="cfgGemini"></div>
         <div class="form-group"><label>Google Client ID</label><input id="cfgGoogle"></div>
+        
         <div class="grid-btns">
             <button class="full-btn" style="background:#7f8c8d" onclick="UI.closeModal('configModal')">Cancelar</button>
             <button class="full-btn" style="background:var(--success)" onclick="Config.save()">Salvar</button>
@@ -117,46 +122,80 @@
 
 <div id="toast">Notificação</div>
 
-<!-- Integração Google -->
 <script src="https://apis.google.com/js/api.js"></script>
 <script src="https://accounts.google.com/gsi/client"></script>
 
 <script>
-/** 
- * GTD FUKUOKA ENTERPRISE v10.5
- * - Fix: "Failed to fetch" sanitizer
- * - Fix: Sequencing UI robustness
- */
+/** GTD FUKUOKA ENTERPRISE v10.6 - DOCTOR EDITION **/
 
-// --- UTILS & SECURITY ---
 const Utils = {
     uuid: () => Date.now().toString(36) + Math.random().toString(36).substr(2),
     now: () => new Date().toISOString(),
-    obscure: (s) => { if(!s)return'';try{return btoa(s.split('').map(c=>String.fromCharCode(c.charCodeAt(0)^123)).join(''))}catch(e){return s} },
-    reveal: (s) => { if(!s)return'';try{return atob(s).split('').map(c=>String.fromCharCode(c.charCodeAt(0)^123)).join('')}catch(e){return s} },
     debounce: (f, w) => { let t; return function(...a) { clearTimeout(t); t = setTimeout(() => f.apply(this, a), w); }; }
 };
 
-// --- CONFIGURATION ---
 const Config = {
     data: {},
     load: () => { const s = localStorage.getItem('gtd_cfg_v1'); Config.data = s ? JSON.parse(s) : {}; },
     save: () => {
-        // AGRESSIVE TRIM PARA EVITAR ERROS DE ESPAÇO
+        // Sanitização Agressiva
         const d = {
-            ghUser: document.getElementById('cfgUser').value.replace(/\s/g,''), // Remove TODOS os espaços
-            ghRepo: document.getElementById('cfgRepo').value.trim(),
-            ghToken: Utils.obscure(document.getElementById('cfgToken').value.trim()),
+            ghUser: document.getElementById('cfgUser').value.replace(/\s/g, ''),
+            ghRepo: document.getElementById('cfgRepo').value.replace(/\s/g, ''),
+            ghToken: document.getElementById('cfgToken').value.trim(), // Removido obscure para debug
             ghPath: document.getElementById('cfgPath').value.trim() || 'gtd_tasks.json',
-            geminiKey: Utils.obscure(document.getElementById('cfgGemini').value.trim()),
+            geminiKey: document.getElementById('cfgGemini').value.trim(),
             googleId: document.getElementById('cfgGoogle').value.trim()
         };
         localStorage.setItem('gtd_cfg_v1', JSON.stringify(d)); Config.data = d; location.reload();
     },
-    get: (k) => k.includes('Token')||k.includes('Key') ? Utils.reveal(Config.data[k]) : Config.data[k]
+    get: (k) => Config.data[k] 
 };
 
-// --- DATA STORE ---
+// --- DOCTOR: DIAGNÓSTICO ---
+const Doctor = {
+    checkConnection: async () => {
+        const user = document.getElementById('cfgUser').value.trim();
+        const repo = document.getElementById('cfgRepo').value.trim();
+        const token = document.getElementById('cfgToken').value.trim();
+        const btn = document.querySelector('.btn-test');
+
+        if(!user || !repo || !token) return alert("Preencha User, Repo e Token primeiro.");
+
+        btn.innerHTML = '<span class="spinner"></span> Testando...';
+        
+        try {
+            // Teste 1: Token e Usuário
+            const userRes = await fetch('https://api.github.com/user', {
+                headers: { 'Authorization': `token ${token}` }
+            });
+            
+            if(userRes.status === 401) throw new Error("Token Inválido (401). Verifique se copiou corretamente.");
+            if(!userRes.ok) throw new Error("Erro ao conectar no GitHub API.");
+            
+            // Teste 2: Repositório
+            const repoRes = await fetch(`https://api.github.com/repos/${user}/${repo}`, {
+                headers: { 'Authorization': `token ${token}` }
+            });
+            
+            if(repoRes.status === 404) throw new Error(`Repositório "${repo}" não encontrado ou Token sem acesso. O repo existe?`);
+            if(!repoRes.ok) throw new Error("Erro ao acessar Repositório.");
+
+            const repoData = await repoRes.json();
+            
+            alert(`✅ SUCESSO!\n\nConectado como: ${user}\nRepo: ${repoData.full_name}\nPermissões: OK\n\nPode Salvar.`);
+            btn.innerHTML = '✅ Sucesso';
+            btn.style.background = 'var(--success)';
+
+        } catch(e) {
+            console.error(e);
+            alert(`❌ FALHA: ${e.message}\n\nDica: Use um 'Classic Token' com escopo 'repo'.`);
+            btn.innerHTML = '❌ Falhou';
+            btn.style.background = 'var(--danger)';
+        }
+    }
+};
+
 const Store = {
     items: [],
     sha: null,
@@ -166,7 +205,6 @@ const Store = {
         Store.items = l ? JSON.parse(l) : [];
         Store.sha = localStorage.getItem('gtd_sha');
         
-        // Migration: ensure order
         let needsSave = false;
         Store.items.forEach((item, idx) => {
             if (typeof item.order === 'undefined') { item.order = idx * 1000; needsSave = true; }
@@ -206,7 +244,6 @@ const Store = {
     }
 };
 
-// --- SYNC ENGINE ---
 const Sync = {
     status: 'offline',
     setStatus: (s, m) => {
@@ -229,10 +266,10 @@ const Sync = {
         Sync.setStatus('syncing');
         
         try {
-            // GET
-            const getUrl = `https://api.github.com/repos/${user}/${repo}/contents/${path}`;
+            // GET com timestamp para evitar cache
+            const getUrl = `https://api.github.com/repos/${user}/${repo}/contents/${path}?t=${Date.now()}`;
             const res = await fetch(getUrl, { 
-                headers: { 'Authorization': `token ${token}`, 'Accept': 'application/vnd.github.v3+json', 'Cache-Control': 'no-cache' } 
+                headers: { 'Authorization': `token ${token}`, 'Accept': 'application/vnd.github.v3+json' } 
             });
             
             let remoteItems = [];
@@ -247,26 +284,26 @@ const Sync = {
                 needsCreation = true;
             } else {
                 if(res.status === 401) throw new Error("401 Token Inválido");
-                if(res.status === 404) throw new Error("404 Repo não achado");
+                if(res.status === 403) throw new Error("403 Acesso Negado (Verifique Token)");
                 throw new Error(`GitHub ${res.status}`);
             }
             
-            // MERGE
             Store.merge(remoteItems);
             Store.sha = remoteSha;
 
-            // PUT
             const localStr = JSON.stringify(Store.items);
             const remoteStr = JSON.stringify(remoteItems);
             
             if (needsCreation || localStr !== remoteStr || force) {
+                // Remove query param para PUT
+                const putUrl = `https://api.github.com/repos/${user}/${repo}/contents/${path}`;
                 const putBody = {
                     message: "GTD Sync " + Utils.now(),
                     content: btoa(unescape(encodeURIComponent(JSON.stringify(Store.items, null, 2)))),
                     sha: remoteSha 
                 };
 
-                const putRes = await fetch(getUrl, {
+                const putRes = await fetch(putUrl, {
                     method: 'PUT',
                     headers: { 'Authorization': `token ${token}`, 'Content-Type': 'application/json' },
                     body: JSON.stringify(putBody)
@@ -281,8 +318,7 @@ const Sync = {
                     setTimeout(() => Sync.perform(true), 1500);
                 } else {
                     const txt = await putRes.text();
-                    // Se falhar PUT no 404, significa que o user não tem permissão de escrita
-                    if(needsCreation) throw new Error("Erro ao Criar: Verifique Token");
+                    if(res.status === 404 && putRes.status === 404) throw new Error("Repo não existe?");
                     throw new Error(`Save ${putRes.status}`);
                 }
             } else {
@@ -292,14 +328,13 @@ const Sync = {
         } catch (e) {
             console.error(e);
             let msg = e.message;
-            if(msg.includes('Failed to fetch')) msg = "Erro Rede/CORS";
+            if(msg.includes('Failed to fetch')) msg = "Erro Rede/Bloqueador";
             Sync.setStatus('error', msg.substring(0, 15));
-            UI.toast("Erro Sync: " + msg + ". Verifique se o Repo existe.");
+            UI.toast("Erro Sync: " + msg);
         }
     }
 };
 
-// --- UI MANAGER ---
 const UI = {
     lists: ['inbox', 'do-now', 'next', 'waiting', 'calendar', 'project', 'someday', 'reference'],
     names: { 'inbox': '📥 Entrada', 'do-now': '⚡ Fazer Agora', 'next': '🔥 Próximas', 'waiting': '⏳ Delegado', 'calendar': '📅 Agenda', 'project': '📂 Projetos', 'someday': '💡 Talvez', 'reference': '📚 Ref.' },
@@ -310,8 +345,13 @@ const UI = {
             c.innerHTML = `<div class="list-header" onclick="App.addToList('${k}')">${UI.names[k]} <span class="badge" id="badge-${k}">0</span></div><div class="list-body" id="list-${k}"></div>`;
             g.appendChild(c);
         });
-        if(Config.get('ghUser')) { document.getElementById('cfgUser').value = Config.get('ghUser'); document.getElementById('cfgRepo').value = Config.get('ghRepo'); document.getElementById('cfgToken').value = Config.get('ghToken'); document.getElementById('cfgGemini').value = Config.get('geminiKey')||''; document.getElementById('cfgGoogle').value = Config.get('googleId')||''; }
-        else UI.openConfig();
+        if(Config.get('ghUser')) { 
+            document.getElementById('cfgUser').value = Config.get('ghUser'); 
+            document.getElementById('cfgRepo').value = Config.get('ghRepo'); 
+            document.getElementById('cfgToken').value = Config.get('ghToken'); 
+            document.getElementById('cfgGemini').value = Config.get('geminiKey')||''; 
+            document.getElementById('cfgGoogle').value = Config.get('googleId')||''; 
+        } else UI.openConfig();
     },
     render: () => {
         UI.lists.forEach(k => { document.getElementById(`list-${k}`).innerHTML = ''; document.getElementById(`badge-${k}`).innerText = '0'; });
@@ -338,23 +378,10 @@ const UI = {
                 
                 let leftControls = '';
                 if (item.status === 'next') {
-                    leftControls = `
-                        <div class="order-col">
-                            <button class="btn-order" onclick="event.stopPropagation(); App.reorder('${item.id}', -1)">▲</button>
-                            <button class="btn-order" onclick="event.stopPropagation(); App.reorder('${item.id}', 1)">▼</button>
-                        </div>
-                        <div class="seq-num">${seqCounter++}</div>
-                    `;
+                    leftControls = `<div class="order-col"><button class="btn-order" onclick="event.stopPropagation(); App.reorder('${item.id}', -1)">▲</button><button class="btn-order" onclick="event.stopPropagation(); App.reorder('${item.id}', 1)">▼</button></div><div class="seq-num">${seqCounter++}</div>`;
                 }
 
-                el.innerHTML = `
-                    ${leftControls}
-                    <div class="task-content" onclick="App.editItem('${item.id}')">${item.text}${meta ? `<span class="task-meta">${meta}</span>` : ''}</div>
-                    <div class="task-actions">
-                        <button class="btn-act" onclick="App.openContext('${item.id}')">➔</button>
-                        <button class="btn-act del" onclick="App.deleteItem('${item.id}')">✕</button>
-                    </div>
-                `;
+                el.innerHTML = `${leftControls}<div class="task-content" onclick="App.editItem('${item.id}')">${item.text}${meta ? `<span class="task-meta">${meta}</span>` : ''}</div><div class="task-actions"><button class="btn-act" onclick="App.openContext('${item.id}')">➔</button><button class="btn-act del" onclick="App.deleteItem('${item.id}')">✕</button></div>`;
                 t.appendChild(el);
             }
         });
@@ -365,7 +392,6 @@ const UI = {
     toast: (m) => { const t = document.getElementById('toast'); t.innerText = m; t.classList.add('visible'); setTimeout(() => t.classList.remove('visible'), 5000); }
 };
 
-// --- AI ENGINE ---
 const AI = {
     magicProcess: async () => {
         const k = Config.get('geminiKey'); if(!k) return UI.toast("Falta API Key");
@@ -383,7 +409,6 @@ const AI = {
     }
 };
 
-// --- APP CONTROLLER ---
 const App = {
     activeId: null,
     init: () => { 
