@@ -134,13 +134,5 @@
     "status": "next",
     "updatedAt": 1767403045355,
     "order": 1
-  },
-  {
-    "id": 1767462535573,
-    "text": "Consultar processo abono",
-    "status": "completed",
-    "updatedAt": 1767462535573,
-    "order": 1767462535573,
-    "completedAt": "2026-01-03T17:49:10.917Z"
   }
 ]
