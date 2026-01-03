@@ -1,7 +1,134 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#2c3e50">
+    <title>GTD Fukuoka Enterprise</title>
+    <style>
+        :root { --primary: #2c3e50; --accent: #3498db; --success: #27ae60; --warning: #f39c12; --danger: #e74c3c; --bg: #f4f6f8; --card: #ffffff; --text: #2c3e50; --border: #dfe6e9; }
+        @media (prefers-color-scheme: dark) { :root { --bg: #1a1a1a; --card: #2d3436; --text: #dfe6e9; --border: #444; } }
+        
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 10px; padding-bottom: 80px; transition: background 0.3s; }
+        
+        /* Layout Grid & Container */
+        .container { max-width: 1200px; margin: 0 auto; }
+        .header-controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .sync-badge { font-size: 0.75rem; padding: 4px 8px; border-radius: 12px; background: #eee; color: #555; display: flex; align-items: center; gap: 5px; font-weight: 600; border: 1px solid var(--border); cursor: pointer; }
+        .sync-badge.online { color: var(--success); border-color: var(--success); background: rgba(39, 174, 96, 0.1); }
+        .sync-badge.syncing { color: var(--accent); border-color: var(--accent); background: rgba(52, 152, 219, 0.1); }
+        .sync-badge.error { color: var(--danger); border-color: var(--danger); background: rgba(231, 76, 60, 0.1); }
+        .dot { font-size: 1.2em; line-height: 0; }
+        
+        /* Inputs */
+        .input-wrapper { display: flex; gap: 8px; margin-bottom: 15px; background: var(--card); padding: 8px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        input[type="text"] { flex: 1; border: none; font-size: 16px; background: transparent; color: var(--text); padding: 8px; }
+        button { border: none; cursor: pointer; border-radius: 8px; font-weight: 600; transition: transform 0.1s, opacity 0.2s; display: flex; align-items: center; justify-content: center; }
+        button:active { transform: scale(0.95); }
+        .btn-main { background: var(--accent); color: white; width: 44px; height: 44px; font-size: 1.2rem; }
+        
+        /* Lists Grid */
+        .lists-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 15px; }
+        .list-column { background: var(--card); border-radius: 10px; border: 1px solid var(--border); display: flex; flex-direction: column; max-height: 80vh; }
+        .list-header { padding: 12px; border-bottom: 1px solid var(--border); font-weight: bold; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; background: var(--card); border-radius: 10px 10px 0 0; z-index: 10; cursor: pointer; user-select: none; }
+        .list-body { overflow-y: auto; padding: 5px; flex-grow: 1; min-height: 50px; }
+        
+        /* Task Item */
+        .task { background: var(--bg); border: 1px solid var(--border); margin-bottom: 6px; padding: 10px; border-radius: 6px; display: flex; gap: 10px; align-items: start; animation: slideIn 0.2s; position: relative; cursor: pointer; }
+        .task:hover { border-color: #ccc; }
+        .task-content { flex: 1; overflow-wrap: anywhere; font-size: 0.95rem; line-height: 1.4; }
+        .task-meta { font-size: 0.75rem; color: #888; margin-top: 4px; display: block; }
+        .task-actions { display: flex; gap: 5px; opacity: 0.8; }
+        .btn-act { width: 30px; height: 30px; border-radius: 4px; font-size: 0.9rem; background: rgba(0,0,0,0.05); color: var(--text); }
+        .btn-act:hover { background: var(--accent); color: white; }
+        .btn-act.del:hover { background: var(--danger); }
+        
+        /* Badges & Colors */
+        .badge { background: #eee; padding: 2px 8px; border-radius: 10px; font-size: 0.7rem; color: #555; }
+        .border-inbox { border-top: 3px solid var(--danger); }
+        .border-next { border-top: 3px solid var(--success); }
+        .border-waiting { border-top: 3px solid var(--warning); }
+        .border-calendar { border-top: 3px solid #4285f4; }
+        
+        /* Modals */
+        .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(2px); z-index: 2000; display: none; align-items: center; justify-content: center; }
+        .modal { background: var(--card); width: 90%; max-width: 450px; padding: 20px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); max-height: 90vh; overflow-y: auto; }
+        .modal h3 { margin-top: 0; color: var(--text); }
+        .form-group { margin-bottom: 12px; }
+        .form-group label { display: block; font-size: 0.8rem; margin-bottom: 4px; color: #888; }
+        .form-group input { width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); color: var(--text); }
+        .grid-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 15px; }
+        .full-btn { width: 100%; padding: 12px; margin-top: 10px; background: var(--primary); color: white; }
+        
+        /* Utilities */
+        .hidden { display: none !important; }
+        @keyframes slideIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+        .spinner { width: 14px; height: 14px; border: 2px solid #ccc; border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; display: inline-block; vertical-align: middle; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        #toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #333; color: white; padding: 12px 24px; border-radius: 30px; font-size: 0.9rem; z-index: 3000; opacity: 0; transition: opacity 0.3s; pointer-events: none; text-align: center; width: max-content; max-width: 90%; }
+        #toast.visible { opacity: 1; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header-controls">
+        <h2 style="margin:0; font-size:1.3rem;">GTD Fukuoka <span style="font-size:0.6em; opacity:0.6;">v10.1</span></h2>
+        <div style="display:flex; gap:10px;">
+            <div id="syncStatus" class="sync-badge" onclick="App.sync(true)">
+                <span class="dot">●</span> <span>Offline</span>
+            </div>
+            <button class="btn-act" onclick="UI.openConfig()">⚙️</button>
+        </div>
+    </div>
+
+    <!-- Smart Input -->
+    <div class="input-wrapper">
+        <input type="text" id="quickInput" placeholder="O que precisa ser feito?" onkeypress="if(event.key==='Enter') App.addItem()">
+        <button class="btn-main" onclick="App.addItem()">+</button>
+        <button class="btn-main" style="background:#8e44ad" onclick="AI.magicProcess()" title="Processar com IA">✨</button>
+    </div>
+
+    <!-- Lists Rendering Zone -->
+    <div id="appGrid" class="lists-grid"></div>
+</div>
+
+<!-- Modals -->
+<div id="configModal" class="overlay">
+    <div class="modal">
+        <h3>Configurações</h3>
+        <p style="font-size:0.8rem; color:var(--warning)">⚠️ Tokens são ofuscados localmente.</p>
+        <div class="form-group"><label>GitHub User</label><input id="cfgUser" placeholder="Ex: diogofukuoka"></div>
+        <div class="form-group"><label>Repo Name</label><input id="cfgRepo" placeholder="Ex: gtd"></div>
+        <div class="form-group"><label>Token (PAT)</label><input type="password" id="cfgToken" placeholder="ghp_..."></div>
+        <div class="form-group"><label>File Path</label><input id="cfgPath" value="gtd_tasks.json"></div>
+        <hr style="border:0; border-top:1px solid var(--border)">
+        <div class="form-group"><label>Gemini API Key</label><input type="password" id="cfgGemini"></div>
+        <div class="form-group"><label>Google Client ID</label><input id="cfgGoogle"></div>
+        <div class="grid-btns">
+            <button class="full-btn" style="background:#7f8c8d" onclick="UI.closeModal('configModal')">Cancelar</button>
+            <button class="full-btn" style="background:var(--success)" onclick="Config.save()">Salvar</button>
+        </div>
+    </div>
+</div>
+
+<div id="contextModal" class="overlay">
+    <div class="modal">
+        <h3 id="ctxTitle">Mover Tarefa</h3>
+        <div class="grid-btns" id="ctxButtons"></div>
+        <button class="full-btn" style="background:transparent; color:#555; border:1px solid #ccc; margin-top:15px;" onclick="UI.closeModal('contextModal')">Fechar</button>
+    </div>
+</div>
+
+<div id="toast">Notificação</div>
+
+<script src="https://apis.google.com/js/api.js"></script>
+<script src="https://accounts.google.com/gsi/client"></script>
+
 <script>
 /** 
- * GTD FUKUOKA ENTERPRISE - CORREÇÃO DE SYNC
- * Substitua todo o conteúdo da tag <script> por este bloco atualizado.
+ * GTD FUKUOKA ENTERPRISE - VERSÃO COMPLETA E CORRIGIDA
  */
 
 // --- 1. UTILS & SECURITY ---
@@ -47,6 +174,7 @@ const Store = {
         Store.sha = localStorage.getItem('gtd_sha');
     },
     
+    // Lógica de Merge: Last Write Wins baseado em UpdatedAt
     merge: (remoteItems) => {
         let changes = 0;
         const localMap = new Map(Store.items.map(i => [i.id, i]));
@@ -83,13 +211,14 @@ const Store = {
     }
 };
 
-// --- 4. SYNC ENGINE (CORRIGIDO) ---
+// --- 4. SYNC ENGINE (FIXED) ---
 const Sync = {
     status: 'offline',
     
     setStatus: (s, msg) => {
         Sync.status = s;
         const el = document.getElementById('syncStatus');
+        if(!el) return;
         if(s === 'syncing') { el.innerHTML = '<span class="spinner"></span> Sync...'; el.className = 'sync-badge syncing'; }
         else if(s === 'online') { el.innerHTML = '<span class="dot" style="color:var(--success)">●</span> Online'; el.className = 'sync-badge online'; }
         else if(s === 'error') { el.innerHTML = `<span class="dot" style="color:var(--danger)">●</span> ${msg || 'Erro'}`; el.className = 'sync-badge error'; }
@@ -127,8 +256,8 @@ const Sync = {
                 console.log("Arquivo não existe. Preparando criação...");
                 needsCreation = true;
             } else {
-                if(res.status === 401) throw new Error("401: Token Inválido/Expirado");
-                if(res.status === 403) throw new Error("403: Sem Permissão (Scope Repo?)");
+                if(res.status === 401) throw new Error("401: Token Inválido");
+                if(res.status === 403) throw new Error("403: Sem Permissão");
                 throw new Error(`GitHub ${res.status}`);
             }
 
@@ -140,7 +269,6 @@ const Sync = {
             const localString = JSON.stringify(Store.items); // Salva tudo
             const remoteString = JSON.stringify(remoteContent);
             
-            // Se for criação (404), se mudou algo, ou se forçado pelo botão
             if (needsCreation || localString !== remoteString || force) {
                 const putBody = {
                     message: needsCreation ? "Initial Commit GTD" : "Update via GTD App " + Utils.now(),
@@ -159,16 +287,16 @@ const Sync = {
                     Store.sha = putData.content.sha;
                     Store.persist();
                     Sync.setStatus('online');
-                    if(needsCreation) UI.toast("Arquivo criado no GitHub com sucesso!");
+                    if(needsCreation) UI.toast("Arquivo criado no GitHub!");
                 } else {
-                    const errTxt = await putRes.text(); // Detalhes do erro
+                    const errTxt = await putRes.text();
                     console.error("Erro Save:", errTxt);
                     if (putRes.status === 409) {
                         console.warn("Conflito SHA. Tentando novamente...");
                         setTimeout(() => Sync.perform(), 1000);
                         return;
                     }
-                    throw new Error(`Save ${putRes.status}`);
+                    throw new Error(`Erro Save ${putRes.status}`);
                 }
             } else {
                 Sync.setStatus('online');
@@ -189,6 +317,7 @@ const UI = {
     
     init: () => {
         const grid = document.getElementById('appGrid');
+        if(!grid) return console.error("Grid não encontrado");
         grid.innerHTML = '';
         UI.lists.forEach(key => {
             const col = document.createElement('div');
@@ -207,7 +336,13 @@ const UI = {
     },
 
     render: () => {
-        UI.lists.forEach(k => { document.getElementById(`list-${k}`).innerHTML = ''; document.getElementById(`badge-${k}`).innerText = '0'; });
+        UI.lists.forEach(k => { 
+            const el = document.getElementById(`list-${k}`);
+            if(el) el.innerHTML = ''; 
+            const bd = document.getElementById(`badge-${k}`);
+            if(bd) bd.innerText = '0'; 
+        });
+        
         const activeItems = Store.items.filter(i => !i._deleted);
         activeItems.sort((a,b) => {
             if(a.status === 'calendar' && a.date && b.date) return new Date(a.date) - new Date(b.date);
@@ -259,12 +394,19 @@ const AI = {
 const App = {
     activeId: null,
     init: () => {
-        Config.load(); Store.init(); UI.init(); UI.render();
-        Sync.trigger = Utils.debounce(() => Sync.perform(), 2000);
-        // Tenta syncar. Se falhar, tenta forçar create no próximo update.
-        Sync.perform(); 
-        setInterval(() => Sync.perform(), 60000);
-        if(Config.get('googleId')) Calendar.init();
+        try {
+            Config.load(); 
+            Store.init(); 
+            UI.init(); 
+            UI.render();
+            Sync.trigger = Utils.debounce(() => Sync.perform(), 2000);
+            Sync.perform(); 
+            setInterval(() => Sync.perform(), 60000);
+            if(Config.get('googleId')) Calendar.init();
+        } catch(e) {
+            console.error("Fatal Error:", e);
+            alert("Erro fatal ao iniciar: " + e.message);
+        }
     },
     addItem: () => { const inp = document.getElementById('quickInput'); if(inp.value.trim()) { Store.add(inp.value.trim()); inp.value = ''; } },
     addToList: (list) => { const txt = prompt(`Adicionar em ${UI.names[list]}:`); if(txt) Store.add(txt, list); },
@@ -278,3 +420,5 @@ const App = {
 const Calendar = { client: null, init: () => {} };
 window.onload = App.init;
 </script>
+</body>
+</html>
