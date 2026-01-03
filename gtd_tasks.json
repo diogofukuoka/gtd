@@ -9,8 +9,7 @@
     "text": "Abrir chamado gastos Copel",
     "status": "next",
     "date": "2025-12-30T07:00",
-    "googleEventId": "uv4b9611g3p1o9epvittcefm00",
-    "order": null
+    "googleEventId": "uv4b9611g3p1o9epvittcefm00"
   },
   {
     "id": 1767135322883,
@@ -24,7 +23,8 @@
     "text": "Comprar ingredientes para pão",
     "status": "next",
     "date": "2025-12-31T17:00",
-    "googleEventId": "ejonge02q5vbtp3uagmokbdbcg"
+    "googleEventId": "ejonge02q5vbtp3uagmokbdbcg",
+    "order": null
   },
   {
     "id": 1767135597434,
@@ -39,7 +39,7 @@
     "text": "Aprender xadrez no Gemin Aprendizado",
     "status": "next",
     "updatedAt": 1767400465538,
-    "order": null
+    "order": 1
   },
   {
     "id": 1767400580444,
