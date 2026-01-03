@@ -55,8 +55,10 @@
   {
     "id": 1767400580444,
     "text": "Ver se Scooter caiu próximo sábado às 12:00",
-    "status": "inbox",
-    "updatedAt": 1767400580444
+    "status": "calendar",
+    "updatedAt": 1767400580444,
+    "date": "2026-01-10T12:00",
+    "googleEventId": "39llk8utkjlgjqvj1bt3sl5eoc"
   },
   {
     "id": 1767400605579,
