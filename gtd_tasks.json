@@ -38,7 +38,8 @@
     "id": 1767400465538,
     "text": "Aprender xadrez no Gemin Aprendizado",
     "status": "next",
-    "updatedAt": 1767400465538
+    "updatedAt": 1767400465538,
+    "order": null
   },
   {
     "id": 1767400580444,
@@ -46,8 +47,7 @@
     "status": "next",
     "updatedAt": 1767400580444,
     "date": "2026-01-03T12:00",
-    "googleEventId": "mkdfviumcbegb7chulcvg9pdn4",
-    "order": null
+    "googleEventId": "mkdfviumcbegb7chulcvg9pdn4"
   },
   {
     "id": 1767400605579,
@@ -55,8 +55,7 @@
     "status": "next",
     "updatedAt": 1767400605579,
     "date": "2026-01-03T10:00",
-    "googleEventId": "8tga1vqj284bbpvkpia6nu85a0",
-    "order": null
+    "googleEventId": "8tga1vqj284bbpvkpia6nu85a0"
   },
   {
     "id": 1767400758556,
@@ -132,7 +131,6 @@
     "id": 1767403045355,
     "text": "Aprender a falar no ritmo do pensamento (NotebookLM)",
     "status": "next",
-    "updatedAt": 1767403045355,
-    "order": 1
+    "updatedAt": 1767403045355
   }
 ]
