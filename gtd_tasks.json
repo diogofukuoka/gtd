@@ -146,5 +146,11 @@
     "text": "Estudar o assunto para fazer a elaboração do esboço da pregação",
     "status": "project",
     "updatedAt": 1767480832485
+  },
+  {
+    "id": 1767481097981,
+    "text": "Tirar o ícone de certo das tarefas agendadas",
+    "status": "inbox",
+    "updatedAt": 1767481097981
   }
 ]
