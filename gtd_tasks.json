@@ -5,10 +5,11 @@
     "status": "project"
   },
   {
-    "id": 1767400465538,
-    "text": "Aprender xadrez no Gemin Aprendizado",
+    "id": 1767044479995,
+    "text": "Abrir chamado gastos Copel",
     "status": "next",
-    "updatedAt": 1767400465538
+    "date": "2025-12-30T07:00",
+    "googleEventId": "uv4b9611g3p1o9epvittcefm00"
   },
   {
     "id": 1767135322883,
@@ -18,11 +19,10 @@
     "googleEventId": "oe18244leqcu1t2e7pstukpa1o"
   },
   {
-    "id": 1767044479995,
-    "text": "Abrir chamado gastos Copel",
+    "id": 1767400465538,
+    "text": "Aprender xadrez no Gemin Aprendizado",
     "status": "next",
-    "date": "2025-12-30T07:00",
-    "googleEventId": "uv4b9611g3p1o9epvittcefm00"
+    "updatedAt": 1767400465538
   },
   {
     "id": 1767135597434,
