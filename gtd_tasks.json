@@ -152,5 +152,11 @@
     "text": "Tirar o ícone de certo das tarefas agendadas",
     "status": "next",
     "updatedAt": 1767481097981
+  },
+  {
+    "id": 1767481219098,
+    "text": "Ativar sincronização da agenda automaticamente",
+    "status": "inbox",
+    "updatedAt": 1767481219098
   }
 ]
