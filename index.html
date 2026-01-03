@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>GTD Fukuoka (v10.1 Safe Touch)</title>
+    <title>GTD Fukuoka (v10.2 Black Borders)</title>
     <style>
         :root { --primary: #2c3e50; --accent: #3498db; --success: #27ae60; --warning: #f39c12; --danger: #e74c3c; --google: #4285f4; --gray: #95a5a6; --ai: #8e44ad; --github: #24292e; }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -42,13 +42,20 @@
         .list-header:active { opacity: 0.6; background-color: #e9ecef; }
         .badge { background: #fff; padding: 2px 6px; border-radius: 10px; font-size: 0.7rem; font-weight: bold; border: 1px solid #ccc; }
         
-        .card-inbox { border-top: 4px solid var(--danger); }
-        .card-next { border-top: 4px solid var(--success); }
-        .card-waiting { border-top: 4px solid var(--warning); }
-        .card-projects { border-top: 4px solid var(--primary); }
-        .card-calendar { border-top: 4px solid var(--google); }
-        .card-completed { border-top: 4px solid var(--gray); opacity: 0.8; }
-        .card-do-now { background-color: #fff3cd !important; border: 1px solid #ffeeba !important; }
+        /* AJUSTE SOLICITADO: Todas as bordas superiores agora são PRETAS (#000) */
+        .card-inbox { border-top: 4px solid #000; }
+        .card-next { border-top: 4px solid #000; }
+        .card-waiting { border-top: 4px solid #000; }
+        .card-projects { border-top: 4px solid #000; }
+        .card-calendar { border-top: 4px solid #000; }
+        .card-completed { border-top: 4px solid #000; opacity: 0.8; }
+        
+        /* Mantém o fundo amarelo, mas força a borda superior preta */
+        .card-do-now { 
+            background-color: #fff3cd !important; 
+            border: 1px solid #ffeeba !important; 
+            border-top: 4px solid #000 !important; 
+        }
 
         ul { list-style: none; padding: 0; margin: 0; min-height: 50px; flex-grow: 1; }
         
@@ -66,12 +73,12 @@
         .btn-icon.edit:hover { color: var(--accent); background-color: #e3f2fd; }
         .btn-icon.ai:hover { color: var(--ai); background-color: #f3e5f5; }
 
-        /* AJUSTE SOLICITADO: Botões de Sequência com mais espaço e tamanho */
+        /* Botões de Sequência com espaço seguro (Mantido) */
         .seq-num { background: var(--primary); color: white; font-size: 0.7rem; font-weight: bold; width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-right: 3px; flex-shrink: 0; }
         
         .btn-seq { 
-            width: 32px; /* Aumentado para facilitar o toque */
-            height: 32px; /* Aumentado para facilitar o toque */
+            width: 32px; 
+            height: 32px; 
             font-size: 0.8rem; 
             background: #e9ecef; 
             border: 1px solid #ccc; 
@@ -82,7 +89,7 @@
             border-radius: 4px; 
             cursor: pointer; 
             padding: 0; 
-            margin-right: 12px; /* MARGEM ADICIONADA PARA EVITAR CLIQUE ERRADO */
+            margin-right: 12px; /* Espaço de segurança mantido */
         }
         .btn-seq:hover { background: var(--primary); color: white; border-color: var(--primary); }
 
