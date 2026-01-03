@@ -134,12 +134,5 @@
     "status": "next",
     "updatedAt": 1767403045355,
     "order": 1
-  },
-  {
-    "id": 1767472681224,
-    "text": "tttt",
-    "status": "completed",
-    "updatedAt": 1767472681224,
-    "completedAt": "2026-01-03T20:42:40.876Z"
   }
 ]
