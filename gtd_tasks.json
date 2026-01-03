@@ -18,10 +18,11 @@
     "googleEventId": "oe18244leqcu1t2e7pstukpa1o"
   },
   {
-    "id": 1767401556311,
-    "text": "Colocar tala, pesos, cadeira, potes, telas etc para vender",
+    "id": 1767044479995,
+    "text": "Abrir chamado gastos Copel",
     "status": "next",
-    "updatedAt": 1767401556311
+    "date": "2025-12-30T07:00",
+    "googleEventId": "uv4b9611g3p1o9epvittcefm00"
   },
   {
     "id": 1767135597434,
@@ -32,11 +33,10 @@
     "googleEventId": "9rpaujfli6k3oer2elun8tk5mg"
   },
   {
-    "id": 1767044479995,
-    "text": "Abrir chamado gastos Copel",
+    "id": 1767401556311,
+    "text": "Colocar tala, pesos, cadeira, potes, telas etc para vender",
     "status": "next",
-    "date": "2025-12-30T07:00",
-    "googleEventId": "uv4b9611g3p1o9epvittcefm00"
+    "updatedAt": 1767401556311
   },
   {
     "id": 1767403045355,
