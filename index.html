@@ -58,6 +58,11 @@
         .btn-icon.edit:hover { color: var(--accent); background-color: #e3f2fd; }
         .btn-icon.ai:hover { color: var(--ai); background-color: #f3e5f5; }
 
+        /* Estilos Novos para Sequenciamento */
+        .seq-num { background: var(--primary); color: white; font-size: 0.7rem; font-weight: bold; width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-right: 5px; flex-shrink: 0; }
+        .btn-seq { width: 24px; height: 24px; font-size: 0.7rem; background: #e9ecef; border: 1px solid #ccc; color: #555; display: flex; align-items: center; justify-content: center; border-radius: 4px; cursor: pointer; }
+        .btn-seq:hover { background: var(--primary); color: white; border-color: var(--primary); }
+
         #processing-zone { display:none; border:2px solid var(--accent); padding:15px; border-radius:10px; margin-bottom:20px; background: white; }
         .step { display: none; animation: fadeIn 0.3s; }
         .step.active { display: block; }
@@ -219,12 +224,38 @@
         });
     }
 
+    // Função auxiliar para reordenar tarefas na caixa "Next"
+    function moveNextItem(e, itemId, direction) {
+        e.stopPropagation();
+        // Filtra todas as tarefas da lista 'next' na ordem atual
+        const nextItems = items.filter(i => i.status === 'next');
+        const currentIndexInNext = nextItems.findIndex(i => i.id === itemId);
+        
+        if (currentIndexInNext === -1) return;
+        
+        // Impede mover além dos limites
+        if (direction === -1 && currentIndexInNext === 0) return; // Topo
+        if (direction === 1 && currentIndexInNext === nextItems.length - 1) return; // Fundo
+
+        const targetItem = nextItems[currentIndexInNext + direction];
+        
+        // Encontra os índices reais no array principal 'items'
+        const mainIndexCurrent = items.indexOf(nextItems[currentIndexInNext]);
+        const mainIndexTarget = items.indexOf(targetItem);
+        
+        // Troca as posições no array principal
+        [items[mainIndexCurrent], items[mainIndexTarget]] = [items[mainIndexTarget], items[mainIndexCurrent]];
+        
+        if(window.sync) window.sync(); else render();
+    }
+
     function render() {
         const listKeys = Object.keys(listNames);
         const grid = document.querySelector('.lists-grid');
         if(!grid) return;
         grid.innerHTML = ''; 
         const counts = {};
+        let nextSeqCounter = 1; // Contador para sequência da lista "next"
         
         listKeys.forEach(key => {
             counts[key] = 0;
@@ -271,12 +302,25 @@
                     meta += `<span class="meta" style="color:var(--success)">Feito: ${d.toLocaleString()}</span>`;
                 }
 
+                // Lógica de Sequência e Botões de Reordenação para "Próximas Ações"
+                let seqBadge = "";
+                let moveBtns = "";
+                if (item.status === 'next') {
+                    seqBadge = `<div class="seq-num">${nextSeqCounter++}</div>`;
+                    moveBtns = `
+                        <button class="btn-seq" onclick="moveNextItem(event, ${item.id}, -1)">▲</button>
+                        <button class="btn-seq" onclick="moveNextItem(event, ${item.id}, 1)">▼</button>
+                    `;
+                }
+
                 li.innerHTML = `
+                    ${seqBadge}
                     <div class="task-content">
                         <span class="task-text">${item.text}</span>
                         ${meta}
                     </div>
                     <div class="task-actions">
+                        ${moveBtns}
                         <button class="btn-icon edit" title="Editar" onclick="editItemClick(event, ${idx})">✏️</button>
                         <button class="btn-icon ai" title="Desmembrar (IA)" onclick="breakdownItem(event, ${idx})">🤖</button>
                         <button class="btn-icon del" title="Excluir" onclick="deleteItem(event, ${idx})">🗑️</button>
