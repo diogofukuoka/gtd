@@ -1,215 +1,6 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>GTD Fukuoka (v10.0 Enterprise)</title>
-    <style>
-        :root { 
-            --primary: #2c3e50; --accent: #3498db; --success: #27ae60; --warning: #f39c12; 
-            --danger: #e74c3c; --google: #4285f4; --gray: #95a5a6; --ai: #8e44ad; 
-            --bg: #f4f6f8; --card-bg: #ffffff; --text: #2c3e50;
-        }
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 15px; padding-bottom: 80px; user-select: none; }
-        
-        /* Layout & Container */
-        .container { max-width: 1000px; margin: 0 auto; }
-        header { text-align: center; margin-bottom: 20px; }
-        h1 { margin: 0; color: var(--primary); font-size: 1.6rem; letter-spacing: -0.5px; }
-
-        /* Status Bar */
-        .status-bar { background: var(--card-bg); border: 1px solid #e1e4e8; padding: 8px 12px; border-radius: 8px; margin-top: 15px; font-size: 0.8rem; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.03); }
-        .dot { width: 8px; height: 8px; border-radius: 50%; background: #ccc; display:inline-block; margin-right:6px; transition: background 0.3s; }
-        .dot.online { background: var(--success); box-shadow: 0 0 6px var(--success); }
-        .dot.syncing { background: var(--warning); animation: pulse 1s infinite; }
-        .dot.error { background: var(--danger); }
-        
-        /* Buttons */
-        button { border: none; border-radius: 6px; cursor: pointer; font-weight: 600; transition: all 0.2s; display: inline-flex; align-items: center; justify-content: center; }
-        button:active { transform: scale(0.96); }
-        .btn-sm { padding: 4px 10px; font-size: 0.8rem; background: #edf2f7; color: #333; }
-        .btn-icon { width: 32px; height: 32px; background: transparent; color: #666; font-size: 1.1rem; border-radius: 50%; }
-        .btn-icon:hover { background: #f0f0f0; color: var(--accent); }
-        .btn-main { background: var(--accent); color: white; height: 48px; width: 50px; font-size: 1.4rem; border-radius: 8px; }
-        .btn-mic { background: #607d8b; color: white; height: 48px; width: 48px; font-size: 1.2rem; border-radius: 8px; }
-        .btn-mic.listening { background: var(--danger); animation: pulse-red 1.5s infinite; }
-
-        /* Input Area */
-        .input-group { display: flex; gap: 10px; margin-bottom: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); background: white; padding: 10px; border-radius: 12px; }
-        input[type="text"] { flex: 1; border: none; font-size: 16px; padding: 5px; background: transparent; }
-        input::placeholder { color: #ccc; }
-
-        /* Grid System */
-        .lists-grid { display: grid; grid-template-columns: 1fr; gap: 20px; }
-        @media(min-width: 768px) { .lists-grid { grid-template-columns: repeat(2, 1fr); } }
-        
-        /* Cards */
-        .list-card { background: var(--card-bg); border-radius: 10px; padding: 0; box-shadow: 0 2px 8px rgba(0,0,0,0.04); display: flex; flex-direction: column; overflow: hidden; border: 1px solid #e1e4e8; }
-        .list-header { padding: 12px 15px; background: #f8f9fa; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; font-weight: 700; color: var(--primary); cursor: pointer; }
-        .list-header:hover { background: #f1f3f5; }
-        .badge { background: #e9ecef; color: #495057; padding: 2px 8px; border-radius: 12px; font-size: 0.75rem; }
-
-        /* List Colors */
-        .border-inbox { border-top: 4px solid var(--danger); }
-        .border-next { border-top: 4px solid var(--success); }
-        .border-waiting { border-top: 4px solid var(--warning); }
-        .border-project { border-top: 4px solid var(--primary); }
-        .border-calendar { border-top: 4px solid var(--google); }
-        .border-completed { border-top: 4px solid var(--gray); opacity: 0.9; }
-
-        /* Task Items */
-        ul { list-style: none; padding: 0; margin: 0; min-height: 60px; }
-        li { padding: 12px 15px; border-bottom: 1px solid #f1f1f1; display: flex; align-items: flex-start; gap: 10px; background: white; transition: background 0.2s; position: relative; }
-        li:last-child { border-bottom: none; }
-        
-        /* Sequence Number */
-        .seq-num { 
-            background: var(--primary); color: white; font-size: 0.7rem; font-weight: bold; 
-            min-width: 20px; height: 20px; border-radius: 50%; display: flex; 
-            align-items: center; justify-content: center; margin-top: 2px; flex-shrink: 0;
-        }
-
-        .task-content { flex: 1; display: flex; flex-direction: column; }
-        .task-text { font-size: 0.95rem; line-height: 1.4; color: #333; }
-        .meta { font-size: 0.7rem; color: #888; margin-top: 4px; display: flex; align-items: center; gap: 5px; }
-        
-        /* Actions */
-        .task-actions { display: flex; gap: 2px; align-items: center; opacity: 0.6; transition: opacity 0.2s; }
-        li:hover .task-actions { opacity: 1; }
-        .btn-seq { width: 24px; height: 24px; font-size: 0.7rem; background: #f8f9fa; border: 1px solid #eee; margin: 0 1px; color: #555; }
-        .btn-seq:hover { background: var(--primary); color: white; border-color: var(--primary); }
-
-        /* Processing Wizard */
-        #processing-zone { display:none; background: white; border-radius: 12px; padding: 20px; margin-bottom: 20px; box-shadow: 0 5px 20px rgba(0,0,0,0.1); border: 2px solid var(--accent); animation: slideDown 0.3s; }
-        .decision-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
-        .step { display: none; }
-        .step.active { display: block; animation: fadeIn 0.3s; }
-
-        /* Modals & Overlays */
-        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 3000; align-items: center; justify-content: center; backdrop-filter: blur(2px); }
-        .modal-content { background: white; width: 90%; max-width: 450px; padding: 25px; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
-        .modal-content h3 { margin-top: 0; color: var(--primary); }
-        input[type="text"], input[type="password"], input[type="datetime-local"] { width: 100%; padding: 10px; margin: 5px 0 15px 0; border: 1px solid #ddd; border-radius: 6px; }
-        
-        #loadingOverlay { display: none; position: fixed; inset: 0; background: rgba(255,255,255,0.9); z-index: 9999; flex-direction: column; align-items: center; justify-content: center; }
-        .spinner { width: 40px; height: 40px; border: 4px solid #f3f3f3; border-top: 4px solid var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; }
-        #toast { visibility: hidden; background: #333; color: white; padding: 12px 24px; border-radius: 50px; position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); z-index: 4000; font-size: 0.9rem; box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
-        #toast.show { visibility: visible; animation: fadein 0.5s, fadeout 0.5s 2.5s; }
-
-        @keyframes spin { 100% { transform: rotate(360deg); } }
-        @keyframes fadein { from {bottom: 0; opacity: 0;} to {bottom: 30px; opacity: 1;} }
-        @keyframes fadeout { from {bottom: 30px; opacity: 1;} to {bottom: 0; opacity: 0;} }
-        @keyframes slideDown { from { transform: translateY(-20px); opacity:0; } to { transform: translateY(0); opacity:1; } }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-
-        footer { text-align: center; margin-top: 40px; font-size: 0.75rem; color: #aaa; }
-    </style>
-</head>
-<body>
-
-<div class="container">
-    <header>
-        <h1>GTD Fukuoka <span style="font-size:0.6em; color:#888">v10.0</span></h1>
-        <div class="status-bar">
-            <div style="display:flex; align-items:center;">
-                <div id="dbDot" class="dot"></div>
-                <span id="dbStatus">Offline</span>
-            </div>
-            <div>
-                <button class="btn-sm" id="btnAuthCalendar" onclick="App.authCalendar()">📅 Agenda</button>
-                <button class="btn-sm" onclick="UI.openConfig()">⚙️ Config</button>
-            </div>
-        </div>
-    </header>
-
-    <div class="input-group">
-        <input type="text" id="inboxInput" list="historyList" placeholder="O que precisa ser feito?" onkeypress="if(event.key==='Enter') App.addToInbox()">
-        <datalist id="historyList"></datalist>
-        <button class="btn-mic" id="voiceBtn" onclick="App.toggleVoice()">🎤</button>
-        <button class="btn-main" onclick="App.addToInbox()">+</button>
-    </div>
-
-    <!-- Processamento -->
-    <div id="processButtons" style="display:none; gap:10px; margin-bottom:20px;">
-        <button onclick="App.startProcessing()" class="btn-sm" style="flex:1; background:var(--primary); color:white; height:40px;">⚡ Processar Manual</button>
-        <button onclick="AI.magicProcess()" class="btn-sm" style="flex:1; background:linear-gradient(135deg, #8e44ad, #3498db); color:white; height:40px;">✨ IA Magic Sort</button>
-    </div>
-
-    <div id="processing-zone">
-        <div style="text-align:center; margin-bottom:15px; color:#888; font-weight:bold; font-size:0.8rem;">PROCESSANDO ITEM</div>
-        <h3 id="currentItem" style="margin:0 0 20px 0; background:#fff9db; padding:15px; border-left:4px solid var(--warning); border-radius:6px; font-size:1.1rem;"></h3>
-        
-        <!-- Steps Wizard -->
-        <div id="step-1" class="step active"><p class="q-title" style="text-align:center">É passível de ação?</p><div class="decision-grid"><button class="btn-sm" style="background:var(--danger); color:white; height:40px;" onclick="UI.toStep('step-no')">NÃO</button><button class="btn-sm" style="background:var(--success); color:white; height:40px;" onclick="UI.toStep('step-yes')">SIM</button></div></div>
-        <div id="step-no" class="step"><p style="text-align:center">O que fazer?</p><div class="decision-grid"><button class="btn-sm" onclick="App.finalizeProc('trash')">Lixo 🗑️</button><button class="btn-sm" onclick="App.finalizeProc('someday')">Talvez 💡</button><button class="btn-sm" style="grid-column:span 2" onclick="App.finalizeProc('reference')">Referência 📚</button></div><button class="btn-sm" style="width:100%; margin-top:10px; background:#fff; border:1px solid #ccc;" onclick="UI.toStep('step-1')">Voltar</button></div>
-        <div id="step-yes" class="step"><p style="text-align:center">Leva < 2 minutos?</p><div class="decision-grid"><button class="btn-sm" style="background:var(--success); color:white" onclick="App.finalizeProc('do-now')">SIM (Faça Agora)</button><button class="btn-sm" onclick="UI.toStep('step-delegate')">NÃO</button></div><button class="btn-sm" style="width:100%; margin-top:10px; background:#fff; border:1px solid #ccc;" onclick="UI.toStep('step-1')">Voltar</button></div>
-        <div id="step-delegate" class="step"><p style="text-align:center">É para você?</p><div class="decision-grid"><button class="btn-sm" onclick="App.finalizeProc('waiting')">NÃO (Delegar)</button><button class="btn-sm" onclick="UI.toStep('step-defer')">SIM (Eu faço)</button></div><button class="btn-sm" style="width:100%; margin-top:10px; background:#fff; border:1px solid #ccc;" onclick="UI.toStep('step-yes')">Voltar</button></div>
-        <div id="step-defer" class="step"><p style="text-align:center">Tem data definida?</p><div class="decision-grid"><button class="btn-sm" onclick="App.finalizeProc('calendar')">SIM (Agenda)</button><button class="btn-sm" onclick="App.finalizeProc('next')">NÃO (Assim que der)</button><button class="btn-sm" style="grid-column:span 2" onclick="App.finalizeProc('project')">É complexo (Projeto)</button></div><button class="btn-sm" style="width:100%; margin-top:10px; background:#fff; border:1px solid #ccc;" onclick="UI.toStep('step-delegate')">Voltar</button></div>
-    </div>
-
-    <div class="lists-grid" id="listsContainer"></div>
-</div>
-
-<footer>GTD Fukuoka v10.0 &copy; 2026</footer>
-
-<!-- Modals -->
-<div id="configModal" class="modal-overlay">
-    <div class="modal-content">
-        <h3>⚙️ Configurações</h3>
-        <label>GitHub User:</label><input type="text" id="ghOwner">
-        <label>GitHub Repo:</label><input type="text" id="ghRepo">
-        <label>GitHub Token (PAT):</label><input type="password" id="ghToken">
-        <label>Nome do Arquivo:</label><input type="text" id="ghPath" value="gtd_tasks.json">
-        <hr style="border:0; border-top:1px solid #eee; margin:15px 0;">
-        <label>Google Client ID:</label><input type="text" id="cfgClientId">
-        <label>Gemini API Key:</label><input type="password" id="cfgGemini">
-        <div style="text-align:right;">
-            <button class="btn-sm" onclick="document.getElementById('configModal').style.display='none'">Cancelar</button>
-            <button class="btn-sm" style="background:var(--success); color:white;" onclick="UI.saveConfig()">Salvar</button>
-        </div>
-    </div>
-</div>
-
-<div id="dateModal" class="modal-overlay">
-    <div class="modal-content">
-        <h3>📅 Escolha a Data</h3>
-        <input type="datetime-local" id="modalDateInput">
-        <div style="text-align:right;">
-            <button class="btn-sm" onclick="UI.resolveDate(null)">Cancelar</button>
-            <button class="btn-sm" style="background:var(--success); color:white;" onclick="UI.resolveDate(document.getElementById('modalDateInput').value)">Confirmar</button>
-        </div>
-    </div>
-</div>
-
-<div id="moveModal" class="modal-overlay">
-    <div class="modal-content">
-        <h3>Mover para:</h3>
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
-            <button class="btn-sm" onclick="App.finalizeMove('inbox')">📥 Entrada</button>
-            <button class="btn-sm" onclick="App.finalizeMove('next')">🔥 Próx. Ações</button>
-            <button class="btn-sm" onclick="App.finalizeMove('project')">📂 Projetos</button>
-            <button class="btn-sm" onclick="App.finalizeMove('calendar')">📅 Calendário</button>
-            <button class="btn-sm" onclick="App.finalizeMove('waiting')">⏳ Delegar</button>
-            <button class="btn-sm" onclick="App.finalizeMove('someday')">💡 Talvez</button>
-            <button class="btn-sm" onclick="App.finalizeMove('reference')">📚 Ref.</button>
-            <button class="btn-sm" onclick="App.finalizeMove('completed')">✅ Feito</button>
-        </div>
-        <button class="btn-sm" style="width:100%; margin-top:15px" onclick="document.getElementById('moveModal').style.display='none'">Cancelar</button>
-    </div>
-</div>
-
-<div id="loadingOverlay"><div class="spinner"></div><p id="loadingText" style="margin-top:15px; font-weight:bold;">Carregando...</p></div>
-<div id="toast">Notificação</div>
-
-<!-- CORE LOGIC -->
-<script src="https://apis.google.com/js/api.js"></script>
-<script src="https://accounts.google.com/gsi/client"></script>
-
 <script>
 /**
- * GTD Fukuoka v10 - Enterprise Logic
- * Modularized for performance and maintenance.
+ * GTD Fukuoka v10.1 - Fix Sequencing
  */
 
 // --- 1. CONFIG & STATE ---
@@ -241,8 +32,8 @@ const Storage = {
         State.items = JSON.parse(localStorage.getItem('gtd_data')) || [];
         
         UI.render();
-        await Storage.syncGitHub(true); // Load on start
-        setInterval(() => { if(!document.hidden) Storage.syncGitHub(true); }, 60000); // Polling
+        await Storage.syncGitHub(true);
+        setInterval(() => { if(!document.hidden) Storage.syncGitHub(true); }, 60000);
     },
 
     saveLocal: () => {
@@ -262,11 +53,9 @@ const Storage = {
         const url = `https://api.github.com/repos/${ghOwner}/${ghRepo}/contents/${ghPath}`;
         
         try {
-            // GET
             const res = await fetch(url, { headers: { 'Authorization': `token ${ghToken}`, 'Accept': 'application/vnd.github.v3+json' }});
             
             if (res.status === 404 && !forceLoad) {
-                // Create if not exists and we are saving
                 await Storage.uploadToGitHub(url, ghToken, null);
             } else if (res.ok) {
                 const data = await res.json();
@@ -280,7 +69,6 @@ const Storage = {
                     UI.render();
                     UI.updateStatus('online');
                 } else {
-                    // We are saving, update SHA and push
                     State.ghSha = data.sha;
                     await Storage.uploadToGitHub(url, ghToken, State.ghSha);
                 }
@@ -308,8 +96,6 @@ const Storage = {
             const data = await res.json();
             State.ghSha = data.content.sha;
             UI.updateStatus('online');
-        } else {
-            throw new Error("Upload Failed");
         }
     }
 };
@@ -327,6 +113,7 @@ const App = {
             UI.renderHistory();
         }
 
+        // Novo item ganha ordem alta para ir pro final (se necessário)
         const newItem = { id: Date.now(), text: val, status: 'inbox', updatedAt: Date.now(), order: Date.now() };
         State.items.push(newItem);
         input.value = '';
@@ -337,10 +124,11 @@ const App = {
 
     deleteItem: (id) => {
         if(confirm("Excluir tarefa?")) {
-            const idx = State.items.findIndex(i => i.id === id);
+            // Conversão segura de ID (string/number)
+            const idx = State.items.findIndex(i => i.id == id);
             if(idx > -1) {
                 const item = State.items[idx];
-                GoogleCal.handleEvent(item, 'trash'); // Remove from calendar if exists
+                GoogleCal.handleEvent(item, 'trash');
                 State.items.splice(idx, 1);
                 Storage.saveLocal();
                 UI.render();
@@ -350,7 +138,8 @@ const App = {
     },
 
     editItem: (id) => {
-        const item = State.items.find(i => i.id === id);
+        const item = State.items.find(i => i.id == id);
+        if(!item) return;
         const newTxt = prompt("Editar tarefa:", item.text);
         if(newTxt && newTxt !== item.text) {
             item.text = newTxt;
@@ -361,11 +150,14 @@ const App = {
         }
     },
 
-    // Move Logic
-    startMove: (id) => { State.temp.activeIdx = State.items.findIndex(i => i.id === id); document.getElementById('moveModal').style.display = 'flex'; },
+    startMove: (id) => { 
+        State.temp.activeIdx = State.items.findIndex(i => i.id == id); 
+        document.getElementById('moveModal').style.display = 'flex'; 
+    },
     
     finalizeMove: async (newStatus) => {
         document.getElementById('moveModal').style.display = 'none';
+        if (State.temp.activeIdx === -1) return;
         const item = State.items[State.temp.activeIdx];
         await App.changeStatus(item, newStatus);
     },
@@ -373,36 +165,30 @@ const App = {
     changeStatus: async (item, newStatus, aiDate = null, aiNote = null) => {
         const oldStatus = item.status;
         
-        // Logic for Completed
         if(newStatus === 'completed') item.completedAt = new Date().toISOString(); 
         else delete item.completedAt;
 
-        // Logic for Calendar/Waiting
         if(newStatus === 'calendar' || newStatus === 'waiting') {
             let dateStr = aiDate;
             if(!dateStr) dateStr = await UI.askDate();
-            if(!dateStr) return; // Cancelled
+            if(!dateStr) return;
             item.date = dateStr;
-            
             if(newStatus === 'waiting' && !aiNote) {
                 const who = prompt("Quem está responsável?");
                 if(who) item.note = "Delegado: " + who;
-            } else if(aiNote) {
-                item.note = aiNote;
-            }
+            } else if(aiNote) item.note = aiNote;
         }
 
         item.status = newStatus;
-        // Reset order when moving to a sequenced list to put it at bottom initially
+        // Ao mover para Próximas Ações, joga para o fim da lista
         if(newStatus === 'next') item.order = Date.now();
 
-        await GoogleCal.handleEvent(item, newStatus); // Sync Calendar
+        await GoogleCal.handleEvent(item, newStatus);
         Storage.saveLocal();
         UI.render();
         Storage.syncGitHub();
     },
 
-    // Processing Logic
     startProcessing: () => {
         State.temp.procIdx = State.items.findIndex(i => i.status === 'inbox');
         if(State.temp.procIdx > -1) {
@@ -417,57 +203,65 @@ const App = {
 
     finalizeProc: async (status) => {
         await App.changeStatus(State.items[State.temp.procIdx], status);
-        App.startProcessing(); // Next item
+        App.startProcessing();
     },
 
-    // SEQUENCING LOGIC (1 to n)
+    // --- CORREÇÃO DA LÓGICA DE SEQUENCIAMENTO ---
     reorderTask: (id, direction) => {
-        // Find all items in 'next' list, sorted by current order
-        const nextList = State.items.filter(i => i.status === 'next').sort((a,b) => (a.order || 0) - (b.order || 0));
-        const currentIndex = nextList.findIndex(i => i.id === id);
+        // 1. Pega a lista filtrada e ordenada atual
+        // Conversão segura do ID para comparação
+        let listGroup = State.items.filter(i => i.status === 'next');
         
-        if (currentIndex === -1) return;
-        
-        // Swap logic
-        if (direction === 'up' && currentIndex > 0) {
-            const itemA = nextList[currentIndex];
-            const itemB = nextList[currentIndex - 1];
-            // Swap order values. If equal, adjust slightly.
-            const tempOrder = itemA.order;
-            itemA.order = itemB.order;
-            itemB.order = tempOrder;
-            
-            // Fail-safe if orders were identical
-            if(itemA.order === itemB.order) { itemB.order -= 1; }
+        // Ordena baseado no que temos hoje (tratando undefined como 0)
+        listGroup.sort((a,b) => (a.order || 0) - (b.order || 0));
 
-        } else if (direction === 'down' && currentIndex < nextList.length - 1) {
-            const itemA = nextList[currentIndex];
-            const itemB = nextList[currentIndex + 1];
-            const tempOrder = itemA.order;
-            itemA.order = itemB.order;
-            itemB.order = tempOrder;
+        // 2. Normalização: Garante que todos tenham números sequenciais com espaçamento (1000, 2000, 3000)
+        // Isso corrige tarefas antigas que não tinham 'order' ou tinham duplicatas
+        listGroup.forEach((item, index) => {
+            item.order = (index + 1) * 1000;
+        });
+
+        // 3. Encontra o índice na lista limpa e normalizada
+        const idx = listGroup.findIndex(i => i.id == id);
+        if (idx === -1) return;
+
+        // 4. Efetua a troca (Swap) matemática
+        if (direction === 'up' && idx > 0) {
+            const currentItem = listGroup[idx];
+            const prevItem = listGroup[idx - 1];
             
-             if(itemA.order === itemB.order) { itemB.order += 1; }
+            // Troca os valores de ordem
+            const temp = currentItem.order;
+            currentItem.order = prevItem.order;
+            prevItem.order = temp;
+
+        } else if (direction === 'down' && idx < listGroup.length - 1) {
+            const currentItem = listGroup[idx];
+            const nextItem = listGroup[idx + 1];
+            
+            const temp = currentItem.order;
+            currentItem.order = nextItem.order;
+            nextItem.order = temp;
         }
 
+        // 5. Salva e Renderiza
         Storage.saveLocal();
-        UI.render(); // Re-render will reflect new sort
-        // Debounce sync slightly could be good, but direct sync is safer for integrity
+        UI.render();
+        // Sincroniza (debounce idealmente, mas sync direto é mais seguro para integridade)
         Storage.syncGitHub();
     },
 
-    // Voice
     toggleVoice: () => {
-        if(!('webkitSpeechRecognition' in window)) return alert("Navegador sem suporte a voz.");
-        const recognition = new webkitSpeechRecognition();
-        recognition.lang = "pt-BR";
-        recognition.onstart = () => document.getElementById('voiceBtn').classList.add('listening');
-        recognition.onend = () => document.getElementById('voiceBtn').classList.remove('listening');
-        recognition.onresult = (e) => {
-            const txt = e.results[0][0].transcript;
-            document.getElementById('inboxInput').value = txt.charAt(0).toUpperCase() + txt.slice(1);
+        if(!('webkitSpeechRecognition' in window)) return alert("Sem suporte a voz.");
+        const r = new webkitSpeechRecognition();
+        r.lang = "pt-BR";
+        r.onstart = () => document.getElementById('voiceBtn').classList.add('listening');
+        r.onend = () => document.getElementById('voiceBtn').classList.remove('listening');
+        r.onresult = (e) => {
+            const t = e.results[0][0].transcript;
+            document.getElementById('inboxInput').value = t.charAt(0).toUpperCase() + t.slice(1);
         };
-        recognition.start();
+        r.start();
     }
 };
 
@@ -477,30 +271,27 @@ const UI = {
         const grid = document.getElementById('listsContainer');
         grid.innerHTML = '';
         
-        // Check Inbox count
         const inboxCount = State.items.filter(i => i.status === 'inbox').length;
         document.getElementById('processButtons').style.display = inboxCount > 0 ? 'flex' : 'none';
         if(inboxCount === 0) document.getElementById('processing-zone').style.display = 'none';
 
-        // Render Lists
         Object.keys(State.listDefinitions).forEach(key => {
             const def = State.listDefinitions[key];
             const listItems = State.items.filter(i => i.status === key);
             
-            // Special Sort for Sequenced List (Next Actions)
+            // Ordenação Visual
             if(def.sequenced) {
                 listItems.sort((a, b) => (a.order || 0) - (b.order || 0));
             } else if (key === 'calendar') {
                 listItems.sort((a, b) => new Date(a.date) - new Date(b.date));
             }
 
-            // Create Card
             const card = document.createElement('div');
             card.className = `list-card ${def.class}`;
             if(key === 'completed') card.style.gridColumn = '1 / -1';
 
             const header = `
-                <div class="list-header" onclick="App.startListInput('${key}')">
+                <div class="list-header">
                     <span>${def.title}</span>
                     <span class="badge">${listItems.length}</span>
                 </div>`;
@@ -510,19 +301,20 @@ const UI = {
             listItems.forEach((item, index) => {
                 const li = document.createElement('li');
                 
-                // Metadata HTML
                 let metaHtml = '';
                 if(item.date) metaHtml += `<span>📅 ${new Date(item.date).toLocaleString([], {month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'})}</span>`;
                 if(item.note) metaHtml += `<span>📝 ${item.note}</span>`;
                 
-                // Sequencing Buttons (Only for 'next')
                 let seqBtns = '';
                 let seqBadge = '';
+                
+                // Botões de Sequência (Apenas 'next')
+                // NOTA: Passamos o ID como string '${item.id}' para segurança
                 if(def.sequenced) {
                     seqBadge = `<div class="seq-num">${index + 1}</div>`;
                     seqBtns = `
-                        <button class="btn-seq" onclick="event.stopPropagation(); App.reorderTask(${item.id}, 'up')">▲</button>
-                        <button class="btn-seq" onclick="event.stopPropagation(); App.reorderTask(${item.id}, 'down')">▼</button>
+                        <button class="btn-seq" onclick="event.stopPropagation(); App.reorderTask('${item.id}', 'up')">▲</button>
+                        <button class="btn-seq" onclick="event.stopPropagation(); App.reorderTask('${item.id}', 'down')">▼</button>
                     `;
                 }
 
@@ -534,10 +326,10 @@ const UI = {
                     </div>
                     <div class="task-actions">
                         ${seqBtns}
-                        <button class="btn-icon" onclick="event.stopPropagation(); App.editItem(${item.id})">✏️</button>
-                        <button class="btn-icon" onclick="event.stopPropagation(); AI.breakdownItem(${item.id})">🤖</button>
-                        <button class="btn-icon" onclick="event.stopPropagation(); App.startMove(${item.id})">➡️</button>
-                        <button class="btn-icon" style="color:var(--danger)" onclick="event.stopPropagation(); App.deleteItem(${item.id})">🗑️</button>
+                        <button class="btn-icon" onclick="event.stopPropagation(); App.editItem('${item.id}')">✏️</button>
+                        <button class="btn-icon" onclick="event.stopPropagation(); AI.breakdownItem('${item.id}')">🤖</button>
+                        <button class="btn-icon" onclick="event.stopPropagation(); App.startMove('${item.id}')">➡️</button>
+                        <button class="btn-icon" style="color:var(--danger)" onclick="event.stopPropagation(); App.deleteItem('${item.id}')">🗑️</button>
                     </div>
                 `;
                 ul.appendChild(li);
@@ -547,7 +339,6 @@ const UI = {
             card.appendChild(ul);
             grid.appendChild(card);
         });
-        
         UI.renderHistory();
     },
 
@@ -566,8 +357,7 @@ const UI = {
 
     showToast: (msg) => {
         const t = document.getElementById('toast');
-        t.innerText = msg;
-        t.className = 'show';
+        t.innerText = msg; t.className = 'show';
         setTimeout(() => t.className = '', 3000);
     },
 
@@ -590,17 +380,8 @@ const UI = {
         document.getElementById(id).classList.add('active');
     },
 
-    askDate: () => {
-        return new Promise(resolve => {
-            document.getElementById('dateModal').style.display = 'flex';
-            State.temp.dateResolver = resolve;
-        });
-    },
-    
-    resolveDate: (val) => {
-        document.getElementById('dateModal').style.display = 'none';
-        if(State.temp.dateResolver) State.temp.dateResolver(val);
-    }
+    askDate: () => new Promise(r => { document.getElementById('dateModal').style.display = 'flex'; State.temp.dateResolver = r; }),
+    resolveDate: (val) => { document.getElementById('dateModal').style.display = 'none'; if(State.temp.dateResolver) State.temp.dateResolver(val); }
 };
 
 // --- 5. AI & INTEGRATIONS ---
@@ -609,8 +390,7 @@ const AI = {
         if(!State.config.cfgGemini) throw new Error("Sem API Key do Gemini");
         const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${State.config.cfgGemini}`;
         const res = await fetch(url, {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
+            method: 'POST', headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
         });
         const data = await res.json();
@@ -621,69 +401,38 @@ const AI = {
     magicProcess: async () => {
         const inbox = State.items.filter(i => i.status === 'inbox');
         if(!inbox.length) return UI.showToast("Inbox vazia.");
-
         document.getElementById('loadingOverlay').style.display = 'flex';
-        const inputList = inbox.map(i => `ID:${i.id} TXT:${i.text}`).join('\n');
-        const prompt = `
-            Você é um assistente GTD. Hoje é ${new Date().toISOString()}.
-            Analise estas tarefas e retorne um JSON ARRAY puro com objetos: {"id": "...", "status": "...", "date": "ISO-DATE-IF-NEEDED", "note": "REASON"}.
-            Regras:
-            1. Data/Hora específica? -> 'calendar'.
-            2. Cita outra pessoa? -> 'waiting' (note='Delegado para X').
-            3. Rápido (<2min)? -> 'do-now'.
-            4. Vago/Sonho? -> 'someday'.
-            5. Informação útil? -> 'reference'.
-            6. Complexo/Vários passos? -> 'project'.
-            7. Padrão -> 'next'.
-            Tarefas: ${inputList}
-        `;
-
+        
         try {
-            const txt = await AI.callGemini(prompt);
-            const jsonStr = txt.replace(/```json|```/g, '').trim();
-            const decisions = JSON.parse(jsonStr);
+            const inputList = inbox.map(i => `ID:${i.id} TXT:${i.text}`).join('\n');
+            const prompt = `Analise estas tarefas GTD (Hoje: ${new Date().toISOString()}). Retorne JSON ARRAY: [{"id": "...", "status": "...", "date": "ISO", "note": "..."}]. Regras: 1.Data->calendar 2.Delegar->waiting 3.Rápido->do-now 4.Sonho->someday 5.Ref->reference 6.Complexo->project 7.Outros->next. Tarefas:\n${inputList}`;
             
+            const txt = await AI.callGemini(prompt);
+            const decisions = JSON.parse(txt.replace(/```json|```/g, '').trim());
             for(const d of decisions) {
                 const item = State.items.find(i => i.id == d.id);
                 if(item) await App.changeStatus(item, d.status, d.date, d.note);
             }
-            UI.showToast("Processamento Inteligente Concluído!");
-        } catch(e) {
-            alert("Erro IA: " + e.message);
-        } finally {
-            document.getElementById('loadingOverlay').style.display = 'none';
-        }
+            UI.showToast("IA Finalizada!");
+        } catch(e) { alert("Erro IA: " + e.message); } 
+        finally { document.getElementById('loadingOverlay').style.display = 'none'; }
     },
 
     breakdownItem: async (id) => {
-        const item = State.items.find(i => i.id === id);
-        if(!item || !confirm(`Quebrar "${item.text}" em passos menores com IA?`)) return;
-
+        const item = State.items.find(i => i.id == id);
+        if(!item || !confirm(`Quebrar "${item.text}" com IA?`)) return;
         document.getElementById('loadingOverlay').style.display = 'flex';
         try {
-            const prompt = `Quebre a tarefa "${item.text}" em 3 a 5 sub-tarefas acionáveis curtas. Retorne apenas JSON Array de strings.`;
+            const prompt = `Quebre "${item.text}" em 3-5 passos práticos. Retorne JSON Array de strings.`;
             const txt = await AI.callGemini(prompt);
             const steps = JSON.parse(txt.replace(/```json|```/g, '').trim());
-            
             steps.forEach((stepText, idx) => {
-                State.items.push({ 
-                    id: Date.now() + idx, 
-                    text: stepText, 
-                    status: 'next', 
-                    note: `Ref: ${item.text}`, 
-                    updatedAt: Date.now(),
-                    order: Date.now() + idx // Ensure sequential order
-                });
+                State.items.push({ id: Date.now() + idx, text: stepText, status: 'next', note: `Ref: ${item.text}`, updatedAt: Date.now(), order: Date.now() + idx });
             });
-            item.status = 'project'; // Move original to project
-            Storage.saveLocal();
-            UI.render();
-            Storage.syncGitHub();
-        } catch(e) {
-            alert("Erro IA: " + e.message);
-        } finally {
-            document.getElementById('loadingOverlay').style.display = 'none';
-        }
+            item.status = 'project';
+            Storage.saveLocal(); UI.render(); Storage.syncGitHub();
+        } catch(e) { alert("Erro IA: " + e.message); }
+        finally { document.getElementById('loadingOverlay').style.display = 'none'; }
     }
 };
 
@@ -703,7 +452,6 @@ const GoogleCal = {
                     }
                 }
             });
-            // Check existing token
             const stored = JSON.parse(localStorage.getItem('gtd_gcal_token'));
             if(stored && Date.now() < stored.e) {
                 gapi.client.setToken({access_token: stored.t});
@@ -712,45 +460,31 @@ const GoogleCal = {
             }
         });
     },
-
     handleEvent: async (item, action) => {
-        // Simple logic: if has date + valid status, sync.
         if(!gapi.client.getToken()) return;
-        
         try {
-            // Delete if moving away from calendar/waiting or trashing
-            if(item.googleEventId && (action === 'trash' || (item.status !== 'calendar' && item.status !== 'waiting'))) {
+            if(item.googleEventId && (action === 'trash' || !['calendar','waiting'].includes(item.status))) {
                 try { await gapi.client.calendar.events.delete({ calendarId: 'primary', eventId: item.googleEventId }); } catch(e){}
                 delete item.googleEventId;
             }
-
-            // Create/Update
-            if((item.status === 'calendar' || item.status === 'waiting') && item.date) {
-                const event = {
-                    summary: `GTD: ${item.text}`,
-                    description: item.note || '',
-                    start: { dateTime: new Date(item.date).toISOString() },
-                    end: { dateTime: new Date(new Date(item.date).getTime() + 1800000).toISOString() }
-                };
-
-                if(item.googleEventId) {
-                    await gapi.client.calendar.events.update({ calendarId: 'primary', eventId: item.googleEventId, resource: event });
-                } else {
-                    const res = await gapi.client.calendar.events.insert({ calendarId: 'primary', resource: event });
-                    item.googleEventId = res.result.id;
-                }
+            if(['calendar','waiting'].includes(item.status) && item.date) {
+                const event = { summary: `GTD: ${item.text}`, description: item.note || '', start: { dateTime: new Date(item.date).toISOString() }, end: { dateTime: new Date(new Date(item.date).getTime()+1800000).toISOString() } };
+                if(item.googleEventId) await gapi.client.calendar.events.update({ calendarId: 'primary', eventId: item.googleEventId, resource: event });
+                else { const res = await gapi.client.calendar.events.insert({ calendarId: 'primary', resource: event }); item.googleEventId = res.result.id; }
             }
-        } catch(e) { console.error("GCal Sync Error", e); }
+        } catch(e) { console.error("GCal Error", e); }
     }
 };
 
-// Bootstrap
+// --- 6. EXPOSE & INIT ---
+// Garante escopo global para o HTML encontrar as funções
+window.App = App;
+window.UI = UI;
+window.AI = AI;
+
 window.onload = () => {
     Storage.init();
     GoogleCal.init();
     App.authCalendar = () => GoogleCal.client.requestAccessToken();
 };
-
 </script>
-</body>
-</html>
