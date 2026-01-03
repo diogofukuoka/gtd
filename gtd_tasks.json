@@ -101,20 +101,24 @@
   {
     "id": 1767401511524,
     "text": "Consultar se o Google Firebase está cobrando R$ dia 07/07/2026 às 07:00",
-    "status": "inbox",
-    "updatedAt": 1767401511524
+    "status": "calendar",
+    "updatedAt": 1767401511524,
+    "date": "2026-07-07T07:00",
+    "googleEventId": "vhsvr99omshnk5tch4mqps3k4s"
   },
   {
     "id": 1767401556311,
     "text": "Colocar tala, pesos, cadeira, potes, telas etc para vender",
-    "status": "inbox",
+    "status": "project",
     "updatedAt": 1767401556311
   },
   {
     "id": 1767401612331,
     "text": "Fazer o teste da sacada? 09/01/26 às 07:00",
-    "status": "inbox",
-    "updatedAt": 1767401612331
+    "status": "calendar",
+    "updatedAt": 1767401612331,
+    "date": "2026-01-09T07:00",
+    "googleEventId": "ait71dbfbjnd08lfsbktklfres"
   },
   {
     "id": 1767401646788,
