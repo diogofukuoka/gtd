@@ -64,5 +64,11 @@
     "text": "Ver se Scooter caiu próximo sábado às 12:00",
     "status": "inbox",
     "updatedAt": 1767400580444
+  },
+  {
+    "id": 1767400605579,
+    "text": "Agendar corte de cabelo próximo sabado às 10:00",
+    "status": "inbox",
+    "updatedAt": 1767400605579
   }
 ]
