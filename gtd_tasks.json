@@ -144,7 +144,8 @@
   {
     "id": 1767474683884,
     "text": "Cortar cabelo dia 10 de janeiro de 2026 às 10:00 da manhã",
-    "status": "inbox",
-    "updatedAt": 1767474683884
+    "status": "calendar",
+    "updatedAt": 1767474683884,
+    "date": "2026-01-10T09:00"
   }
 ]
