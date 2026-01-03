@@ -140,5 +140,11 @@
     "text": "4",
     "status": "trash",
     "updatedAt": 1767473512276
+  },
+  {
+    "id": 1767474736447,
+    "text": "Cortar cabelo dia 10 de janeiro de 2026 às 10:00 da manhã",
+    "status": "inbox",
+    "updatedAt": 1767474736447
   }
 ]
