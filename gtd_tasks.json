@@ -40,6 +40,14 @@
     "updatedAt": 1767400465538
   },
   {
+    "id": 1767400506514,
+    "text": "Esta tarefa foi à Proximas Ações?",
+    "status": "next",
+    "updatedAt": 1767400506514,
+    "date": "2026-01-03T00:01",
+    "googleEventId": "u5gmmrpcds99tihgpdtl0meqmk"
+  },
+  {
     "id": 1767400580444,
     "text": "Ver se Scooter caiu próximo sábado às 12:00",
     "status": "calendar",
@@ -50,9 +58,9 @@
   {
     "id": 1767400605579,
     "text": "Agendar corte de cabelo próximo sabado às 10:00",
-    "status": "calendar",
+    "status": "next",
     "updatedAt": 1767400605579,
-    "date": "2026-01-10T08:00",
+    "date": "2026-01-03T10:00",
     "googleEventId": "8tga1vqj284bbpvkpia6nu85a0"
   },
   {
@@ -130,11 +138,5 @@
     "text": "Aprender a falar no ritmo do pensamento (NotebookLM)",
     "status": "next",
     "updatedAt": 1767403045355
-  },
-  {
-    "id": 1767406628172,
-    "text": "Incluir opção de colocar só brancas e ou pretas no tabuleiro",
-    "status": "next",
-    "updatedAt": 1767406628172
   }
 ]
