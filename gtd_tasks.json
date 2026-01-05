@@ -180,16 +180,16 @@
     "googleEventId": "uv4b9611g3p1o9epvittcefm00"
   },
   {
-    "id": 1767534109390,
-    "text": "Ver dispositivo gravador ativado pelo celular a comprar",
-    "status": "next",
-    "updatedAt": 1767534109390
-  },
-  {
     "id": 1767632906476,
     "text": "Enviar planilha de fornecedores à UPDE",
     "status": "next",
     "updatedAt": 1767632906476
+  },
+  {
+    "id": 1767534109390,
+    "text": "Ver dispositivo gravador ativado pelo celular a comprar",
+    "status": "next",
+    "updatedAt": 1767534109390
   },
   {
     "id": 1767063414904,
