@@ -173,19 +173,19 @@
     "updatedAt": 1767534109390
   },
   {
+    "id": 1767403045355,
+    "text": "Aprender a falar no ritmo do pensamento (NotebookLM)",
+    "status": "next",
+    "updatedAt": 1767403045355,
+    "order": 1
+  },
+  {
     "id": 1767063414904,
     "text": "Comprar ingredientes para pão",
     "status": "next",
     "date": "2025-12-31T17:00",
     "googleEventId": "ejonge02q5vbtp3uagmokbdbcg",
     "order": null
-  },
-  {
-    "id": 1767403045355,
-    "text": "Aprender a falar no ritmo do pensamento (NotebookLM)",
-    "status": "next",
-    "updatedAt": 1767403045355,
-    "order": 1
   },
   {
     "id": 1767400465538,
