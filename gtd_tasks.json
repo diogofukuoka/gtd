@@ -98,13 +98,10 @@
     "googleEventId": "ng6jf6s8l9c5dg1m15m7fgsv6c"
   },
   {
-    "id": 1767400580444,
-    "text": "Carregar bateria da Scooter",
+    "id": 1767490449861,
+    "text": "Treinar flashcards da Bíblia",
     "status": "next",
-    "updatedAt": 1767400580444,
-    "date": "2026-01-03T12:00",
-    "googleEventId": "mkdfviumcbegb7chulcvg9pdn4",
-    "order": null
+    "updatedAt": 1767490449861
   },
   {
     "id": 1767473512276,
@@ -136,16 +133,19 @@
     "googleEventId": "9llosfumn93ej75d16h0olv8p8"
   },
   {
+    "id": 1767400580444,
+    "text": "Carregar bateria da Scooter",
+    "status": "next",
+    "updatedAt": 1767400580444,
+    "date": "2026-01-03T12:00",
+    "googleEventId": "mkdfviumcbegb7chulcvg9pdn4",
+    "order": null
+  },
+  {
     "id": 1767401556311,
     "text": "Colocar tala, pesos, cadeira, potes, telas etc para vender",
     "status": "next",
     "updatedAt": 1767401556311
-  },
-  {
-    "id": 1767490449861,
-    "text": "Treinar flashcards da Bíblia",
-    "status": "next",
-    "updatedAt": 1767490449861
   },
   {
     "id": 1767044479995,
