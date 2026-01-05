@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>GTD Fukuoka (v10.2 Black Borders)</title>
+    <title>GTD Fukuoka (v10.3 Fix IA)</title>
     <style>
         :root { --primary: #2c3e50; --accent: #3498db; --success: #27ae60; --warning: #f39c12; --danger: #e74c3c; --google: #4285f4; --gray: #95a5a6; --ai: #8e44ad; --github: #24292e; }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         
-        /* LAYOUT: Margens reduzidas para ganhar tela (Mantido) */
+        /* LAYOUT: Margens reduzidas para ganhar tela */
         body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f8f9fa; color: #333; margin: 0; padding: 5px; padding-bottom: 80px; user-select: none; }
         .container { max-width: 900px; margin: 0 auto; background: white; padding: 10px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
         
@@ -34,7 +34,7 @@
         .lists-grid { display: grid; grid-template-columns: 1fr; gap: 15px; }
         @media(min-width: 700px) { .lists-grid { grid-template-columns: 1fr 1fr; } }
         
-        /* CARD: Padding interno reduzido (Mantido) */
+        /* CARD */
         .list-card { background-color: #f1f3f5; border: 1px solid #ced4da; border-radius: 8px; padding: 10px 5px; min-height: 100px; display: flex; flex-direction: column; }
         
         .list-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #dee2e6; padding-bottom: 5px; margin-bottom: 8px; cursor: pointer; padding-left: 5px; padding-right: 5px; }
@@ -42,7 +42,7 @@
         .list-header:active { opacity: 0.6; background-color: #e9ecef; }
         .badge { background: #fff; padding: 2px 6px; border-radius: 10px; font-size: 0.7rem; font-weight: bold; border: 1px solid #ccc; }
         
-        /* AJUSTE SOLICITADO: Todas as bordas superiores agora são PRETAS (#000) */
+        /* BORDAS PRETAS */
         .card-inbox { border-top: 4px solid #000; }
         .card-next { border-top: 4px solid #000; }
         .card-project { border-top: 4px solid #000; }
@@ -52,7 +52,6 @@
         .card-reference { border-top: 4px solid #000; }  
         .card-completed { border-top: 4px solid #000; opacity: 0.8; }
         
-        /* Mantém o fundo amarelo, mas força a borda superior preta */
         .card-do-now { 
             background-color: #fff3cd !important; 
             border: 1px solid #ffeeba !important; 
@@ -61,7 +60,7 @@
 
         ul { list-style: none; padding: 0; margin: 0; min-height: 50px; flex-grow: 1; }
         
-        /* ITEM: Padding reduzido (Mantido) */
+        /* ITEM */
         li { padding: 8px 5px; border: 1px solid #e9ecef; display: flex; justify-content: space-between; align-items: center; background: #ffffff; border-radius: 6px; margin-bottom: 6px; touch-action: pan-y; -webkit-user-select: none; user-select: none; position: relative; gap: 5px; }
         
         .task-content { flex: 1; display: flex; flex-direction: column; cursor: default; padding: 2px 0; overflow: hidden; }
@@ -75,7 +74,7 @@
         .btn-icon.edit:hover { color: var(--accent); background-color: #e3f2fd; }
         .btn-icon.ai:hover { color: var(--ai); background-color: #f3e5f5; }
 
-        /* Botões de Sequência com espaço seguro (Mantido) */
+        /* Botões de Sequência */
         .seq-num { background: var(--primary); color: white; font-size: 0.7rem; font-weight: bold; width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-right: 3px; flex-shrink: 0; }
         
         .btn-seq { 
@@ -91,7 +90,7 @@
             border-radius: 4px; 
             cursor: pointer; 
             padding: 0; 
-            margin-right: 12px; /* Espaço de segurança mantido */
+            margin-right: 12px; 
         }
         .btn-seq:hover { background: var(--primary); color: white; border-color: var(--primary); }
 
@@ -223,7 +222,7 @@
     var touchStartX = 0;
     var touchStartY = 0;
     var isScrolling = false;
-    var ghSha = null; // Para controlar versão do GitHub
+    var ghSha = null; 
 
     function openConfig() { 
         document.getElementById('cfgClientId').value = config.googleClientId || ''; 
@@ -236,12 +235,12 @@
     }
     function closeConfig() { document.getElementById('configModal').style.display = 'none'; }
     function saveConfig() {
-        config.googleClientId = document.getElementById('cfgClientId').value;
-        config.geminiKey = document.getElementById('cfgGemini').value;
-        config.ghOwner = document.getElementById('ghOwner').value;
-        config.ghRepo = document.getElementById('ghRepo').value;
-        config.ghToken = document.getElementById('ghToken').value;
-        config.ghPath = document.getElementById('ghPath').value;
+        config.googleClientId = document.getElementById('cfgClientId').value.trim();
+        config.geminiKey = document.getElementById('cfgGemini').value.trim(); // Trim importante para a chave!
+        config.ghOwner = document.getElementById('ghOwner').value.trim();
+        config.ghRepo = document.getElementById('ghRepo').value.trim();
+        config.ghToken = document.getElementById('ghToken').value.trim();
+        config.ghPath = document.getElementById('ghPath').value.trim();
         localStorage.setItem('gtd_config', JSON.stringify(config));
         location.reload();
     }
@@ -256,26 +255,19 @@
         });
     }
 
-    // Função auxiliar para reordenar tarefas na caixa "Next"
     function moveNextItem(e, itemId, direction) {
         e.stopPropagation();
-        // Filtra todas as tarefas da lista 'next' na ordem atual
         const nextItems = items.filter(i => i.status === 'next');
         const currentIndexInNext = nextItems.findIndex(i => i.id === itemId);
         
         if (currentIndexInNext === -1) return;
-        
-        // Impede mover além dos limites
-        if (direction === -1 && currentIndexInNext === 0) return; // Topo
-        if (direction === 1 && currentIndexInNext === nextItems.length - 1) return; // Fundo
+        if (direction === -1 && currentIndexInNext === 0) return;
+        if (direction === 1 && currentIndexInNext === nextItems.length - 1) return;
 
         const targetItem = nextItems[currentIndexInNext + direction];
-        
-        // Encontra os índices reais no array principal 'items'
         const mainIndexCurrent = items.indexOf(nextItems[currentIndexInNext]);
         const mainIndexTarget = items.indexOf(targetItem);
         
-        // Troca as posições no array principal
         [items[mainIndexCurrent], items[mainIndexTarget]] = [items[mainIndexTarget], items[mainIndexCurrent]];
         
         if(window.sync) window.sync(); else render();
@@ -287,7 +279,7 @@
         if(!grid) return;
         grid.innerHTML = ''; 
         const counts = {};
-        let nextSeqCounter = 1; // Contador para sequência da lista "next"
+        let nextSeqCounter = 1; 
         
         listKeys.forEach(key => {
             counts[key] = 0;
@@ -334,7 +326,6 @@
                     meta += `<span class="meta" style="color:var(--success)">Feito: ${d.toLocaleString()}</span>`;
                 }
 
-                // Lógica de Sequência e Botões de Reordenação para "Próximas Ações"
                 let seqBadge = "";
                 let moveBtns = "";
                 if (item.status === 'next') {
@@ -415,21 +406,16 @@
             });
             
             if (res.status === 404) {
-                // Arquivo não existe, vamos criar no primeiro save
                 console.log("Arquivo não existe no GitHub, será criado.");
                 document.getElementById('dbDot').className = "dot online";
                 document.getElementById('dbStatus').innerText = "GitHub (Novo)";
-                // Se temos itens locais, forçamos um save para criar o arquivo
                 if(items.length > 0) window.sync();
             } else if (res.ok) {
                 const data = await res.json();
-                ghSha = data.sha; // Importante para updates
-                // Decode Base64 (com suporte a UTF-8)
+                ghSha = data.sha; 
                 const content = decodeURIComponent(escape(atob(data.content)));
                 const remoteItems = JSON.parse(content);
                 
-                // Merge simples: se remoto tem mais itens ou é diferente, atualiza
-                // (Para uso pessoal simples, assumimos que o cloud é a verdade ao carregar)
                 items = remoteItems;
                 localStorage.setItem('gtd_data', JSON.stringify(items));
                 render();
@@ -449,7 +435,6 @@
     }
 
     window.sync = async function() {
-        // Salva Local
         localStorage.setItem('gtd_data', JSON.stringify(items));
         render();
 
@@ -458,17 +443,15 @@
         document.getElementById('dbDot').className = "dot syncing";
         
         const url = `https://api.github.com/repos/${config.ghOwner}/${config.ghRepo}/contents/${config.ghPath}`;
-        // Encode Base64 (UTF-8 safe)
         const content = btoa(unescape(encodeURIComponent(JSON.stringify(items, null, 2))));
         
         const body = {
             message: "Update via GTD App",
             content: content,
-            sha: ghSha // Necessário para update. Se null, cria novo (se não existir)
+            sha: ghSha 
         };
 
         try {
-            // Se não temos SHA, tentamos um GET antes para não dar conflito (caso tenha sido criado por outro device)
             if (!ghSha) {
                  const checkRes = await fetch(url, { headers: { 'Authorization': `token ${config.ghToken}` } });
                  if(checkRes.ok) {
@@ -489,7 +472,7 @@
 
             if (res.ok) {
                 const data = await res.json();
-                ghSha = data.content.sha; // Atualiza SHA para o próximo save
+                ghSha = data.content.sha; 
                 document.getElementById('dbDot').className = "dot online";
             } else {
                 console.error("Erro Save GitHub", await res.text());
@@ -501,16 +484,14 @@
         }
     }
 
-    // Auto-Sync (Polling simples para simular realtime)
     setInterval(() => {
-        // Apenas recarrega se o usuário não estiver interagindo para evitar sobrescrever edição
         if(!document.hidden) loadFromGitHub(); 
-    }, 60000); // Checa a cada 60s
+    }, 60000); 
 
     window.addEventListener('load', function() {
         render();
         renderHistory();
-        loadFromGitHub(); // Carrega do GitHub ao iniciar
+        loadFromGitHub(); 
         if(!config.googleClientId) document.getElementById('loadingOverlay').style.display = 'none';
         window.checkDueDates();
         setInterval(window.checkDueDates, 60000);
@@ -521,9 +502,8 @@
         }, true);
     });
 
-    // --- DEMAIS FUNÇÕES (VOZ, TOUCH, CALENDÁRIO, IA) MANTIDAS IGUAIS ---
+    // --- UTILS & EVENTS ---
     
-    // ... [Voice code] ...
     let recognition;
     if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -674,23 +654,37 @@
         if (changed) { if(window.sync) window.sync(); else render(); showToast("Tarefas vencidas movidas para Próximas Ações"); }
     }
 
-    // --- IA / MAGIC ---
+    // --- IA / MAGIC (CORRIGIDO: gemini-1.5-flash) ---
+    function cleanJson(text) {
+        // Tenta encontrar o array JSON dentro da resposta (caso a IA fale antes)
+        const firstBracket = text.indexOf('[');
+        const lastBracket = text.lastIndexOf(']');
+        if(firstBracket > -1 && lastBracket > -1) {
+            return text.substring(firstBracket, lastBracket + 1);
+        }
+        return text;
+    }
+
     window.breakdownItem = async function(e, idx) {
         e.stopPropagation();
         if(!config.geminiKey) return alert("Configure a API Key do Gemini.");
         document.getElementById('loadingText').innerText = "IA Pensando...";
         document.getElementById('loadingOverlay').style.display = 'flex';
         const item = items[idx];
-        const prompt = `Quebre a tarefa "${item.text}" em etapas acionáveis. Retorne JSON Array strings.`;
+        const prompt = `Quebre a tarefa "${item.text}" em etapas acionáveis. Retorne APENAS um JSON Array de strings, sem formatação markdown.`;
         try {
-            const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${config.geminiKey}`, {
+            // CORREÇÃO: Modelo 1.5
+            const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${config.geminiKey}`, {
                 method: 'POST', headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
             });
             const data = await res.json();
             if (data.error) throw new Error(data.error.message);
-            const txt = data.candidates[0].content.parts[0].text;
-            const steps = JSON.parse(txt.replace(/```json|```/g, '').trim());
+            
+            let txt = data.candidates[0].content.parts[0].text;
+            txt = cleanJson(txt); // Limpa markdown
+            
+            const steps = JSON.parse(txt);
             steps.forEach(step => items.push({ id: Date.now() + Math.random(), text: step, status: 'next', note: `De: ${item.text}`, updatedAt: Date.now() }));
             window.sync();
             showToast("Tarefas criadas!");
@@ -706,16 +700,20 @@
         document.getElementById('loadingOverlay').style.display = 'flex';
         const tasksTxt = inboxItems.map(i => `- ID:${i.id} | TEXTO: ${i.text}`).join('\n');
         const now = new Date().toISOString();
-        const prompt = `Hoje é ${now}. Analise estas tarefas GTD e classifique-as. ${tasksTxt} Regras de Saída (JSON Array): [{"id": "...", "status": "...", "date": "YYYY-MM-DDTHH:MM", "note": "..."}]. Regras: 1. Se tiver data/hora específica -> 'calendar'. 2. Se citar outra pessoa -> 'waiting'. 3. <2min -> 'do-now'. 4. Vago -> 'someday'. 5. Ref -> 'reference'. 6. Complexo -> 'project'. 7. Padrão -> 'next'.`;
+        const prompt = `Hoje é ${now}. Analise estas tarefas GTD e classifique-as. ${tasksTxt} Regras de Saída (JSON Array puro): [{"id": "...", "status": "...", "date": "YYYY-MM-DDTHH:MM", "note": "..."}]. Regras: 1. Se tiver data/hora específica -> 'calendar'. 2. Se citar outra pessoa -> 'waiting'. 3. <2min -> 'do-now'. 4. Vago -> 'someday'. 5. Ref -> 'reference'. 6. Complexo -> 'project'. 7. Padrão -> 'next'.`;
         try {
-            const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${config.geminiKey}`, {
+            // CORREÇÃO: Modelo 1.5
+            const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${config.geminiKey}`, {
                 method: 'POST', headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
             });
             const data = await res.json();
             if (data.error) throw new Error(data.error.message);
-            const txt = data.candidates[0].content.parts[0].text;
-            const decisions = JSON.parse(txt.replace(/```json|```/g, '').trim());
+            
+            let txt = data.candidates[0].content.parts[0].text;
+            txt = cleanJson(txt); // Limpa markdown
+            
+            const decisions = JSON.parse(txt);
             for (const d of decisions) { const item = items.find(i => i.id == d.id); if(item) await changeItemStatus(item, d.status, d.date, d.note); }
             window.sync();
             showToast("Processamento IA Concluído!");
