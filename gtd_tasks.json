@@ -45,13 +45,10 @@
     "googleEventId": "q119e1odcja88ngrhvmak8ls2c"
   },
   {
-    "id": 1767400580444,
-    "text": "Carregar bateria da Scooter",
+    "id": 1767527958448,
+    "text": "Incluir no flashcard outra opção de organizar versículos arrastando",
     "status": "next",
-    "updatedAt": 1767400580444,
-    "date": "2026-01-03T12:00",
-    "googleEventId": "mkdfviumcbegb7chulcvg9pdn4",
-    "order": null
+    "updatedAt": 1767527958448
   },
   {
     "id": 1767401511524,
@@ -62,10 +59,13 @@
     "googleEventId": "vhsvr99omshnk5tch4mqps3k4s"
   },
   {
-    "id": 1767527958448,
-    "text": "Incluir no flashcard outra opção de organizar versículos arrastando",
+    "id": 1767400580444,
+    "text": "Carregar bateria da Scooter",
     "status": "next",
-    "updatedAt": 1767527958448
+    "updatedAt": 1767400580444,
+    "date": "2026-01-03T12:00",
+    "googleEventId": "mkdfviumcbegb7chulcvg9pdn4",
+    "order": null
   },
   {
     "id": 1767401612331,
