@@ -167,6 +167,12 @@
     "order": null
   },
   {
+    "id": 1767632906476,
+    "text": "Enviar planilha de fornecedores à UPDE",
+    "status": "next",
+    "updatedAt": 1767632906476
+  },
+  {
     "id": 1767401556311,
     "text": "Colocar tala, pesos, cadeira, potes, telas etc para vender",
     "status": "next",
@@ -178,12 +184,6 @@
     "status": "next",
     "date": "2025-12-30T07:00",
     "googleEventId": "uv4b9611g3p1o9epvittcefm00"
-  },
-  {
-    "id": 1767632906476,
-    "text": "Enviar planilha de fornecedores à UPDE",
-    "status": "next",
-    "updatedAt": 1767632906476
   },
   {
     "id": 1767534109390,
