@@ -253,7 +253,9 @@
   {
     "id": 1767621778372,
     "text": "Testantando 07/01/26 07:00",
-    "status": "inbox",
-    "updatedAt": 1767621778372
+    "status": "calendar",
+    "updatedAt": 1767621778372,
+    "date": "2026-01-07T07:00",
+    "googleEventId": "27un12bmba320udffedmroite0"
   }
 ]
