@@ -62,10 +62,10 @@
     "googleEventId": "vhsvr99omshnk5tch4mqps3k4s"
   },
   {
-    "id": 1767401556311,
-    "text": "Colocar tala, pesos, cadeira, potes, telas etc para vender",
+    "id": 1767527958448,
+    "text": "Incluir no flashcard outra opção de organizar versículos arrastando",
     "status": "next",
-    "updatedAt": 1767401556311
+    "updatedAt": 1767527958448
   },
   {
     "id": 1767401612331,
@@ -100,11 +100,10 @@
     "googleEventId": "ng6jf6s8l9c5dg1m15m7fgsv6c"
   },
   {
-    "id": 1767044479995,
-    "text": "Abrir chamado gastos Copel",
+    "id": 1767401556311,
+    "text": "Colocar tala, pesos, cadeira, potes, telas etc para vender",
     "status": "next",
-    "date": "2025-12-30T07:00",
-    "googleEventId": "uv4b9611g3p1o9epvittcefm00"
+    "updatedAt": 1767401556311
   },
   {
     "id": 1767473512276,
@@ -136,10 +135,11 @@
     "googleEventId": "9llosfumn93ej75d16h0olv8p8"
   },
   {
-    "id": 1767527958448,
-    "text": "Incluir no flashcard outra opção de organizar versículos arrastando",
+    "id": 1767044479995,
+    "text": "Abrir chamado gastos Copel",
     "status": "next",
-    "updatedAt": 1767527958448
+    "date": "2025-12-30T07:00",
+    "googleEventId": "uv4b9611g3p1o9epvittcefm00"
   },
   {
     "id": 1767480832485,
