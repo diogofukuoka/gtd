@@ -167,17 +167,17 @@
     "googleEventId": "uv4b9611g3p1o9epvittcefm00"
   },
   {
-    "id": 1767534109390,
-    "text": "Ver dispositivo gravador ativado pelo celular a comprar",
-    "status": "next",
-    "updatedAt": 1767534109390
-  },
-  {
     "id": 1767403045355,
     "text": "Aprender a falar no ritmo do pensamento (NotebookLM)",
     "status": "next",
     "updatedAt": 1767403045355,
     "order": 1
+  },
+  {
+    "id": 1767534109390,
+    "text": "Ver dispositivo gravador ativado pelo celular a comprar",
+    "status": "next",
+    "updatedAt": 1767534109390
   },
   {
     "id": 1767063414904,
