@@ -158,6 +158,12 @@
     "updatedAt": 1767480832485
   },
   {
+    "id": 1767632906476,
+    "text": "Enviar planilha de fornecedores à UPDE",
+    "status": "next",
+    "updatedAt": 1767632906476
+  },
+  {
     "id": 1767400580444,
     "text": "Carregar bateria da Scooter",
     "status": "next",
@@ -165,12 +171,6 @@
     "date": "2026-01-03T12:00",
     "googleEventId": "mkdfviumcbegb7chulcvg9pdn4",
     "order": null
-  },
-  {
-    "id": 1767632906476,
-    "text": "Enviar planilha de fornecedores à UPDE",
-    "status": "next",
-    "updatedAt": 1767632906476
   },
   {
     "id": 1767401556311,
