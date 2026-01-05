@@ -102,8 +102,9 @@
   {
     "id": 1767632426989,
     "text": "Ver folha ponto",
-    "status": "next",
-    "updatedAt": 1767632426989
+    "status": "completed",
+    "updatedAt": 1767632426989,
+    "completedAt": "2026-01-05T19:02:36.158Z"
   },
   {
     "id": 1767473512276,
