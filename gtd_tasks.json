@@ -240,10 +240,10 @@
     "updatedAt": 1767481097981
   },
   {
-    "id": 1767529698963,
-    "text": "Mudar hinário para o Github ",
+    "id": 1767632906476,
+    "text": "Enviar planilha de fornecedores à UPDE",
     "status": "next",
-    "updatedAt": 1767529698963
+    "updatedAt": 1767632906476
   },
   {
     "id": 1767632590855,
@@ -254,9 +254,9 @@
     "googleEventId": "mc6lgcj973p0jba6if0eatlt94"
   },
   {
-    "id": 1767632906476,
-    "text": "Enviar planilha de fornecedores à UPDE",
+    "id": 1767529698963,
+    "text": "Mudar hinário para o Github ",
     "status": "next",
-    "updatedAt": 1767632906476
+    "updatedAt": 1767529698963
   }
 ]
