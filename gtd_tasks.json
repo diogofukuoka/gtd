@@ -149,16 +149,16 @@
     "googleEventId": "uv4b9611g3p1o9epvittcefm00"
   },
   {
-    "id": 1767480832485,
-    "text": "Estudar o assunto para fazer a elaboração do esboço da pregação",
-    "status": "next",
-    "updatedAt": 1767480832485
-  },
-  {
     "id": 1767490449861,
     "text": "Treinar flashcards da Bíblia",
     "status": "next",
     "updatedAt": 1767490449861
+  },
+  {
+    "id": 1767480832485,
+    "text": "Estudar o assunto para fazer a elaboração do esboço da pregação",
+    "status": "next",
+    "updatedAt": 1767480832485
   },
   {
     "id": 1767534109390,
