@@ -155,16 +155,16 @@
     "updatedAt": 1767480832485
   },
   {
-    "id": 1767534109390,
-    "text": "Ver dispositivo gravador ativado pelo celular a comprar",
-    "status": "next",
-    "updatedAt": 1767534109390
-  },
-  {
     "id": 1767490449861,
     "text": "Treinar flashcards da Bíblia",
     "status": "next",
     "updatedAt": 1767490449861
+  },
+  {
+    "id": 1767534109390,
+    "text": "Ver dispositivo gravador ativado pelo celular a comprar",
+    "status": "next",
+    "updatedAt": 1767534109390
   },
   {
     "id": 1767490484466,
