@@ -234,16 +234,16 @@
     "googleEventId": "ahvb7bd9kf9fig9h2p4folub5g"
   },
   {
-    "id": 1767481097981,
-    "text": "Tirar o ícone de certo das tarefas agendadas",
-    "status": "next",
-    "updatedAt": 1767481097981
-  },
-  {
     "id": 1767632906476,
     "text": "Enviar planilha de fornecedores à UPDE",
     "status": "next",
     "updatedAt": 1767632906476
+  },
+  {
+    "id": 1767481097981,
+    "text": "Tirar o ícone de certo das tarefas agendadas",
+    "status": "next",
+    "updatedAt": 1767481097981
   },
   {
     "id": 1767632590855,
