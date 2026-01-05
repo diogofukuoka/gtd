@@ -197,10 +197,10 @@
     "updatedAt": 1767527958448
   },
   {
-    "id": 1767529698963,
-    "text": "Mudar hinário para o Github ",
+    "id": 1767614170361,
+    "text": "Ver orçamento de guincho à Scooter",
     "status": "next",
-    "updatedAt": 1767529698963
+    "updatedAt": 1767614170361
   },
   {
     "id": 1767553544960,
@@ -231,9 +231,9 @@
     "googleEventId": "ahvb7bd9kf9fig9h2p4folub5g"
   },
   {
-    "id": 1767614170361,
-    "text": "Ver orçamento de guincho à Scooter",
+    "id": 1767529698963,
+    "text": "Mudar hinário para o Github ",
     "status": "next",
-    "updatedAt": 1767614170361
+    "updatedAt": 1767529698963
   }
 ]
