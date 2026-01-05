@@ -42,12 +42,10 @@
     "updatedAt": 1767401556311
   },
   {
-    "id": 1767401282284,
-    "text": "Imprimir faturas da igreja e ir pagar sem falta dia 05/01/26 às 08:00",
+    "id": 1767614170361,
+    "text": "Ver orçamento de guincho à Scooter",
     "status": "next",
-    "updatedAt": 1767401282284,
-    "date": "2026-01-05T08:00",
-    "googleEventId": "q119e1odcja88ngrhvmak8ls2c"
+    "updatedAt": 1767614170361
   },
   {
     "id": 1767401511524,
@@ -58,10 +56,12 @@
     "googleEventId": "vhsvr99omshnk5tch4mqps3k4s"
   },
   {
-    "id": 1767614170361,
-    "text": "Ver orçamento de guincho à Scooter",
+    "id": 1767401282284,
+    "text": "Imprimir faturas da igreja e ir pagar sem falta dia 05/01/26 às 08:00",
     "status": "next",
-    "updatedAt": 1767614170361
+    "updatedAt": 1767401282284,
+    "date": "2026-01-05T08:00",
+    "googleEventId": "q119e1odcja88ngrhvmak8ls2c"
   },
   {
     "id": 1767401612331,
