@@ -46,10 +46,11 @@
   {
     "id": 1767401282284,
     "text": "Imprimir faturas da igreja e ir pagar sem falta dia 05/01/26 às 08:00",
-    "status": "next",
+    "status": "completed",
     "updatedAt": 1767401282284,
     "date": "2026-01-05T08:00",
-    "googleEventId": "q119e1odcja88ngrhvmak8ls2c"
+    "googleEventId": "q119e1odcja88ngrhvmak8ls2c",
+    "completedAt": "2026-01-05T18:07:37.715Z"
   },
   {
     "id": 1767401511524,
