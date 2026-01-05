@@ -180,6 +180,12 @@
     "updatedAt": 1767534109390
   },
   {
+    "id": 1767632426989,
+    "text": "Ver folha ponto",
+    "status": "next",
+    "updatedAt": 1767632426989
+  },
+  {
     "id": 1767063414904,
     "text": "Comprar ingredientes para pão",
     "status": "next",
@@ -192,12 +198,6 @@
     "text": "Aprender xadrez no Gemin Aprendizado",
     "status": "next",
     "updatedAt": 1767400465538
-  },
-  {
-    "id": 1767632426989,
-    "text": "Ver folha ponto",
-    "status": "next",
-    "updatedAt": 1767632426989
   },
   {
     "id": 1767481303188,
