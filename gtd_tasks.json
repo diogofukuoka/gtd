@@ -200,10 +200,10 @@
     "updatedAt": 1767400465538
   },
   {
-    "id": 1767481303188,
-    "text": "Baixar o arquivo Json das tarefas",
+    "id": 1767632906476,
+    "text": "Enviar planilha de fornecedores à UPDE",
     "status": "next",
-    "updatedAt": 1767481303188
+    "updatedAt": 1767632906476
   },
   {
     "id": 1767553544960,
@@ -234,10 +234,10 @@
     "googleEventId": "ahvb7bd9kf9fig9h2p4folub5g"
   },
   {
-    "id": 1767632906476,
-    "text": "Enviar planilha de fornecedores à UPDE",
+    "id": 1767481303188,
+    "text": "Baixar o arquivo Json das tarefas",
     "status": "next",
-    "updatedAt": 1767632906476
+    "updatedAt": 1767481303188
   },
   {
     "id": 1767481097981,
