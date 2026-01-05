@@ -139,16 +139,16 @@
     "updatedAt": 1767490449861
   },
   {
-    "id": 1767490484466,
-    "text": "Estudar a sincronia entre fala e mente no NBLM",
-    "status": "next",
-    "updatedAt": 1767490484466
-  },
-  {
     "id": 1767632906476,
     "text": "Enviar planilha de fornecedores à UPDE",
     "status": "next",
     "updatedAt": 1767632906476
+  },
+  {
+    "id": 1767490484466,
+    "text": "Estudar a sincronia entre fala e mente no NBLM",
+    "status": "next",
+    "updatedAt": 1767490484466
   },
   {
     "id": 1767403045355,
