@@ -35,19 +35,19 @@
     "googleEventId": "9rpaujfli6k3oer2elun8tk5mg"
   },
   {
-    "id": 1767044479995,
-    "text": "Abrir chamado gastos Copel",
-    "status": "next",
-    "date": "2025-12-30T07:00",
-    "googleEventId": "uv4b9611g3p1o9epvittcefm00"
-  },
-  {
     "id": 1767401282284,
     "text": "Imprimir faturas da igreja e ir pagar sem falta dia 05/01/26 às 08:00",
     "status": "next",
     "updatedAt": 1767401282284,
     "date": "2026-01-05T08:00",
     "googleEventId": "q119e1odcja88ngrhvmak8ls2c"
+  },
+  {
+    "id": 1767044479995,
+    "text": "Abrir chamado gastos Copel",
+    "status": "next",
+    "date": "2025-12-30T07:00",
+    "googleEventId": "uv4b9611g3p1o9epvittcefm00"
   },
   {
     "id": 1767401511524,
