@@ -161,6 +161,12 @@
     "order": null
   },
   {
+    "id": 1767632426989,
+    "text": "Ver folha ponto",
+    "status": "next",
+    "updatedAt": 1767632426989
+  },
+  {
     "id": 1767401556311,
     "text": "Colocar tala, pesos, cadeira, potes, telas etc para vender",
     "status": "next",
@@ -178,12 +184,6 @@
     "text": "Ver dispositivo gravador ativado pelo celular a comprar",
     "status": "next",
     "updatedAt": 1767534109390
-  },
-  {
-    "id": 1767632426989,
-    "text": "Ver folha ponto",
-    "status": "next",
-    "updatedAt": 1767632426989
   },
   {
     "id": 1767063414904,
