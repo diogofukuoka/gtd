@@ -146,16 +146,16 @@
     "order": 1
   },
   {
-    "id": 1767480832485,
-    "text": "Estudar o assunto para fazer a elaboração do esboço da pregação",
-    "status": "next",
-    "updatedAt": 1767480832485
-  },
-  {
     "id": 1767632426989,
     "text": "Ver folha ponto",
     "status": "next",
     "updatedAt": 1767632426989
+  },
+  {
+    "id": 1767480832485,
+    "text": "Estudar o assunto para fazer a elaboração do esboço da pregação",
+    "status": "next",
+    "updatedAt": 1767480832485
   },
   {
     "id": 1767400580444,
