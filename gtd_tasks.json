@@ -98,10 +98,10 @@
     "googleEventId": "ng6jf6s8l9c5dg1m15m7fgsv6c"
   },
   {
-    "id": 1767490449861,
-    "text": "Treinar flashcards da Bíblia",
+    "id": 1767632426989,
+    "text": "Ver folha ponto",
     "status": "next",
-    "updatedAt": 1767490449861
+    "updatedAt": 1767632426989
   },
   {
     "id": 1767473512276,
@@ -133,16 +133,16 @@
     "googleEventId": "9llosfumn93ej75d16h0olv8p8"
   },
   {
+    "id": 1767490449861,
+    "text": "Treinar flashcards da Bíblia",
+    "status": "next",
+    "updatedAt": 1767490449861
+  },
+  {
     "id": 1767490484466,
     "text": "Estudar a sincronia entre fala e mente no NBLM",
     "status": "next",
     "updatedAt": 1767490484466
-  },
-  {
-    "id": 1767632426989,
-    "text": "Ver folha ponto",
-    "status": "next",
-    "updatedAt": 1767632426989
   },
   {
     "id": 1767403045355,
