@@ -148,16 +148,16 @@
     "order": null
   },
   {
-    "id": 1767401556311,
-    "text": "Colocar tala, pesos, cadeira, potes, telas etc para vender",
-    "status": "next",
-    "updatedAt": 1767401556311
-  },
-  {
     "id": 1767480832485,
     "text": "Estudar o assunto para fazer a elaboração do esboço da pregação",
     "status": "next",
     "updatedAt": 1767480832485
+  },
+  {
+    "id": 1767401556311,
+    "text": "Colocar tala, pesos, cadeira, potes, telas etc para vender",
+    "status": "next",
+    "updatedAt": 1767401556311
   },
   {
     "id": 1767044479995,
