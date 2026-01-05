@@ -133,6 +133,15 @@
     "googleEventId": "9llosfumn93ej75d16h0olv8p8"
   },
   {
+    "id": 1767400580444,
+    "text": "Carregar bateria da Scooter",
+    "status": "next",
+    "updatedAt": 1767400580444,
+    "date": "2026-01-03T12:00",
+    "googleEventId": "mkdfviumcbegb7chulcvg9pdn4",
+    "order": null
+  },
+  {
     "id": 1767534109390,
     "text": "Ver dispositivo gravador ativado pelo celular a comprar",
     "status": "next",
@@ -144,15 +153,6 @@
     "status": "next",
     "date": "2025-12-31T17:00",
     "googleEventId": "ejonge02q5vbtp3uagmokbdbcg",
-    "order": null
-  },
-  {
-    "id": 1767400580444,
-    "text": "Carregar bateria da Scooter",
-    "status": "next",
-    "updatedAt": 1767400580444,
-    "date": "2026-01-03T12:00",
-    "googleEventId": "mkdfviumcbegb7chulcvg9pdn4",
     "order": null
   },
   {
