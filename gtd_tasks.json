@@ -193,16 +193,16 @@
     "updatedAt": 1767481303188
   },
   {
-    "id": 1767481097981,
-    "text": "Tirar o ícone de certo das tarefas agendadas",
-    "status": "next",
-    "updatedAt": 1767481097981
-  },
-  {
     "id": 1767527958448,
     "text": "Incluir no flashcard outra opção de organizar versículos arrastando",
     "status": "next",
     "updatedAt": 1767527958448
+  },
+  {
+    "id": 1767481097981,
+    "text": "Tirar o ícone de certo das tarefas agendadas",
+    "status": "next",
+    "updatedAt": 1767481097981
   },
   {
     "id": 1767553544960,
