@@ -178,12 +178,6 @@
     "order": 1
   },
   {
-    "id": 1767481303188,
-    "text": "Baixar o arquivo Json das tarefas",
-    "status": "next",
-    "updatedAt": 1767481303188
-  },
-  {
     "id": 1767400580444,
     "text": "Carregar bateria da Scooter",
     "status": "next",
@@ -191,6 +185,12 @@
     "date": "2026-01-03T12:00",
     "googleEventId": "mkdfviumcbegb7chulcvg9pdn4",
     "order": null
+  },
+  {
+    "id": 1767481303188,
+    "text": "Baixar o arquivo Json das tarefas",
+    "status": "next",
+    "updatedAt": 1767481303188
   },
   {
     "id": 1767481097981,
