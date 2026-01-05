@@ -252,5 +252,11 @@
     "updatedAt": 1767632590855,
     "date": "2026-01-19T08:00",
     "googleEventId": "mc6lgcj973p0jba6if0eatlt94"
+  },
+  {
+    "id": 1767632906476,
+    "text": "Enviar planilha de fornecedores à UPDE",
+    "status": "next",
+    "updatedAt": 1767632906476
   }
 ]
