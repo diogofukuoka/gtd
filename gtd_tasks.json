@@ -242,10 +242,10 @@
     "updatedAt": 1767481303188
   },
   {
-    "id": 1767481097981,
-    "text": "Tirar o ícone de certo das tarefas agendadas",
+    "id": 1767529698963,
+    "text": "Mudar hinário para o Github ",
     "status": "next",
-    "updatedAt": 1767481097981
+    "updatedAt": 1767529698963
   },
   {
     "id": 1767632590855,
@@ -256,9 +256,9 @@
     "googleEventId": "mc6lgcj973p0jba6if0eatlt94"
   },
   {
-    "id": 1767529698963,
-    "text": "Mudar hinário para o Github ",
+    "id": 1767481097981,
+    "text": "Tirar o ícone de certo das tarefas agendadas",
     "status": "next",
-    "updatedAt": 1767529698963
+    "updatedAt": 1767481097981
   }
 ]
