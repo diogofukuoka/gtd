@@ -148,12 +148,10 @@
     "updatedAt": 1767534109390
   },
   {
-    "id": 1767063414904,
-    "text": "Comprar ingredientes para pão",
+    "id": 1767527958448,
+    "text": "Incluir no flashcard outra opção de organizar versículos arrastando",
     "status": "next",
-    "date": "2025-12-31T17:00",
-    "googleEventId": "ejonge02q5vbtp3uagmokbdbcg",
-    "order": null
+    "updatedAt": 1767527958448
   },
   {
     "id": 1767490411393,
@@ -174,10 +172,12 @@
     "updatedAt": 1767490484466
   },
   {
-    "id": 1767527958448,
-    "text": "Incluir no flashcard outra opção de organizar versículos arrastando",
+    "id": 1767063414904,
+    "text": "Comprar ingredientes para pão",
     "status": "next",
-    "updatedAt": 1767527958448
+    "date": "2025-12-31T17:00",
+    "googleEventId": "ejonge02q5vbtp3uagmokbdbcg",
+    "order": null
   },
   {
     "id": 1767400465538,
