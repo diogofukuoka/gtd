@@ -248,7 +248,8 @@
   {
     "id": 1767632590855,
     "text": "Meus Documentos Férias 01-2026.zip salvei na Rede",
-    "status": "inbox",
-    "updatedAt": 1767632590855
+    "status": "calendar",
+    "updatedAt": 1767632590855,
+    "date": "2026-01-19T08:00"
   }
 ]
