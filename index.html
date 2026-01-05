@@ -1,0 +1,792 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>GTD Fukuoka (v10.2 Black Borders)</title>
+    <style>
+        :root { --primary: #2c3e50; --accent: #3498db; --success: #27ae60; --warning: #f39c12; --danger: #e74c3c; --google: #4285f4; --gray: #95a5a6; --ai: #8e44ad; --github: #24292e; }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        
+        /* LAYOUT: Margens reduzidas para ganhar tela (Mantido) */
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f8f9fa; color: #333; margin: 0; padding: 5px; padding-bottom: 80px; user-select: none; }
+        .container { max-width: 900px; margin: 0 auto; background: white; padding: 10px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+        
+        header { text-align: center; margin-bottom: 15px; }
+        h1 { margin: 0; color: var(--primary); font-size: 1.4rem; }
+        
+        .status-bar { background: #f8f9fa; border: 1px solid #e9ecef; padding: 8px; border-radius: 6px; margin-top: 10px; font-size: 0.8rem; display: flex; justify-content: space-between; align-items: center; gap: 5px; }
+        .dot { width: 10px; height: 10px; border-radius: 50%; background: #ccc; display:inline-block; margin-right:5px; }
+        .dot.online { background: var(--success); box-shadow: 0 0 5px var(--success); }
+        .dot.syncing { background: var(--warning); animation: pulse 1s infinite; }
+        .dot.error { background: var(--danger); }
+        
+        button { padding: 0 10px; height: 36px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; transition: 0.2s; }
+        button:active { transform: scale(0.96); }
+        .btn-config { background: white; border: 1px solid #ccc; color: #333; font-size: 0.8rem; }
+        .btn-add { background: var(--accent); color: white; min-width: 45px; font-size: 1.2rem; height: 42px; }
+        .btn-mic { background: #607d8b; color: white; min-width: 42px; font-size: 1.2rem; height: 42px; }
+        .btn-mic.listening { background: #e74c3c; animation: pulse-red 1.5s infinite; }
+        
+        .input-group { display: flex; gap: 5px; margin-bottom: 15px; width: 100%; }
+        input[type="text"], input[type="datetime-local"], input[type="password"] { flex: 1; padding: 10px; border: 2px solid #ddd; border-radius: 8px; font-size: 16px; }
+
+        .lists-grid { display: grid; grid-template-columns: 1fr; gap: 15px; }
+        @media(min-width: 700px) { .lists-grid { grid-template-columns: 1fr 1fr; } }
+        
+        /* CARD: Padding interno reduzido (Mantido) */
+        .list-card { background-color: #f1f3f5; border: 1px solid #ced4da; border-radius: 8px; padding: 10px 5px; min-height: 100px; display: flex; flex-direction: column; }
+        
+        .list-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #dee2e6; padding-bottom: 5px; margin-bottom: 8px; cursor: pointer; padding-left: 5px; padding-right: 5px; }
+        .list-header h3 { margin: 0; font-size: 0.95rem; }
+        .list-header:active { opacity: 0.6; background-color: #e9ecef; }
+        .badge { background: #fff; padding: 2px 6px; border-radius: 10px; font-size: 0.7rem; font-weight: bold; border: 1px solid #ccc; }
+        
+        /* AJUSTE SOLICITADO: Todas as bordas superiores agora são PRETAS (#000) */
+        .card-inbox { border-top: 4px solid #000; }
+        .card-next { border-top: 4px solid #000; }
+        .card-project { border-top: 4px solid #000; }
+        .card-calendar { border-top: 4px solid #000; }
+        .card-waiting { border-top: 4px solid #000; }
+        .card-someday { border-top: 4px solid #000; }
+        .card-reference { border-top: 4px solid #000; }  
+        .card-completed { border-top: 4px solid #000; opacity: 0.8; }
+        
+        /* Mantém o fundo amarelo, mas força a borda superior preta */
+        .card-do-now { 
+            background-color: #fff3cd !important; 
+            border: 1px solid #ffeeba !important; 
+            border-top: 4px solid #000 !important; 
+        }
+
+        ul { list-style: none; padding: 0; margin: 0; min-height: 50px; flex-grow: 1; }
+        
+        /* ITEM: Padding reduzido (Mantido) */
+        li { padding: 8px 5px; border: 1px solid #e9ecef; display: flex; justify-content: space-between; align-items: center; background: #ffffff; border-radius: 6px; margin-bottom: 6px; touch-action: pan-y; -webkit-user-select: none; user-select: none; position: relative; gap: 5px; }
+        
+        .task-content { flex: 1; display: flex; flex-direction: column; cursor: default; padding: 2px 0; overflow: hidden; }
+        .task-text { font-weight: 400; font-size: 0.95rem; color: #2c3e50; word-wrap: break-word; }
+        .meta { font-size: 0.7rem; color: #666; display: block; margin-top: 2px; pointer-events: none; }
+        
+        .task-actions { display: flex; gap: 2px; align-items: center; flex-shrink: 0; }
+        .btn-icon { background: none; border: none; padding: 0; font-size: 1rem; cursor: pointer; border-radius: 4px; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; transition: background 0.2s; position: relative; z-index: 2; }
+        .btn-icon:hover { background-color: #f1f3f5; }
+        .btn-icon.del:hover { color: var(--danger); background-color: #ffebee; }
+        .btn-icon.edit:hover { color: var(--accent); background-color: #e3f2fd; }
+        .btn-icon.ai:hover { color: var(--ai); background-color: #f3e5f5; }
+
+        /* Botões de Sequência com espaço seguro (Mantido) */
+        .seq-num { background: var(--primary); color: white; font-size: 0.7rem; font-weight: bold; width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-right: 3px; flex-shrink: 0; }
+        
+        .btn-seq { 
+            width: 32px; 
+            height: 32px; 
+            font-size: 0.8rem; 
+            background: #e9ecef; 
+            border: 1px solid #ccc; 
+            color: #555; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            border-radius: 4px; 
+            cursor: pointer; 
+            padding: 0; 
+            margin-right: 12px; /* Espaço de segurança mantido */
+        }
+        .btn-seq:hover { background: var(--primary); color: white; border-color: var(--primary); }
+
+        #processing-zone { display:none; border:2px solid var(--accent); padding:15px; border-radius:10px; margin-bottom:20px; background: white; }
+        .step { display: none; animation: fadeIn 0.3s; }
+        .step.active { display: block; }
+        .decision-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+        .btn-yes { background: var(--success); color: white; }
+        .btn-no { background: var(--danger); color: white; }
+        .btn-opt { background: var(--primary); color: white; }
+
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 3000; align-items: center; justify-content: center; }
+        .modal-content { background: white; width: 90%; max-width: 400px; padding: 20px; border-radius: 10px; }
+        #toast { visibility: hidden; min-width: 250px; background-color: #333; color: #fff; text-align: center; border-radius: 4px; padding: 16px; position: fixed; z-index: 9999; left: 50%; bottom: 30px; transform: translateX(-50%); }
+        #toast.show { visibility: visible; animation: fadein 0.5s, fadeout 0.5s 2.5s; }
+        #loadingOverlay { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.9); z-index: 9999; align-items: center; justify-content: center; flex-direction: column; }
+        .spinner { border: 4px solid #f3f3f3; border-top: 4px solid var(--accent); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; }
+
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        @keyframes fadein { from {bottom: 0; opacity: 0;} to {bottom: 30px; opacity: 1;} }
+        @keyframes fadeout { from {bottom: 30px; opacity: 1;} to {bottom: 0; opacity: 0;} }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .hidden { display: none !important; }
+        footer { text-align: center; margin-top: 30px; margin-bottom: 20px; font-size: 0.8rem; color: var(--gray); font-weight: 500; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>GTD Fukuoka</h1>
+        <div class="status-bar">
+            <div><div id="dbDot" class="dot"></div><span id="dbStatus">GitHub: Off</span></div>
+            <div>
+                <button class="btn-config" id="btnAuthCalendar" onclick="handleAuthClick()">📅 Agenda</button>
+                <button class="btn-config" onclick="openConfig()">⚙️ Config</button>
+            </div>
+        </div>
+    </header>
+
+    <div class="input-group">
+        <input type="text" id="inboxInput" list="historyList" placeholder="Nova tarefa..." onkeypress="if(event.key==='Enter') addToInbox()">
+        <datalist id="historyList"></datalist>
+        <button class="btn-mic" id="voiceBtn" onclick="toggleVoice()">🎤</button>
+        <button class="btn-add" onclick="addToInbox()">+</button>
+    </div>
+
+    <!-- BOTÕES DE PROCESSAMENTO -->
+    <div id="processButtons" class="hidden" style="display:flex; gap:10px; margin-bottom:20px;">
+        <button onclick="startProcessing()" id="btnProcess" class="btn-config" style="flex:1; background:var(--primary); color:white;">⚡ Processar Manual</button>
+        <button onclick="magicProcess()" id="btnMagic" class="btn-config" style="flex:1; background:linear-gradient(135deg, #8e44ad, #3498db); color:white;">✨ Processar pela IA</button>
+    </div>
+
+    <!-- WIZARD MANUAL -->
+    <div id="processing-zone">
+        <div style="border-bottom:1px solid #eee; padding-bottom:10px; margin-bottom:10px; text-align:center; font-weight:bold; color:#888;">PROCESSANDO ITEM:</div>
+        <h3 id="currentItem" style="margin:0 0 15px 0; background:#fff3cd; padding:15px; border-left:5px solid var(--warning); border-radius:4px;"></h3>
+        <div id="step-1" class="step active"><p style="text-align:center; font-weight:bold;">É passível de ação?</p><div class="decision-grid"><button class="btn-no" onclick="toStep('step-no')">NÃO</button><button class="btn-yes" onclick="toStep('step-yes')">SIM</button></div></div>
+        <div id="step-no" class="step"><p style="text-align:center; font-weight:bold;">O que fazer com isso?</p><div class="decision-grid"><button class="btn-no" onclick="finalizeProc('trash')">Lixo 🗑️</button><button class="btn-opt" onclick="finalizeProc('someday')">Talvez 💡</button><button class="btn-opt" style="grid-column:span 2" onclick="finalizeProc('reference')">Referência 📚</button></div><button class="btn-config" style="width:100%; margin-top:10px" onclick="toStep('step-1')">Voltar</button></div>
+        <div id="step-yes" class="step"><p style="text-align:center; font-weight:bold;">Leva menos de 2 minutos?</p><div class="decision-grid"><button class="btn-yes" onclick="finalizeProc('do-now')">SIM (Faça Agora)</button><button class="btn-no" onclick="toStep('step-delegate')">NÃO</button></div><button class="btn-config" style="width:100%; margin-top:10px" onclick="toStep('step-1')">Voltar</button></div>
+        <div id="step-delegate" class="step"><p style="text-align:center; font-weight:bold;">Você é a melhor pessoa para fazer?</p><div class="decision-grid"><button class="btn-no" onclick="finalizeProc('waiting')">NÃO (Delegar)</button><button class="btn-yes" onclick="toStep('step-defer')">SIM (Eu faço)</button></div><button class="btn-config" style="width:100%; margin-top:10px" onclick="toStep('step-yes')">Voltar</button></div>
+        <div id="step-defer" class="step"><p style="text-align:center; font-weight:bold;">Tem dia ou hora específica?</p><div class="decision-grid"><button class="btn-opt" onclick="finalizeProc('calendar')">SIM (Agenda)</button><button class="btn-opt" onclick="finalizeProc('next')">NÃO (Assim que der)</button><button class="btn-opt" style="grid-column:span 2" onclick="finalizeProc('project')">É complexo (Projeto)</button></div><button class="btn-config" style="width:100%; margin-top:10px" onclick="toStep('step-delegate')">Voltar</button></div>
+    </div>
+
+    <div class="lists-grid"></div>
+</div>
+
+<footer><p>Desenvolvido por Diogo Fukuoka &copy; 2025</p></footer>
+
+<div id="moveModal" class="modal-overlay">
+    <div class="modal-content">
+        <h3>Mover tarefa para:</h3>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+            <button class="btn-config" onclick="finalizeCtx('inbox')">📥 Entrada</button>
+            <button class="btn-config" onclick="finalizeCtx('do-now')">⚡ Agora</button>
+            <button class="btn-config" onclick="finalizeCtx('next')">🔥 Próx. Ações</button>
+            <button class="btn-config" onclick="finalizeCtx('project')">📂 Projetos</button>
+            <button class="btn-config" onclick="finalizeCtx('calendar')">📅 Calendário</button>
+            <button class="btn-config" onclick="finalizeCtx('waiting')">⏳ Delegar</button>
+            <button class="btn-config" onclick="finalizeCtx('someday')">💡 Talvez</button>
+            <button class="btn-config" onclick="finalizeCtx('reference')">📚 Ref.</button>
+            <button class="btn-config" onclick="finalizeCtx('completed')">✅ Feito</button>
+        </div>
+        <button class="btn-config" style="width:100%; margin-top:10px;" onclick="document.getElementById('moveModal').style.display='none'">Cancelar</button>
+    </div>
+</div>
+
+<div id="configModal" class="modal-overlay">
+    <div class="modal-content">
+        <h3>Configurações (GitHub)</h3>
+        <p style="font-size:0.8rem; color:#666;">Seus dados ficarão salvos no seu repositório.</p>
+        <label>GitHub Username (Dono):</label><input type="text" id="ghOwner" placeholder="Ex: diogofukuoka">
+        <label>Nome do Repositório:</label><input type="text" id="ghRepo" placeholder="Ex: gtd-backup">
+        <label>Token (PAT) Clássico:</label><input type="password" id="ghToken" placeholder="ghp_...">
+        <label>Nome do Arquivo:</label><input type="text" id="ghPath" value="gtd_tasks.json">
+        <hr>
+        <label>Google Client ID (Agenda):</label><input type="text" id="cfgClientId">
+        <label>Gemini API Key (IA):</label><input type="password" id="cfgGemini">
+        <div style="text-align:right; margin-top:15px;">
+            <button class="btn-config" onclick="closeConfig()">Fechar</button>
+            <button class="btn-config" style="background:var(--success); color:white;" onclick="saveConfig()">Salvar e Recarregar</button>
+        </div>
+    </div>
+</div>
+
+<div id="dateModal" class="modal-overlay">
+    <div class="modal-content">
+        <h3>Escolha a Data</h3>
+        <input type="datetime-local" id="modalDateInput">
+        <div style="margin-top:10px; text-align:right;">
+            <button class="btn-config" onclick="resolveDate(null)">Cancelar</button>
+            <button class="btn-config" style="background:var(--success); color:white;" onclick="resolveDate(document.getElementById('modalDateInput').value)">Confirmar</button>
+        </div>
+    </div>
+</div>
+
+<div id="loadingOverlay"><div class="spinner"></div><p style="margin-top:10px" id="loadingText">Carregando...</p></div>
+<div id="toast">Notificação</div>
+
+<!-- SCRIPT BASE -->
+<script>
+    var items = JSON.parse(localStorage.getItem('gtd_data')) || [];
+    var config = JSON.parse(localStorage.getItem('gtd_config')) || {};
+    var inputHistory = JSON.parse(localStorage.getItem('gtd_history')) || [];
+    var listNames = { 'inbox': '📥 Entrada', 'do-now': '⚡ Fazer Agora', 'next': '🔥 Próximas Ações', 'project': '📂 Projetos', 'calendar': '📅 Calendário', 'waiting': '⏳ Delegar', 'someday': '💡 Talvez', 'reference': '📚 Referência', 'completed': '✅ Concluídas' };
+    var activeItemIdx = null;
+    var longPressTimer;
+    var dateRes;
+    var touchStartX = 0;
+    var touchStartY = 0;
+    var isScrolling = false;
+    var ghSha = null; // Para controlar versão do GitHub
+
+    function openConfig() { 
+        document.getElementById('cfgClientId').value = config.googleClientId || ''; 
+        document.getElementById('cfgGemini').value = config.geminiKey || '';
+        document.getElementById('ghOwner').value = config.ghOwner || '';
+        document.getElementById('ghRepo').value = config.ghRepo || '';
+        document.getElementById('ghToken').value = config.ghToken || '';
+        document.getElementById('ghPath').value = config.ghPath || 'gtd_tasks.json';
+        document.getElementById('configModal').style.display = 'flex'; 
+    }
+    function closeConfig() { document.getElementById('configModal').style.display = 'none'; }
+    function saveConfig() {
+        config.googleClientId = document.getElementById('cfgClientId').value;
+        config.geminiKey = document.getElementById('cfgGemini').value;
+        config.ghOwner = document.getElementById('ghOwner').value;
+        config.ghRepo = document.getElementById('ghRepo').value;
+        config.ghToken = document.getElementById('ghToken').value;
+        config.ghPath = document.getElementById('ghPath').value;
+        localStorage.setItem('gtd_config', JSON.stringify(config));
+        location.reload();
+    }
+
+    function renderHistory() {
+        const dl = document.getElementById('historyList');
+        dl.innerHTML = '';
+        inputHistory.slice().reverse().forEach(h => {
+            const op = document.createElement('option');
+            op.value = h;
+            dl.appendChild(op);
+        });
+    }
+
+    // Função auxiliar para reordenar tarefas na caixa "Next"
+    function moveNextItem(e, itemId, direction) {
+        e.stopPropagation();
+        // Filtra todas as tarefas da lista 'next' na ordem atual
+        const nextItems = items.filter(i => i.status === 'next');
+        const currentIndexInNext = nextItems.findIndex(i => i.id === itemId);
+        
+        if (currentIndexInNext === -1) return;
+        
+        // Impede mover além dos limites
+        if (direction === -1 && currentIndexInNext === 0) return; // Topo
+        if (direction === 1 && currentIndexInNext === nextItems.length - 1) return; // Fundo
+
+        const targetItem = nextItems[currentIndexInNext + direction];
+        
+        // Encontra os índices reais no array principal 'items'
+        const mainIndexCurrent = items.indexOf(nextItems[currentIndexInNext]);
+        const mainIndexTarget = items.indexOf(targetItem);
+        
+        // Troca as posições no array principal
+        [items[mainIndexCurrent], items[mainIndexTarget]] = [items[mainIndexTarget], items[mainIndexCurrent]];
+        
+        if(window.sync) window.sync(); else render();
+    }
+
+    function render() {
+        const listKeys = Object.keys(listNames);
+        const grid = document.querySelector('.lists-grid');
+        if(!grid) return;
+        grid.innerHTML = ''; 
+        const counts = {};
+        let nextSeqCounter = 1; // Contador para sequência da lista "next"
+        
+        listKeys.forEach(key => {
+            counts[key] = 0;
+            const card = document.createElement('div');
+            card.className = `list-card card-${key}`;
+            if(key === 'completed') card.style.gridColumn = '1 / -1';
+            
+            card.innerHTML = `
+                <div class="list-header" 
+                     onmousedown="startListTitlePress(event, '${key}', 'mouse')" ontouchstart="startListTitlePress(event, '${key}', 'touch')"
+                     onmouseup="cancelPress()" ontouchend="cancelPress()" onmouseleave="cancelPress()" ontouchmove="cancelPressOnMove(event)">
+                    <h3>${listNames[key]}</h3>
+                    <div>
+                        ${key === 'completed' ? `<button class="btn-config" onclick="clearCompletedHistory()" style="font-size:0.7rem; padding:2px 5px;">🗑️</button>` : ''}
+                        <span class="badge" id="c-${key}">0</span>
+                    </div>
+                </div>
+                <ul id="l-${key}"></ul>
+            `;
+            grid.appendChild(card);
+        });
+
+        items.forEach((item, idx) => {
+            const ul = document.getElementById('l-'+item.status);
+            if(ul) {
+                counts[item.status]++;
+                const li = document.createElement('li');
+                
+                li.ontouchstart = (e) => startMovePress(e, idx, 'touch');
+                li.ontouchmove = (e) => cancelPressOnMove(e);
+                li.ontouchend = cancelPress;
+                li.ontouchcancel = cancelPress;
+                li.onmousedown = (e) => { if(!e.touches) startMovePress(e, idx, 'mouse'); };
+                li.oncontextmenu = (e) => e.preventDefault(); 
+
+                let meta = "";
+                if(item.note) meta += `<span class="meta">${item.note}</span>`;
+                if(item.date && (item.status === 'calendar' || item.status === 'waiting')) {
+                    const d = new Date(item.date);
+                    meta += `<span class="meta">📅 ${d.toLocaleString()} ${item.googleEventId ? '✅' : ''}</span>`;
+                }
+                if(item.status === 'completed' && item.completedAt) {
+                    const d = new Date(item.completedAt);
+                    meta += `<span class="meta" style="color:var(--success)">Feito: ${d.toLocaleString()}</span>`;
+                }
+
+                // Lógica de Sequência e Botões de Reordenação para "Próximas Ações"
+                let seqBadge = "";
+                let moveBtns = "";
+                if (item.status === 'next') {
+                    seqBadge = `<div class="seq-num">${nextSeqCounter++}</div>`;
+                    moveBtns = `
+                        <button class="btn-seq" onclick="moveNextItem(event, ${item.id}, -1)">▲</button>
+                        <button class="btn-seq" onclick="moveNextItem(event, ${item.id}, 1)">▼</button>
+                    `;
+                }
+
+                li.innerHTML = `
+                    ${seqBadge}
+                    <div class="task-content">
+                        <span class="task-text">${item.text}</span>
+                        ${meta}
+                    </div>
+                    <div class="task-actions">
+                        ${moveBtns}
+                        <button class="btn-icon edit" title="Editar" onclick="editItemClick(event, ${idx})">✏️</button>
+                        <button class="btn-icon ai" title="Desmembrar (IA)" onclick="breakdownItem(event, ${idx})">🤖</button>
+                        <button class="btn-icon del" title="Excluir" onclick="deleteItem(event, ${idx})">🗑️</button>
+                    </div>
+                `;
+                ul.appendChild(li);
+            }
+        });
+
+        listKeys.forEach(l => {
+             const badge = document.getElementById('c-'+l);
+             if(badge) badge.innerText = counts[l];
+        });
+        updateDashboard(counts['inbox']);
+    }
+
+    function updateDashboard(inboxCount) {
+        const btnContainer = document.getElementById('processButtons');
+        const processingZone = document.getElementById('processing-zone');
+        if(inboxCount > 0) {
+            btnContainer.classList.remove('hidden');
+            btnContainer.style.display = 'flex'; 
+        } else {
+            btnContainer.classList.add('hidden');
+            btnContainer.style.display = 'none';
+            processingZone.style.display = 'none'; 
+        }
+    }
+
+    function addToInbox() {
+        const val = document.getElementById('inboxInput').value;
+        if(val) { 
+            if(!inputHistory.includes(val)) {
+                inputHistory.push(val);
+                if(inputHistory.length > 50) inputHistory.shift();
+                localStorage.setItem('gtd_history', JSON.stringify(inputHistory));
+                renderHistory();
+            }
+            items.push({id:Date.now(), text:val, status:'inbox', updatedAt:Date.now()}); 
+            document.getElementById('inboxInput').value=''; 
+            if(window.sync) window.sync(); else render(); 
+        }
+    }
+
+    // --- GITHUB SYNC LOGIC ---
+    async function loadFromGitHub() {
+        if (!config.ghToken || !config.ghOwner || !config.ghRepo) {
+            document.getElementById('dbStatus').innerText = "Sem Config";
+            if(!items.length) setTimeout(openConfig, 500);
+            document.getElementById('loadingOverlay').style.display = 'none';
+            return;
+        }
+
+        document.getElementById('dbStatus').innerText = "Conectando...";
+        const url = `https://api.github.com/repos/${config.ghOwner}/${config.ghRepo}/contents/${config.ghPath}`;
+        
+        try {
+            const res = await fetch(url, {
+                headers: { 'Authorization': `token ${config.ghToken}`, 'Accept': 'application/vnd.github.v3+json' }
+            });
+            
+            if (res.status === 404) {
+                // Arquivo não existe, vamos criar no primeiro save
+                console.log("Arquivo não existe no GitHub, será criado.");
+                document.getElementById('dbDot').className = "dot online";
+                document.getElementById('dbStatus').innerText = "GitHub (Novo)";
+                // Se temos itens locais, forçamos um save para criar o arquivo
+                if(items.length > 0) window.sync();
+            } else if (res.ok) {
+                const data = await res.json();
+                ghSha = data.sha; // Importante para updates
+                // Decode Base64 (com suporte a UTF-8)
+                const content = decodeURIComponent(escape(atob(data.content)));
+                const remoteItems = JSON.parse(content);
+                
+                // Merge simples: se remoto tem mais itens ou é diferente, atualiza
+                // (Para uso pessoal simples, assumimos que o cloud é a verdade ao carregar)
+                items = remoteItems;
+                localStorage.setItem('gtd_data', JSON.stringify(items));
+                render();
+                document.getElementById('dbDot').className = "dot online";
+                document.getElementById('dbStatus').innerText = "GitHub Online";
+                
+                if(window.checkRemoteCalendarDeletions) window.checkRemoteCalendarDeletions();
+            } else {
+                throw new Error("Erro GitHub: " + res.status);
+            }
+        } catch (e) {
+            console.error(e);
+            document.getElementById('dbDot').className = "dot error";
+            document.getElementById('dbStatus').innerText = "Erro GitHub";
+        }
+        document.getElementById('loadingOverlay').style.display = 'none';
+    }
+
+    window.sync = async function() {
+        // Salva Local
+        localStorage.setItem('gtd_data', JSON.stringify(items));
+        render();
+
+        if (!config.ghToken || !config.ghOwner || !config.ghRepo) return;
+
+        document.getElementById('dbDot').className = "dot syncing";
+        
+        const url = `https://api.github.com/repos/${config.ghOwner}/${config.ghRepo}/contents/${config.ghPath}`;
+        // Encode Base64 (UTF-8 safe)
+        const content = btoa(unescape(encodeURIComponent(JSON.stringify(items, null, 2))));
+        
+        const body = {
+            message: "Update via GTD App",
+            content: content,
+            sha: ghSha // Necessário para update. Se null, cria novo (se não existir)
+        };
+
+        try {
+            // Se não temos SHA, tentamos um GET antes para não dar conflito (caso tenha sido criado por outro device)
+            if (!ghSha) {
+                 const checkRes = await fetch(url, { headers: { 'Authorization': `token ${config.ghToken}` } });
+                 if(checkRes.ok) {
+                     const checkData = await checkRes.json();
+                     body.sha = checkData.sha;
+                 }
+            }
+
+            const res = await fetch(url, {
+                method: 'PUT',
+                headers: { 
+                    'Authorization': `token ${config.ghToken}`, 
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/vnd.github.v3+json'
+                },
+                body: JSON.stringify(body)
+            });
+
+            if (res.ok) {
+                const data = await res.json();
+                ghSha = data.content.sha; // Atualiza SHA para o próximo save
+                document.getElementById('dbDot').className = "dot online";
+            } else {
+                console.error("Erro Save GitHub", await res.text());
+                document.getElementById('dbDot').className = "dot error";
+            }
+        } catch (e) {
+            console.error(e);
+            document.getElementById('dbDot').className = "dot error";
+        }
+    }
+
+    // Auto-Sync (Polling simples para simular realtime)
+    setInterval(() => {
+        // Apenas recarrega se o usuário não estiver interagindo para evitar sobrescrever edição
+        if(!document.hidden) loadFromGitHub(); 
+    }, 60000); // Checa a cada 60s
+
+    window.addEventListener('load', function() {
+        render();
+        renderHistory();
+        loadFromGitHub(); // Carrega do GitHub ao iniciar
+        if(!config.googleClientId) document.getElementById('loadingOverlay').style.display = 'none';
+        window.checkDueDates();
+        setInterval(window.checkDueDates, 60000);
+        
+        window.addEventListener('scroll', function() {
+            clearTimeout(longPressTimer);
+            isScrolling = true;
+        }, true);
+    });
+
+    // --- DEMAIS FUNÇÕES (VOZ, TOUCH, CALENDÁRIO, IA) MANTIDAS IGUAIS ---
+    
+    // ... [Voice code] ...
+    let recognition;
+    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        recognition = new SpeechRecognition();
+        recognition.lang = 'pt-BR';
+        recognition.continuous = false;
+        recognition.onstart = function() { document.getElementById('voiceBtn').classList.add('listening'); };
+        recognition.onend = function() { document.getElementById('voiceBtn').classList.remove('listening'); };
+        recognition.onresult = function(event) {
+            const text = event.results[0][0].transcript;
+            const input = document.getElementById('inboxInput');
+            input.value = text.charAt(0).toUpperCase() + text.slice(1);
+            input.focus();
+        };
+    } else { document.getElementById('voiceBtn').style.display = 'none'; }
+    window.toggleVoice = function() { if(!recognition) return alert("Sem suporte voz."); try { recognition.start(); } catch(e) { recognition.stop(); } }
+
+    function showToast(msg) { 
+        const t = document.getElementById('toast'); t.innerText = msg; t.className = 'show'; 
+        setTimeout(() => t.className = '', 3000); 
+    }
+    
+    function cancelPress() { clearTimeout(longPressTimer); }
+    function cancelPressOnMove(e) {
+        if(e.touches && e.touches[0]) {
+            var moveX = e.touches[0].clientX;
+            var moveY = e.touches[0].clientY;
+            if(Math.abs(moveX - touchStartX) > 5 || Math.abs(moveY - touchStartY) > 5) {
+                clearTimeout(longPressTimer);
+                isScrolling = true;
+            }
+        }
+    }
+
+    function askDate() { return new Promise(r => { document.getElementById('dateModal').style.display='flex'; dateRes = r; }); }
+    function resolveDate(val) { document.getElementById('dateModal').style.display='none'; dateRes(val); }
+    
+    function startMovePress(e, idx, type) {
+        if (e.target.tagName === 'BUTTON' || e.target.closest('button')) return;
+        if(type === 'touch' && e.touches && e.touches[0]) {
+            touchStartX = e.touches[0].clientX;
+            touchStartY = e.touches[0].clientY;
+        }
+        isScrolling = false;
+        longPressTimer = setTimeout(() => {
+            if(!isScrolling) {
+                activeItemIdx = idx; 
+                document.getElementById('moveModal').style.display = 'flex';
+                if(navigator.vibrate) navigator.vibrate(50);
+            }
+        }, 800); 
+    }
+    
+    function editItemClick(e, idx) { e.stopPropagation(); triggerEdit(idx); }
+    
+    function triggerEdit(idx) {
+        const item = items[idx]; const newTxt = prompt("Editar:", item.text);
+        if(newTxt && newTxt !== item.text) { item.text = newTxt; if(window.sync) window.sync(); else render(); }
+    }
+    function deleteItem(e, idx) {
+        e.stopPropagation();
+        if(confirm("Excluir?")) {
+            const item = items[idx];
+            if(window.handleCalendarEvents) window.handleCalendarEvents(item, item.status, 'trash');
+            items.splice(idx, 1);
+            if(window.sync) window.sync(); else render();
+        }
+    }
+    function finalizeCtx(newStatus) {
+        document.getElementById('moveModal').style.display = 'none';
+        changeItemStatus(items[activeItemIdx], newStatus);
+    }
+    async function changeItemStatus(item, newStatus, aiDate = null, aiNote = null) {
+        const oldStatus = item.status;
+        if(newStatus === 'completed') item.completedAt = new Date().toISOString(); else delete item.completedAt;
+        if(newStatus === 'calendar' || newStatus === 'waiting') {
+            let dateStr = aiDate;
+            if(!dateStr) dateStr = await askDate();
+            if(!dateStr) return; 
+            item.date = dateStr;
+            if(newStatus === 'waiting') { 
+                if(aiNote) item.note = aiNote;
+                else { const n = prompt("Delegar para?"); if(n) item.note = "Delegado: "+n; }
+            }
+        }
+        if(window.handleCalendarEvents) await window.handleCalendarEvents(item, oldStatus, newStatus);
+        item.status = newStatus;
+        if(window.sync) window.sync(); else render();
+    }
+    
+    function startListTitlePress(e, listKey, type) {
+        if (e.target.tagName === 'BUTTON' || e.target.closest('button')) return;
+        if(type === 'touch' && e.touches && e.touches[0]) {
+            touchStartX = e.touches[0].clientX;
+            touchStartY = e.touches[0].clientY;
+        }
+        isScrolling = false;
+        longPressTimer = setTimeout(async () => {
+            if(!isScrolling) {
+                if(navigator.vibrate) navigator.vibrate(50);
+                const text = prompt(`Adicionar em "${listNames[listKey]}":`);
+                if(text) {
+                    const newItem = { id: Date.now(), text: text, status: listKey, updatedAt: Date.now() };
+                    if (listKey === 'calendar' || listKey === 'waiting') {
+                        const dateStr = await askDate();
+                        if(dateStr) {
+                            newItem.date = dateStr;
+                            if(listKey === 'waiting') { const n = prompt("Delegar?"); if(n) newItem.note = "Delegado: "+n; }
+                            items.push(newItem);
+                            if(window.handleCalendarEvents) await window.handleCalendarEvents(newItem, null, listKey);
+                        } else return;
+                    } else items.push(newItem);
+                    if(window.sync) window.sync(); else render();
+                }
+            }
+        }, 800);
+    }
+    function clearCompletedHistory() { if(confirm("Limpar histórico?")) { items = items.filter(i=>i.status!=='completed'); if(window.sync) window.sync(); else render(); } }
+    
+    let procIdx = null;
+    function startProcessing() {
+        procIdx = items.findIndex(i => i.status === 'inbox');
+        if(procIdx > -1) {
+            document.getElementById('processing-zone').style.display = 'block';
+            document.getElementById('currentItem').innerText = items[procIdx].text;
+            activeItemIdx = procIdx;
+            toStep('step-1');
+        }
+    }
+    function toStep(stepId) { document.querySelectorAll('.step').forEach(s => s.classList.remove('active')); document.getElementById(stepId).classList.add('active'); }
+    async function finalizeProc(newStatus) {
+        await changeItemStatus(items[procIdx], newStatus);
+        setTimeout(() => {
+            if (items.some(i => i.status === 'inbox')) startProcessing();
+            else { document.getElementById('processing-zone').style.display = 'none'; showToast("Entrada zerada!"); }
+        }, 300); 
+    }
+    
+    window.checkDueDates = function() {
+        const now = new Date();
+        let changed = false;
+        items.forEach(item => {
+            if ((item.status === 'calendar' || item.status === 'waiting') && item.date) {
+                const taskDate = new Date(item.date);
+                if (taskDate <= now) { item.status = 'next'; changed = true; }
+            }
+        });
+        if (changed) { if(window.sync) window.sync(); else render(); showToast("Tarefas vencidas movidas para Próximas Ações"); }
+    }
+
+    // --- IA / MAGIC ---
+    window.breakdownItem = async function(e, idx) {
+        e.stopPropagation();
+        if(!config.geminiKey) return alert("Configure a API Key do Gemini.");
+        document.getElementById('loadingText').innerText = "IA Pensando...";
+        document.getElementById('loadingOverlay').style.display = 'flex';
+        const item = items[idx];
+        const prompt = `Quebre a tarefa "${item.text}" em etapas acionáveis. Retorne JSON Array strings.`;
+        try {
+            const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${config.geminiKey}`, {
+                method: 'POST', headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+            });
+            const data = await res.json();
+            if (data.error) throw new Error(data.error.message);
+            const txt = data.candidates[0].content.parts[0].text;
+            const steps = JSON.parse(txt.replace(/```json|```/g, '').trim());
+            steps.forEach(step => items.push({ id: Date.now() + Math.random(), text: step, status: 'next', note: `De: ${item.text}`, updatedAt: Date.now() }));
+            window.sync();
+            showToast("Tarefas criadas!");
+        } catch(e) { alert("Erro IA: " + e.message); }
+        document.getElementById('loadingOverlay').style.display = 'none';
+    }
+
+    window.magicProcess = async function() {
+        if(!config.geminiKey) return alert("Configure a API Key do Gemini.");
+        const inboxItems = items.filter(i => i.status === 'inbox');
+        if(inboxItems.length === 0) return alert("Caixa de entrada vazia.");
+        document.getElementById('loadingText').innerText = "IA Processando...";
+        document.getElementById('loadingOverlay').style.display = 'flex';
+        const tasksTxt = inboxItems.map(i => `- ID:${i.id} | TEXTO: ${i.text}`).join('\n');
+        const now = new Date().toISOString();
+        const prompt = `Hoje é ${now}. Analise estas tarefas GTD e classifique-as. ${tasksTxt} Regras de Saída (JSON Array): [{"id": "...", "status": "...", "date": "YYYY-MM-DDTHH:MM", "note": "..."}]. Regras: 1. Se tiver data/hora específica -> 'calendar'. 2. Se citar outra pessoa -> 'waiting'. 3. <2min -> 'do-now'. 4. Vago -> 'someday'. 5. Ref -> 'reference'. 6. Complexo -> 'project'. 7. Padrão -> 'next'.`;
+        try {
+            const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${config.geminiKey}`, {
+                method: 'POST', headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+            });
+            const data = await res.json();
+            if (data.error) throw new Error(data.error.message);
+            const txt = data.candidates[0].content.parts[0].text;
+            const decisions = JSON.parse(txt.replace(/```json|```/g, '').trim());
+            for (const d of decisions) { const item = items.find(i => i.id == d.id); if(item) await changeItemStatus(item, d.status, d.date, d.note); }
+            window.sync();
+            showToast("Processamento IA Concluído!");
+        } catch(e) { alert("Erro IA: " + e.message); } finally { document.getElementById('loadingOverlay').style.display = 'none'; }
+    }
+</script>
+
+<script src="https://apis.google.com/js/api.js"></script>
+<script src="https://accounts.google.com/gsi/client"></script>
+<script>
+    const SCOPES = 'https://www.googleapis.com/auth/calendar.events';
+    let tokenClient;
+    if(config.googleClientId) {
+        window.addEventListener('load', () => {
+            gapi.load('client', async () => {
+                await gapi.client.init({ discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest'] });
+                tokenClient = google.accounts.oauth2.initTokenClient({
+                    client_id: config.googleClientId, scope: SCOPES,
+                    callback: (resp) => {
+                        if(resp.error) return;
+                        const exp = Date.now() + (resp.expires_in * 1000);
+                        localStorage.setItem('gtd_cal_token', JSON.stringify({ token: resp.access_token, exp: exp }));
+                        gapi.client.setToken(resp);
+                        document.getElementById('btnAuthCalendar').innerText = "📅 Agenda OK";
+                        document.getElementById('btnAuthCalendar').style.background = "var(--success)";
+                        document.getElementById('btnAuthCalendar').style.color = "white";
+                        window.checkRemoteCalendarDeletions();
+                    }
+                });
+                const stored = JSON.parse(localStorage.getItem('gtd_cal_token'));
+                if(stored && Date.now() < stored.exp) {
+                    gapi.client.setToken({ access_token: stored.token });
+                    document.getElementById('btnAuthCalendar').innerText = "📅 Agenda OK";
+                    document.getElementById('btnAuthCalendar').style.background = "var(--success)";
+                    document.getElementById('btnAuthCalendar').style.color = "white";
+                    setInterval(window.checkRemoteCalendarDeletions, 30000); 
+                }
+            });
+        });
+    }
+    window.handleAuthClick = function() {
+        if(!config.googleClientId) return alert("Configure o Client ID da Agenda primeiro.");
+        tokenClient.requestAccessToken({prompt: ''});
+    }
+    window.handleCalendarEvents = async function(item, oldStatus, newStatus) {
+        if(!gapi.client.getToken()) return;
+        if ((oldStatus === 'calendar' || oldStatus === 'waiting') && (newStatus !== 'calendar' && newStatus !== 'waiting')) {
+            if (item.googleEventId) delete item.googleEventId;
+        }
+        if ((newStatus === 'calendar' || newStatus === 'waiting') && item.date) {
+            try {
+                const start = new Date(item.date);
+                const end = new Date(start.getTime() + 30 * 60000); 
+                const event = { summary: `GTD: ${item.text} ${newStatus === 'waiting' ? '(Delegado)' : ''}`, description: item.note || '', start: { dateTime: start.toISOString() }, end: { dateTime: end.toISOString() } };
+                if(item.googleEventId) { try { await gapi.client.calendar.events.update({ calendarId: 'primary', eventId: item.googleEventId, resource: event }); } catch { const res = await gapi.client.calendar.events.insert({ calendarId: 'primary', resource: event }); item.googleEventId = res.result.id; } } 
+                else { const res = await gapi.client.calendar.events.insert({ calendarId: 'primary', resource: event }); item.googleEventId = res.result.id; }
+            } catch(e) { console.error("Erro Agenda:", e); }
+        }
+    }
+    window.checkRemoteCalendarDeletions = async function() {
+        if(!gapi.client.getToken()) return;
+        let changed = false;
+        const syncedItems = items.filter(i => (i.status === 'calendar' || i.status === 'waiting') && i.googleEventId);
+        for (const item of syncedItems) {
+            try {
+                const res = await gapi.client.calendar.events.get({ calendarId: 'primary', eventId: item.googleEventId });
+                if (res.result.status === 'cancelled') { items.splice(items.indexOf(item), 1); changed = true; }
+            } catch (err) { if (err.status === 404 || err.status === 410) { items.splice(items.indexOf(item), 1); changed = true; } }
+        }
+        if (changed) window.sync();
+    }
+</script>
+</body>
+</html>

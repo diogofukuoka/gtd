@@ -1,0 +1,253 @@
+[
+  {
+    "id": 1767538051696,
+    "text": "Comprar copos",
+    "status": "completed",
+    "updatedAt": 1767538051696,
+    "completedAt": "2026-01-04T21:09:08.650Z"
+  },
+  {
+    "id": 1767135322883,
+    "text": "Consultar processo compensação",
+    "status": "next",
+    "date": "2026-01-05T08:00",
+    "googleEventId": "oe18244leqcu1t2e7pstukpa1o"
+  },
+  {
+    "id": 1767538110078,
+    "text": "Comprar sacos de lixo",
+    "status": "completed",
+    "updatedAt": 1767538110078,
+    "completedAt": "2026-01-04T21:37:31.267Z"
+  },
+  {
+    "id": 1767135597434,
+    "text": "Milena arrumar cód Mentorh 05/01/26 07:30",
+    "status": "next",
+    "note": "Delegado: Milena",
+    "date": "2026-01-05T07:30:00",
+    "googleEventId": "9rpaujfli6k3oer2elun8tk5mg"
+  },
+  {
+    "id": 1767044479995,
+    "text": "Abrir chamado gastos Copel",
+    "status": "next",
+    "date": "2025-12-30T07:00",
+    "googleEventId": "uv4b9611g3p1o9epvittcefm00"
+  },
+  {
+    "id": 1767401556311,
+    "text": "Colocar tala, pesos, cadeira, potes, telas etc para vender",
+    "status": "next",
+    "updatedAt": 1767401556311
+  },
+  {
+    "id": 1767400799977,
+    "text": "Pagar CRT 04 (ler) 05/01/26 08:30",
+    "status": "next",
+    "updatedAt": 1767400799977,
+    "date": "2026-01-05T08:30",
+    "googleEventId": "v975u6miaap7vd6ouelkja7si4"
+  },
+  {
+    "id": 1767401282284,
+    "text": "Imprimir faturas da igreja e ir pagar sem falta dia 05/01/26 às 08:00",
+    "status": "next",
+    "updatedAt": 1767401282284,
+    "date": "2026-01-05T08:00",
+    "googleEventId": "q119e1odcja88ngrhvmak8ls2c"
+  },
+  {
+    "id": 1767401511524,
+    "text": "Consultar se o Google Firebase está cobrando R$ dia 07/07/2026 às 07:00",
+    "status": "calendar",
+    "updatedAt": 1767401511524,
+    "date": "2026-07-07T07:00",
+    "googleEventId": "vhsvr99omshnk5tch4mqps3k4s"
+  },
+  {
+    "id": 1767480832485,
+    "text": "Estudar o assunto para fazer a elaboração do esboço da pregação",
+    "status": "next",
+    "updatedAt": 1767480832485
+  },
+  {
+    "id": 1767401612331,
+    "text": "Fazer o teste da sacada? 09/01/26 às 07:00",
+    "status": "calendar",
+    "updatedAt": 1767401612331,
+    "date": "2026-01-09T07:00",
+    "googleEventId": "ait71dbfbjnd08lfsbktklfres"
+  },
+  {
+    "id": 1767401646788,
+    "text": "GTD: Ver sobre os pombos no telhado para 9 de Janeiro 2026 às 8 horas da manhã  ",
+    "status": "calendar",
+    "updatedAt": 1767401646788,
+    "date": "2026-01-09T08:00",
+    "googleEventId": "7vjh3am6oebif79pri199j7esg"
+  },
+  {
+    "id": 1767401710768,
+    "text": "Levar Scooter para arrumar no dia 12 de Janeiro 2026 às 7 horas da manhã  ",
+    "status": "calendar",
+    "updatedAt": 1767401710768,
+    "date": "2026-01-12T07:00",
+    "googleEventId": "mhquntqs0bmmf2tgfuaskjjgjo"
+  },
+  {
+    "id": 1767401791356,
+    "text": "Permanece com plano mensal Mureka AI ou muda para anual? 14/01/26 às 07:00",
+    "status": "calendar",
+    "updatedAt": 1767401791356,
+    "date": "2026-01-14T07:00",
+    "googleEventId": "ng6jf6s8l9c5dg1m15m7fgsv6c"
+  },
+  {
+    "id": 1767534109390,
+    "text": "Ver dispositivo gravador ativado pelo celular a comprar",
+    "status": "next",
+    "updatedAt": 1767534109390
+  },
+  {
+    "id": 1767473512276,
+    "text": "4",
+    "status": "trash",
+    "updatedAt": 1767473512276
+  },
+  {
+    "id": 1767474867833,
+    "text": "Cortar cabelo dia 10 de janeiro de 2026 às 10:00 da manhã",
+    "status": "calendar",
+    "updatedAt": 1767474867833,
+    "date": "2026-01-10T10:00",
+    "googleEventId": "oski36gjh1l7ls1rak0g4ajtk0"
+  },
+  {
+    "id": 1767480422929,
+    "text": "Colocar plural na GEM da Bíblia de Estudo ",
+    "status": "completed",
+    "updatedAt": 1767480422929,
+    "completedAt": "2026-01-04T10:49:25.638Z"
+  },
+  {
+    "id": 1767535362007,
+    "text": "Criar música baseado no estudo de hoje",
+    "status": "calendar",
+    "updatedAt": 1767535362008,
+    "date": "2026-01-11T14:30",
+    "googleEventId": "9llosfumn93ej75d16h0olv8p8"
+  },
+  {
+    "id": 1767063414904,
+    "text": "Comprar ingredientes para pão",
+    "status": "next",
+    "date": "2025-12-31T17:00",
+    "googleEventId": "ejonge02q5vbtp3uagmokbdbcg",
+    "order": null
+  },
+  {
+    "id": 1767400465538,
+    "text": "Aprender xadrez no Gemin Aprendizado",
+    "status": "next",
+    "updatedAt": 1767400465538
+  },
+  {
+    "id": 1767403045355,
+    "text": "Aprender a falar no ritmo do pensamento (NotebookLM)",
+    "status": "next",
+    "updatedAt": 1767403045355,
+    "order": 1
+  },
+  {
+    "id": 1767490411393,
+    "text": "Estudar a Bíblia para ler a Bíblia pra Je",
+    "status": "project",
+    "updatedAt": 1767490411393
+  },
+  {
+    "id": 1767490449861,
+    "text": "Treinar flashcards da Bíblia",
+    "status": "project",
+    "updatedAt": 1767490449861
+  },
+  {
+    "id": 1767490484466,
+    "text": "Estudar a sincronia entre fala e mente no NBLM",
+    "status": "project",
+    "updatedAt": 1767490484466
+  },
+  {
+    "id": 1767481303188,
+    "text": "Baixar o arquivo Json das tarefas",
+    "status": "next",
+    "updatedAt": 1767481303188
+  },
+  {
+    "id": 1767400580444,
+    "text": "Ver se Scooter caiu próximo sábado às 12:00",
+    "status": "next",
+    "updatedAt": 1767400580444,
+    "date": "2026-01-03T12:00",
+    "googleEventId": "mkdfviumcbegb7chulcvg9pdn4",
+    "order": null
+  },
+  {
+    "id": 1767481097981,
+    "text": "Tirar o ícone de certo das tarefas agendadas",
+    "status": "next",
+    "updatedAt": 1767481097981
+  },
+  {
+    "id": 1767481219098,
+    "text": "Ativar sincronização da agenda automaticamente",
+    "status": "next",
+    "updatedAt": 1767481219098
+  },
+  {
+    "id": 1767527958448,
+    "text": "Incluir no flashcard outra opção de organizar versículos arrastando",
+    "status": "next",
+    "updatedAt": 1767527958448
+  },
+  {
+    "id": 1767529698963,
+    "text": "Mudar hinário para o Github ",
+    "status": "next",
+    "updatedAt": 1767529698963
+  },
+  {
+    "id": 1767553544960,
+    "text": "Teste",
+    "updatedAt": 1767553544960
+  },
+  {
+    "id": 1767560968779,
+    "text": "Comprar vinhos",
+    "status": "calendar",
+    "updatedAt": 1767560968780,
+    "date": "2026-01-10T09:00",
+    "googleEventId": "fp0tr5k17irluk3fb55n911gss"
+  },
+  {
+    "id": 1767563810678,
+    "text": "Compra de refil Bom Ar",
+    "status": "completed",
+    "updatedAt": 1767563810678,
+    "completedAt": "2026-01-04T21:56:56.043Z"
+  },
+  {
+    "id": 1767564031174,
+    "text": "Chegaram os produtos do salão? 09/01/26 08:30",
+    "status": "calendar",
+    "updatedAt": 1767564031174,
+    "date": "2026-01-09T08:30",
+    "googleEventId": "ahvb7bd9kf9fig9h2p4folub5g"
+  },
+  {
+    "id": 1767614170361,
+    "text": "Ver orçamento de guincho à Scooter",
+    "status": "inbox",
+    "updatedAt": 1767614170361
+  }
+]
