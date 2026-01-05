@@ -36,16 +36,16 @@
     "googleEventId": "uv4b9611g3p1o9epvittcefm00"
   },
   {
-    "id": 1767401556311,
-    "text": "Colocar tala, pesos, cadeira, potes, telas etc para vender",
-    "status": "next",
-    "updatedAt": 1767401556311
-  },
-  {
     "id": 1767614170361,
     "text": "Ver orçamento de guincho à Scooter",
     "status": "next",
     "updatedAt": 1767614170361
+  },
+  {
+    "id": 1767401556311,
+    "text": "Colocar tala, pesos, cadeira, potes, telas etc para vender",
+    "status": "next",
+    "updatedAt": 1767401556311
   },
   {
     "id": 1767401511524,
