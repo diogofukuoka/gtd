@@ -133,16 +133,16 @@
     "googleEventId": "9llosfumn93ej75d16h0olv8p8"
   },
   {
-    "id": 1767490449861,
-    "text": "Treinar flashcards da Bíblia",
-    "status": "next",
-    "updatedAt": 1767490449861
-  },
-  {
     "id": 1767632906476,
     "text": "Enviar planilha de fornecedores à UPDE",
     "status": "next",
     "updatedAt": 1767632906476
+  },
+  {
+    "id": 1767490449861,
+    "text": "Treinar flashcards da Bíblia",
+    "status": "next",
+    "updatedAt": 1767490449861
   },
   {
     "id": 1767490484466,
