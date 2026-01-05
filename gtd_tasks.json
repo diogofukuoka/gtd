@@ -7,11 +7,10 @@
     "completedAt": "2026-01-04T21:09:08.650Z"
   },
   {
-    "id": 1767135322883,
-    "text": "Consultar processo compensação",
+    "id": 1767614170361,
+    "text": "Ver orçamento de guincho à Scooter",
     "status": "next",
-    "date": "2026-01-05T08:00",
-    "googleEventId": "oe18244leqcu1t2e7pstukpa1o"
+    "updatedAt": 1767614170361
   },
   {
     "id": 1767538110078,
@@ -21,10 +20,11 @@
     "completedAt": "2026-01-04T21:37:31.267Z"
   },
   {
-    "id": 1767614170361,
-    "text": "Ver orçamento de guincho à Scooter",
+    "id": 1767135322883,
+    "text": "Consultar processo compensação",
     "status": "next",
-    "updatedAt": 1767614170361
+    "date": "2026-01-05T08:00",
+    "googleEventId": "oe18244leqcu1t2e7pstukpa1o"
   },
   {
     "id": 1767135597434,
