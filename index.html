@@ -319,7 +319,7 @@
                 if(item.note) meta += `<span class="meta">${item.note}</span>`;
                 if(item.date && (item.status === 'calendar' || item.status === 'waiting')) {
                     const d = new Date(item.date);
-                    meta += `<span class="meta">📅 ${d.toLocaleString()} ${item.googleEventId ? '✅' : ''}</span>`;
+                    meta += `<span class="meta">📅 ${d.toLocaleString()} ${item.googleEventId ? : ''}</span>`;
                 }
                 if(item.status === 'completed' && item.completedAt) {
                     const d = new Date(item.completedAt);
