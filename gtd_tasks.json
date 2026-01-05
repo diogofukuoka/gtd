@@ -181,17 +181,17 @@
     "order": null
   },
   {
-    "id": 1767400465538,
-    "text": "Aprender xadrez no Gemin Aprendizado",
-    "status": "next",
-    "updatedAt": 1767400465538
-  },
-  {
     "id": 1767403045355,
     "text": "Aprender a falar no ritmo do pensamento (NotebookLM)",
     "status": "next",
     "updatedAt": 1767403045355,
     "order": 1
+  },
+  {
+    "id": 1767400465538,
+    "text": "Aprender xadrez no Gemin Aprendizado",
+    "status": "next",
+    "updatedAt": 1767400465538
   },
   {
     "id": 1767481303188,
