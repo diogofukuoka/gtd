@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>GTD Fukuoka (v10.3 Fix IA)</title>
+    <title>GTD Fukuoka (v10.4 Topo)</title>
     <style>
         :root { --primary: #2c3e50; --accent: #3498db; --success: #27ae60; --warning: #f39c12; --danger: #e74c3c; --google: #4285f4; --gray: #95a5a6; --ai: #8e44ad; --github: #24292e; }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -90,7 +90,7 @@
             border-radius: 4px; 
             cursor: pointer; 
             padding: 0; 
-            margin-right: 12px; 
+            /* margin-right removido aqui para controlar no inline style */
         }
         .btn-seq:hover { background: var(--primary); color: white; border-color: var(--primary); }
 
@@ -273,6 +273,32 @@
         if(window.sync) window.sync(); else render();
     }
 
+    // --- NOVA FUNÇÃO: MOVER PARA O TOPO ---
+    function moveToTop(e, itemId) {
+        e.stopPropagation();
+        // Encontra o índice real no array principal
+        const currentIdx = items.findIndex(i => i.id === itemId);
+        if (currentIdx === -1) return;
+        
+        const item = items[currentIdx];
+
+        // Remove da posição atual
+        items.splice(currentIdx, 1);
+
+        // Encontra onde começa a lista de "next"
+        const firstNextIdx = items.findIndex(i => i.status === 'next');
+
+        if (firstNextIdx === -1) {
+            // Se não houver outros itens 'next', apenas adiciona (pode ser no inicio ou fim, tanto faz pois será o único)
+            items.unshift(item);
+        } else {
+            // Insere antes do primeiro item 'next'
+            items.splice(firstNextIdx, 0, item);
+        }
+
+        if(window.sync) window.sync(); else render();
+    }
+
     function render() {
         const listKeys = Object.keys(listNames);
         const grid = document.querySelector('.lists-grid');
@@ -330,9 +356,15 @@
                 let moveBtns = "";
                 if (item.status === 'next') {
                     seqBadge = `<div class="seq-num">${nextSeqCounter++}</div>`;
+                    // --- LAYOUT ATUALIZADO DOS BOTÕES ---
                     moveBtns = `
-                        <button class="btn-seq" onclick="moveNextItem(event, ${item.id}, -1)">▲</button>
-                        <button class="btn-seq" onclick="moveNextItem(event, ${item.id}, 1)">▼</button>
+                        <div style="display:flex; flex-direction:column; margin-right:8px; gap:2px;">
+                            <div style="display:flex; gap:2px;">
+                                <button class="btn-seq" style="margin:0; width:28px; height:22px; font-size:0.6rem;" onclick="moveNextItem(event, ${item.id}, -1)">▲</button>
+                                <button class="btn-seq" style="margin:0; width:28px; height:22px; font-size:0.6rem;" onclick="moveNextItem(event, ${item.id}, 1)">▼</button>
+                            </div>
+                            <button class="btn-seq" style="margin:0; width:100%; height:18px; font-size:0.6rem; background:#e3f2fd; border-color:#90caf9; color:#1565c0;" onclick="moveToTop(event, ${item.id})" title="Mover para o topo">Topo</button>
+                        </div>
                     `;
                 }
 
