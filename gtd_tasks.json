@@ -7,21 +7,6 @@
     "completedAt": "2026-01-04T21:09:08.650Z"
   },
   {
-    "id": 1767538110078,
-    "text": "Comprar sacos de lixo",
-    "status": "completed",
-    "updatedAt": 1767538110078,
-    "completedAt": "2026-01-04T21:37:31.267Z"
-  },
-  {
-    "id": 1767655678389,
-    "text": "Marcar a bateria da Scooter",
-    "status": "completed",
-    "updatedAt": 1767655678389,
-    "date": "2026-01-06T06:00",
-    "completedAt": "2026-01-06T16:25:28.115Z"
-  },
-  {
     "id": 1767614170361,
     "text": "Ver com a Pop pra levar a Scooter",
     "status": "next",
@@ -30,17 +15,26 @@
     "googleEventId": "5dqkqk6b5lqvvcdq4tlrrar7p8"
   },
   {
-    "id": 1767717612553,
-    "text": "Ver a questao da ajuda de custo do plano da Eloah na EBSERH",
-    "status": "next",
-    "updatedAt": 1767717612553
+    "id": 1767538110078,
+    "text": "Comprar sacos de lixo",
+    "status": "completed",
+    "updatedAt": 1767538110078,
+    "completedAt": "2026-01-04T21:37:31.267Z"
   },
   {
-    "id": 1767044479995,
-    "text": "Abrir chamado gastos Copel",
+    "id": 1767135322883,
+    "text": "Consultar processo compensação",
     "status": "next",
-    "date": "2025-12-30T07:00",
-    "googleEventId": "uv4b9611g3p1o9epvittcefm00"
+    "date": "2026-01-06T07:30",
+    "googleEventId": "oe18244leqcu1t2e7pstukpa1o"
+  },
+  {
+    "id": 1767135597434,
+    "text": "Milena arrumar cód Mentorh 05/01/26 07:30",
+    "status": "next",
+    "note": "Delegado: Milena",
+    "date": "2026-01-06T08:00",
+    "googleEventId": "9rpaujfli6k3oer2elun8tk5mg"
   },
   {
     "id": 1767527958448,
@@ -149,33 +143,10 @@
     "completedAt": "2026-01-05T18:52:39.300Z"
   },
   {
-    "id": 1767135322883,
-    "text": "Consultar processo compensação",
-    "status": "completed",
-    "date": "2026-01-06T07:30",
-    "googleEventId": "oe18244leqcu1t2e7pstukpa1o",
-    "completedAt": "2026-01-06T16:39:00.649Z"
-  },
-  {
-    "id": 1767401556311,
-    "text": "Colocar tala, pesos, cadeira, potes, telas etc para vender",
-    "status": "next",
-    "updatedAt": 1767401556311
-  },
-  {
     "id": 1767490411393,
     "text": "Estudar a Bíblia para ler a Bíblia pra Je",
     "status": "next",
     "updatedAt": 1767490411393
-  },
-  {
-    "id": 1767135597434,
-    "text": "Milena arrumar cód Mentorh 05/01/26 07:30",
-    "status": "completed",
-    "note": "Delegado: Milena",
-    "date": "2026-01-06T08:00",
-    "googleEventId": "9rpaujfli6k3oer2elun8tk5mg",
-    "completedAt": "2026-01-06T16:40:52.481Z"
   },
   {
     "id": 1767490449861,
@@ -197,26 +168,46 @@
     "order": 1
   },
   {
-    "id": 1767400580444,
-    "text": "Carregar bateria da Scooter",
-    "status": "completed",
-    "updatedAt": 1767400580444,
-    "date": "2026-01-03T12:00",
-    "googleEventId": "mkdfviumcbegb7chulcvg9pdn4",
-    "order": null,
-    "completedAt": "2026-01-06T00:28:36.061Z"
-  },
-  {
     "id": 1767480832485,
     "text": "Estudar o assunto para fazer a elaboração do esboço da pregação",
     "status": "next",
     "updatedAt": 1767480832485
   },
   {
+    "id": 1767400580444,
+    "text": "Carregar bateria da Scooter",
+    "status": "next",
+    "updatedAt": 1767400580444,
+    "date": "2026-01-03T12:00",
+    "googleEventId": "mkdfviumcbegb7chulcvg9pdn4",
+    "order": null
+  },
+  {
+    "id": 1767401556311,
+    "text": "Colocar tala, pesos, cadeira, potes, telas etc para vender",
+    "status": "next",
+    "updatedAt": 1767401556311
+  },
+  {
+    "id": 1767044479995,
+    "text": "Abrir chamado gastos Copel",
+    "status": "next",
+    "date": "2025-12-30T07:00",
+    "googleEventId": "uv4b9611g3p1o9epvittcefm00"
+  },
+  {
     "id": 1767534109390,
     "text": "Ver dispositivo gravador ativado pelo celular a comprar",
     "status": "next",
     "updatedAt": 1767534109390
+  },
+  {
+    "id": 1767063414904,
+    "text": "Comprar ingredientes para pão",
+    "status": "next",
+    "date": "2025-12-31T17:00",
+    "googleEventId": "ejonge02q5vbtp3uagmokbdbcg",
+    "order": null
   },
   {
     "id": 1767553544960,
@@ -247,18 +238,16 @@
     "googleEventId": "ahvb7bd9kf9fig9h2p4folub5g"
   },
   {
-    "id": 1767063414904,
-    "text": "Comprar ingredientes para pão",
-    "status": "next",
-    "date": "2025-12-31T17:00",
-    "googleEventId": "ejonge02q5vbtp3uagmokbdbcg",
-    "order": null
-  },
-  {
     "id": 1767400465538,
     "text": "Aprender xadrez no Gemin Aprendizado",
     "status": "next",
     "updatedAt": 1767400465538
+  },
+  {
+    "id": 1767481303188,
+    "text": "Baixar o arquivo Json das tarefas",
+    "status": "next",
+    "updatedAt": 1767481303188
   },
   {
     "id": 1767632590855,
@@ -269,23 +258,17 @@
     "googleEventId": "mc6lgcj973p0jba6if0eatlt94"
   },
   {
-    "id": 1767481303188,
-    "text": "Baixar o arquivo Json das tarefas",
+    "id": 1767655678389,
+    "text": "Marcar a bateria da Scooter",
     "status": "next",
-    "updatedAt": 1767481303188
+    "updatedAt": 1767655678389,
+    "date": "2026-01-06T06:00",
+    "googleEventId": "bhtplga89bdk65v9nf7qbfdev4"
   },
   {
     "id": 1767655879306,
     "text": "Marcar 36 km gastos de bateria Scooter",
-    "status": "completed",
-    "updatedAt": 1767655879306,
-    "completedAt": "2026-01-06T00:27:20.958Z"
-  },
-  {
-    "id": 1767706341657,
-    "text": "R$ 70 para o André",
-    "status": "completed",
-    "updatedAt": 1767706341657,
-    "completedAt": "2026-01-06T16:18:52.511Z"
+    "status": "do-now",
+    "updatedAt": 1767655879306
   }
 ]
