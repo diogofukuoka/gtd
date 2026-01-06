@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>GTD Fukuoka (v10.6 Fix Agenda)</title>
+    <title>GTD Fukuoka (v10.3 Fix IA)</title>
     <style>
         :root { --primary: #2c3e50; --accent: #3498db; --success: #27ae60; --warning: #f39c12; --danger: #e74c3c; --google: #4285f4; --gray: #95a5a6; --ai: #8e44ad; --github: #24292e; }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -90,6 +90,7 @@
             border-radius: 4px; 
             cursor: pointer; 
             padding: 0; 
+            margin-right: 12px; 
         }
         .btn-seq:hover { background: var(--primary); color: white; border-color: var(--primary); }
 
@@ -272,25 +273,6 @@
         if(window.sync) window.sync(); else render();
     }
 
-    // --- FUNÇÃO: MOVER PARA O TOPO ---
-    function moveToTop(e, itemId) {
-        e.stopPropagation();
-        const currentIdx = items.findIndex(i => i.id === itemId);
-        if (currentIdx === -1) return;
-        
-        const item = items[currentIdx];
-        items.splice(currentIdx, 1);
-        const firstNextIdx = items.findIndex(i => i.status === 'next');
-
-        if (firstNextIdx === -1) {
-            items.unshift(item);
-        } else {
-            items.splice(firstNextIdx, 0, item);
-        }
-
-        if(window.sync) window.sync(); else render();
-    }
-
     function render() {
         const listKeys = Object.keys(listNames);
         const grid = document.querySelector('.lists-grid');
@@ -348,15 +330,9 @@
                 let moveBtns = "";
                 if (item.status === 'next') {
                     seqBadge = `<div class="seq-num">${nextSeqCounter++}</div>`;
-                    // --- LAYOUT ATUALIZADO: GAP MAIOR (10px) ---
                     moveBtns = `
-                        <div style="display:flex; flex-direction:column; margin-right:8px; gap:10px;">
-                            <div style="display:flex; gap:2px;">
-                                <button class="btn-seq" style="margin:0; width:28px; height:22px; font-size:0.6rem;" onclick="moveNextItem(event, ${item.id}, -1)">▲</button>
-                                <button class="btn-seq" style="margin:0; width:28px; height:22px; font-size:0.6rem;" onclick="moveNextItem(event, ${item.id}, 1)">▼</button>
-                            </div>
-                            <button class="btn-seq" style="margin:0; width:100%; height:22px; font-size:0.6rem; background:#e3f2fd; border-color:#90caf9; color:#1565c0;" onclick="moveToTop(event, ${item.id})" title="Mover para o topo">Topo</button>
-                        </div>
+                        <button class="btn-seq" onclick="moveNextItem(event, ${item.id}, -1)">▲</button>
+                        <button class="btn-seq" onclick="moveNextItem(event, ${item.id}, 1)">▼</button>
                     `;
                 }
 
@@ -562,14 +538,7 @@
         }
     }
 
-    // CORREÇÃO: Limpar input ao abrir
-    function askDate() { 
-        return new Promise(r => { 
-            document.getElementById('modalDateInput').value = ''; // Limpa valor anterior
-            document.getElementById('dateModal').style.display='flex'; 
-            dateRes = r; 
-        }); 
-    }
+    function askDate() { return new Promise(r => { document.getElementById('dateModal').style.display='flex'; dateRes = r; }); }
     function resolveDate(val) { document.getElementById('dateModal').style.display='none'; dateRes(val); }
     
     function startMovePress(e, idx, type) {
@@ -607,15 +576,13 @@
         document.getElementById('moveModal').style.display = 'none';
         changeItemStatus(items[activeItemIdx], newStatus);
     }
-    
-    // CORREÇÃO: Retorna true/false para saber se mudou
     async function changeItemStatus(item, newStatus, aiDate = null, aiNote = null) {
         const oldStatus = item.status;
         if(newStatus === 'completed') item.completedAt = new Date().toISOString(); else delete item.completedAt;
         if(newStatus === 'calendar' || newStatus === 'waiting') {
             let dateStr = aiDate;
             if(!dateStr) dateStr = await askDate();
-            if(!dateStr) return false; // ABORTA SE NÃO TIVER DATA
+            if(!dateStr) return; 
             item.date = dateStr;
             if(newStatus === 'waiting') { 
                 if(aiNote) item.note = aiNote;
@@ -625,7 +592,6 @@
         if(window.handleCalendarEvents) await window.handleCalendarEvents(item, oldStatus, newStatus);
         item.status = newStatus;
         if(window.sync) window.sync(); else render();
-        return true; // SUCESSO
     }
     
     function startListTitlePress(e, listKey, type) {
@@ -668,12 +634,157 @@
         }
     }
     function toStep(stepId) { document.querySelectorAll('.step').forEach(s => s.classList.remove('active')); document.getElementById(stepId).classList.add('active'); }
-    
-    // CORREÇÃO: Verifica se houve sucesso antes de avançar
     async function finalizeProc(newStatus) {
-        const success = await changeItemStatus(items[procIdx], newStatus);
-        if(!success) return; // SE FALHOU (DATA CANCELADA), NÃO AVANÇA
-        
+        await changeItemStatus(items[procIdx], newStatus);
         setTimeout(() => {
             if (items.some(i => i.status === 'inbox')) startProcessing();
-            else { document.getElementById('process
+            else { document.getElementById('processing-zone').style.display = 'none'; showToast("Entrada zerada!"); }
+        }, 300); 
+    }
+    
+    window.checkDueDates = function() {
+        const now = new Date();
+        let changed = false;
+        items.forEach(item => {
+            if ((item.status === 'calendar' || item.status === 'waiting') && item.date) {
+                const taskDate = new Date(item.date);
+                if (taskDate <= now) { item.status = 'next'; changed = true; }
+            }
+        });
+        if (changed) { if(window.sync) window.sync(); else render(); showToast("Tarefas vencidas movidas para Próximas Ações"); }
+    }
+
+    // --- IA / MAGIC (CORRIGIDO: gemini-2.5-flash) ---
+    function cleanJson(text) {
+        // Tenta encontrar o array JSON dentro da resposta (caso a IA fale antes)
+        const firstBracket = text.indexOf('[');
+        const lastBracket = text.lastIndexOf(']');
+        if(firstBracket > -1 && lastBracket > -1) {
+            return text.substring(firstBracket, lastBracket + 1);
+        }
+        return text;
+    }
+
+    window.breakdownItem = async function(e, idx) {
+        e.stopPropagation();
+        if(!config.geminiKey) return alert("Configure a API Key do Gemini.");
+        document.getElementById('loadingText').innerText = "IA Pensando...";
+        document.getElementById('loadingOverlay').style.display = 'flex';
+        const item = items[idx];
+        const prompt = `Quebre a tarefa "${item.text}" em etapas acionáveis. Retorne APENAS um JSON Array de strings, sem formatação markdown.`;
+        try {
+            // CORREÇÃO: Modelo 1.5
+            const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${config.geminiKey}`, {
+                method: 'POST', headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+            });
+            const data = await res.json();
+            if (data.error) throw new Error(data.error.message);
+            
+            let txt = data.candidates[0].content.parts[0].text;
+            txt = cleanJson(txt); // Limpa markdown
+            
+            const steps = JSON.parse(txt);
+            steps.forEach(step => items.push({ id: Date.now() + Math.random(), text: step, status: 'next', note: `De: ${item.text}`, updatedAt: Date.now() }));
+            window.sync();
+            showToast("Tarefas criadas!");
+        } catch(e) { alert("Erro IA: " + e.message); }
+        document.getElementById('loadingOverlay').style.display = 'none';
+    }
+
+    window.magicProcess = async function() {
+        if(!config.geminiKey) return alert("Configure a API Key do Gemini.");
+        const inboxItems = items.filter(i => i.status === 'inbox');
+        if(inboxItems.length === 0) return alert("Caixa de entrada vazia.");
+        document.getElementById('loadingText').innerText = "IA Processando...";
+        document.getElementById('loadingOverlay').style.display = 'flex';
+        const tasksTxt = inboxItems.map(i => `- ID:${i.id} | TEXTO: ${i.text}`).join('\n');
+        const now = new Date().toISOString();
+        const prompt = `Hoje é ${now}. Analise estas tarefas GTD e classifique-as. ${tasksTxt} Regras de Saída (JSON Array puro): [{"id": "...", "status": "...", "date": "YYYY-MM-DDTHH:MM", "note": "..."}]. Regras: 1. Se tiver data/hora específica -> 'calendar'. 2. Se citar outra pessoa -> 'waiting'. 3. <2min -> 'do-now'. 4. Vago -> 'someday'. 5. Ref -> 'reference'. 6. Complexo -> 'project'. 7. Padrão -> 'next'.`;
+        try {
+            // CORREÇÃO: Modelo 1.5
+            const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${config.geminiKey}`, {
+                method: 'POST', headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+            });
+            const data = await res.json();
+            if (data.error) throw new Error(data.error.message);
+            
+            let txt = data.candidates[0].content.parts[0].text;
+            txt = cleanJson(txt); // Limpa markdown
+            
+            const decisions = JSON.parse(txt);
+            for (const d of decisions) { const item = items.find(i => i.id == d.id); if(item) await changeItemStatus(item, d.status, d.date, d.note); }
+            window.sync();
+            showToast("Processamento IA Concluído!");
+        } catch(e) { alert("Erro IA: " + e.message); } finally { document.getElementById('loadingOverlay').style.display = 'none'; }
+    }
+</script>
+
+<script src="https://apis.google.com/js/api.js"></script>
+<script src="https://accounts.google.com/gsi/client"></script>
+<script>
+    const SCOPES = 'https://www.googleapis.com/auth/calendar.events';
+    let tokenClient;
+    if(config.googleClientId) {
+        window.addEventListener('load', () => {
+            gapi.load('client', async () => {
+                await gapi.client.init({ discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest'] });
+                tokenClient = google.accounts.oauth2.initTokenClient({
+                    client_id: config.googleClientId, scope: SCOPES,
+                    callback: (resp) => {
+                        if(resp.error) return;
+                        const exp = Date.now() + (resp.expires_in * 1000);
+                        localStorage.setItem('gtd_cal_token', JSON.stringify({ token: resp.access_token, exp: exp }));
+                        gapi.client.setToken(resp);
+                        document.getElementById('btnAuthCalendar').innerText = "📅 Agenda OK";
+                        document.getElementById('btnAuthCalendar').style.background = "var(--success)";
+                        document.getElementById('btnAuthCalendar').style.color = "white";
+                        window.checkRemoteCalendarDeletions();
+                    }
+                });
+                const stored = JSON.parse(localStorage.getItem('gtd_cal_token'));
+                if(stored && Date.now() < stored.exp) {
+                    gapi.client.setToken({ access_token: stored.token });
+                    document.getElementById('btnAuthCalendar').innerText = "📅 Agenda OK";
+                    document.getElementById('btnAuthCalendar').style.background = "var(--success)";
+                    document.getElementById('btnAuthCalendar').style.color = "white";
+                    setInterval(window.checkRemoteCalendarDeletions, 30000); 
+                }
+            });
+        });
+    }
+    window.handleAuthClick = function() {
+        if(!config.googleClientId) return alert("Configure o Client ID da Agenda primeiro.");
+        tokenClient.requestAccessToken({prompt: ''});
+    }
+    window.handleCalendarEvents = async function(item, oldStatus, newStatus) {
+        if(!gapi.client.getToken()) return;
+        if ((oldStatus === 'calendar' || oldStatus === 'waiting') && (newStatus !== 'calendar' && newStatus !== 'waiting')) {
+            if (item.googleEventId) delete item.googleEventId;
+        }
+        if ((newStatus === 'calendar' || newStatus === 'waiting') && item.date) {
+            try {
+                const start = new Date(item.date);
+                const end = new Date(start.getTime() + 30 * 60000); 
+                const event = { summary: `GTD: ${item.text} ${newStatus === 'waiting' ? '(Delegado)' : ''}`, description: item.note || '', start: { dateTime: start.toISOString() }, end: { dateTime: end.toISOString() } };
+                if(item.googleEventId) { try { await gapi.client.calendar.events.update({ calendarId: 'primary', eventId: item.googleEventId, resource: event }); } catch { const res = await gapi.client.calendar.events.insert({ calendarId: 'primary', resource: event }); item.googleEventId = res.result.id; } } 
+                else { const res = await gapi.client.calendar.events.insert({ calendarId: 'primary', resource: event }); item.googleEventId = res.result.id; }
+            } catch(e) { console.error("Erro Agenda:", e); }
+        }
+    }
+    window.checkRemoteCalendarDeletions = async function() {
+        if(!gapi.client.getToken()) return;
+        let changed = false;
+        const syncedItems = items.filter(i => (i.status === 'calendar' || i.status === 'waiting') && i.googleEventId);
+        for (const item of syncedItems) {
+            try {
+                const res = await gapi.client.calendar.events.get({ calendarId: 'primary', eventId: item.googleEventId });
+                if (res.result.status === 'cancelled') { items.splice(items.indexOf(item), 1); changed = true; }
+            } catch (err) { if (err.status === 404 || err.status === 410) { items.splice(items.indexOf(item), 1); changed = true; } }
+        }
+        if (changed) window.sync();
+    }
+</script>
+</body>
+</html>
