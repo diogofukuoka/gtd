@@ -7,6 +7,12 @@
     "completedAt": "2026-01-04T21:09:08.650Z"
   },
   {
+    "id": 1767737839821,
+    "text": "Hospedar todo meu app também no Firebase e testar",
+    "status": "next",
+    "updatedAt": 1767737839821
+  },
+  {
     "id": 1767044479995,
     "text": "Abrir chamado gastos Copel",
     "status": "next",
@@ -296,11 +302,5 @@
     "id": 1767720408834,
     "text": "Corrigir api da IA",
     "updatedAt": 1767720408834
-  },
-  {
-    "id": 1767737839821,
-    "text": "Hospedar todo meu app também no Firebase e testar",
-    "status": "next",
-    "updatedAt": 1767737839821
   }
 ]
