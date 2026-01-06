@@ -271,5 +271,11 @@
     "status": "completed",
     "updatedAt": 1767655879306,
     "completedAt": "2026-01-06T00:27:20.958Z"
+  },
+  {
+    "id": 1767706341657,
+    "text": "R$ 70 para o André",
+    "status": "inbox",
+    "updatedAt": 1767706341657
   }
 ]
