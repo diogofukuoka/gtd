@@ -268,8 +268,9 @@
   {
     "id": 1767655879306,
     "text": "Marcar 36 km gastos de bateria Scooter",
-    "status": "do-now",
-    "updatedAt": 1767655879306
+    "status": "completed",
+    "updatedAt": 1767655879306,
+    "completedAt": "2026-01-06T17:24:58.708Z"
   },
   {
     "id": 1767720050031,
