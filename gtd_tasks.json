@@ -260,10 +260,9 @@
   {
     "id": 1767655678389,
     "text": "Marcar a bateria da Scooter",
-    "status": "calendar",
+    "status": "next",
     "updatedAt": 1767655678389,
-    "date": "2026-01-06T06:00",
-    "googleEventId": "bhtplga89bdk65v9nf7qbfdev4"
+    "date": "2026-01-06T06:00"
   },
   {
     "id": 1767655879306,
