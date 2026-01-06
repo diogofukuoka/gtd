@@ -178,11 +178,12 @@
   {
     "id": 1767400580444,
     "text": "Carregar bateria da Scooter",
-    "status": "next",
+    "status": "completed",
     "updatedAt": 1767400580444,
     "date": "2026-01-03T12:00",
     "googleEventId": "mkdfviumcbegb7chulcvg9pdn4",
-    "order": null
+    "order": null,
+    "completedAt": "2026-01-06T17:27:36.913Z"
   },
   {
     "id": 1767401556311,
