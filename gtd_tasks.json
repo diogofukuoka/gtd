@@ -161,18 +161,18 @@
     "updatedAt": 1767490484466
   },
   {
-    "id": 1767403045355,
-    "text": "Aprender a falar no ritmo do pensamento (NotebookLM)",
-    "status": "next",
-    "updatedAt": 1767403045355,
-    "order": 1
-  },
-  {
     "id": 1767655678389,
     "text": "Marcar a bateria da Scooter",
     "status": "next",
     "updatedAt": 1767655678389,
     "date": "2026-01-06T06:00"
+  },
+  {
+    "id": 1767403045355,
+    "text": "Aprender a falar no ritmo do pensamento (NotebookLM)",
+    "status": "next",
+    "updatedAt": 1767403045355,
+    "order": 1
   },
   {
     "id": 1767480832485,
