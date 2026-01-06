@@ -149,17 +149,17 @@
     "updatedAt": 1767490411393
   },
   {
-    "id": 1767490449861,
-    "text": "Treinar flashcards da Bíblia",
-    "status": "next",
-    "updatedAt": 1767490449861
-  },
-  {
     "id": 1767655678389,
     "text": "Marcar a bateria da Scooter",
     "status": "next",
     "updatedAt": 1767655678389,
     "date": "2026-01-06T06:00"
+  },
+  {
+    "id": 1767490449861,
+    "text": "Treinar flashcards da Bíblia",
+    "status": "next",
+    "updatedAt": 1767490449861
   },
   {
     "id": 1767490484466,
