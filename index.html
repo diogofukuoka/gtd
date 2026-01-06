@@ -654,7 +654,7 @@
         if (changed) { if(window.sync) window.sync(); else render(); showToast("Tarefas vencidas movidas para Próximas Ações"); }
     }
 
-    // --- IA / MAGIC (CORRIGIDO: gemini-2.5-flash) ---
+    // --- IA / MAGIC (CORRIGIDO: gemini-1.5-flash) ---
     function cleanJson(text) {
         // Tenta encontrar o array JSON dentro da resposta (caso a IA fale antes)
         const firstBracket = text.indexOf('[');
@@ -674,7 +674,7 @@
         const prompt = `Quebre a tarefa "${item.text}" em etapas acionáveis. Retorne APENAS um JSON Array de strings, sem formatação markdown.`;
         try {
             // CORREÇÃO: Modelo 1.5
-            const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${config.geminiKey}`, {
+            const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${config.geminiKey}`, {
                 method: 'POST', headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
             });
@@ -703,7 +703,7 @@
         const prompt = `Hoje é ${now}. Analise estas tarefas GTD e classifique-as. ${tasksTxt} Regras de Saída (JSON Array puro): [{"id": "...", "status": "...", "date": "YYYY-MM-DDTHH:MM", "note": "..."}]. Regras: 1. Se tiver data/hora específica -> 'calendar'. 2. Se citar outra pessoa -> 'waiting'. 3. <2min -> 'do-now'. 4. Vago -> 'someday'. 5. Ref -> 'reference'. 6. Complexo -> 'project'. 7. Padrão -> 'next'.`;
         try {
             // CORREÇÃO: Modelo 1.5
-            const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${config.geminiKey}`, {
+            const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${config.geminiKey}`, {
                 method: 'POST', headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
             });
