@@ -306,8 +306,9 @@
   {
     "id": 1767729804652,
     "text": "Corrigir 13/01 08h",
-    "status": "inbox",
+    "status": "calendar",
     "updatedAt": 1767729804652,
-    "date": "2026-01-13T08:00"
+    "date": "2026-01-13T08:00",
+    "googleEventId": "9nu148funtn0hhl1qpdvt9dn2s"
   }
 ]
