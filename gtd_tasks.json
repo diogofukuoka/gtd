@@ -312,19 +312,15 @@
   {
     "id": 1767730822706,
     "text": "Ver a questao da ajuda de custo do plano da Eloah na EBSERH",
-    "status": "inbox",
+    "status": "project",
     "updatedAt": 1767730822706
   },
   {
     "id": 1767730827285,
     "text": "Corrigir 13/01 08h",
-    "status": "inbox",
-    "updatedAt": 1767730827285
-  },
-  {
-    "id": 1767730833888,
-    "text": "Compra de refil Bom Ar",
-    "status": "inbox",
-    "updatedAt": 1767730833888
+    "status": "calendar",
+    "updatedAt": 1767730827285,
+    "date": "2026-01-13T08:00",
+    "googleEventId": "j5fhg02k780c5ms2ogog98506g"
   }
 ]
