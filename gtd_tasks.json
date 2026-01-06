@@ -296,5 +296,11 @@
     "id": 1767720408834,
     "text": "Corrigir api da IA",
     "updatedAt": 1767720408834
+  },
+  {
+    "id": 1767737839821,
+    "text": "Hospedar todo meu app também no Firebase e testar",
+    "status": "inbox",
+    "updatedAt": 1767737839821
   }
 ]
