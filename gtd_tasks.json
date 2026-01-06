@@ -279,8 +279,10 @@
   {
     "id": 1767720050031,
     "text": "Ver se refil chegou 07/01 às 07h",
-    "status": "inbox",
-    "updatedAt": 1767720050031
+    "status": "calendar",
+    "updatedAt": 1767720050031,
+    "date": "2026-01-07T07:00",
+    "googleEventId": "fvsgp92mpuq65rsaaj9s8gfdbg"
   },
   {
     "id": 1767720086900,
