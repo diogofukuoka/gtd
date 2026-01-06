@@ -163,16 +163,16 @@
     "googleEventId": "9rpaujfli6k3oer2elun8tk5mg"
   },
   {
-    "id": 1767490449861,
-    "text": "Treinar flashcards da Bíblia",
-    "status": "next",
-    "updatedAt": 1767490449861
-  },
-  {
     "id": 1767401556311,
     "text": "Colocar tala, pesos, cadeira, potes, telas etc para vender",
     "status": "next",
     "updatedAt": 1767401556311
+  },
+  {
+    "id": 1767490449861,
+    "text": "Treinar flashcards da Bíblia",
+    "status": "next",
+    "updatedAt": 1767490449861
   },
   {
     "id": 1767490484466,
