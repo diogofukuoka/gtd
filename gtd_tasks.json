@@ -29,12 +29,11 @@
     "googleEventId": "oe18244leqcu1t2e7pstukpa1o"
   },
   {
-    "id": 1767135597434,
-    "text": "Milena arrumar cód Mentorh 05/01/26 07:30",
+    "id": 1767655678389,
+    "text": "Marcar a bateria da Scooter",
     "status": "next",
-    "note": "Delegado: Milena",
-    "date": "2026-01-06T08:00",
-    "googleEventId": "9rpaujfli6k3oer2elun8tk5mg"
+    "updatedAt": 1767655678389,
+    "date": "2026-01-06T06:00"
   },
   {
     "id": 1767527958448,
@@ -143,11 +142,12 @@
     "completedAt": "2026-01-05T18:52:39.300Z"
   },
   {
-    "id": 1767655678389,
-    "text": "Marcar a bateria da Scooter",
+    "id": 1767135597434,
+    "text": "Milena arrumar cód Mentorh 05/01/26 07:30",
     "status": "next",
-    "updatedAt": 1767655678389,
-    "date": "2026-01-06T06:00"
+    "note": "Delegado: Milena",
+    "date": "2026-01-06T08:00",
+    "googleEventId": "9rpaujfli6k3oer2elun8tk5mg"
   },
   {
     "id": 1767490411393,
