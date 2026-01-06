@@ -9,7 +9,7 @@
   {
     "id": 1767614170361,
     "text": "Ver com a Pop pra levar a Scooter",
-    "status": "calendar",
+    "status": "next",
     "updatedAt": 1767614170361,
     "date": "2026-01-06T07:00",
     "googleEventId": "5dqkqk6b5lqvvcdq4tlrrar7p8"
@@ -24,14 +24,14 @@
   {
     "id": 1767135322883,
     "text": "Consultar processo compensação",
-    "status": "calendar",
+    "status": "next",
     "date": "2026-01-06T07:30",
     "googleEventId": "oe18244leqcu1t2e7pstukpa1o"
   },
   {
     "id": 1767135597434,
     "text": "Milena arrumar cód Mentorh 05/01/26 07:30",
-    "status": "calendar",
+    "status": "next",
     "note": "Delegado: Milena",
     "date": "2026-01-06T08:00",
     "googleEventId": "9rpaujfli6k3oer2elun8tk5mg"
