@@ -306,9 +306,9 @@
   {
     "id": 1767729804652,
     "text": "Corrigir 13/01 08h",
-    "status": "calendar",
+    "status": "completed",
     "updatedAt": 1767729804652,
     "date": "2026-01-13T08:00",
-    "googleEventId": "9nu148funtn0hhl1qpdvt9dn2s"
+    "completedAt": "2026-01-06T20:19:02.748Z"
   }
 ]
