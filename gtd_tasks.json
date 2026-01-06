@@ -143,17 +143,17 @@
     "completedAt": "2026-01-05T18:52:39.300Z"
   },
   {
-    "id": 1767490411393,
-    "text": "Estudar a Bíblia para ler a Bíblia pra Je",
-    "status": "next",
-    "updatedAt": 1767490411393
-  },
-  {
     "id": 1767655678389,
     "text": "Marcar a bateria da Scooter",
     "status": "next",
     "updatedAt": 1767655678389,
     "date": "2026-01-06T06:00"
+  },
+  {
+    "id": 1767490411393,
+    "text": "Estudar a Bíblia para ler a Bíblia pra Je",
+    "status": "next",
+    "updatedAt": 1767490411393
   },
   {
     "id": 1767490449861,
