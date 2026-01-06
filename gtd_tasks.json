@@ -168,6 +168,13 @@
     "updatedAt": 1767490484466
   },
   {
+    "id": 1767044479995,
+    "text": "Abrir chamado gastos Copel",
+    "status": "next",
+    "date": "2025-12-30T07:00",
+    "googleEventId": "uv4b9611g3p1o9epvittcefm00"
+  },
+  {
     "id": 1767403045355,
     "text": "Aprender a falar no ritmo do pensamento (NotebookLM)",
     "status": "next",
@@ -179,13 +186,6 @@
     "text": "Estudar o assunto para fazer a elaboração do esboço da pregação",
     "status": "next",
     "updatedAt": 1767480832485
-  },
-  {
-    "id": 1767044479995,
-    "text": "Abrir chamado gastos Copel",
-    "status": "next",
-    "date": "2025-12-30T07:00",
-    "googleEventId": "uv4b9611g3p1o9epvittcefm00"
   },
   {
     "id": 1767400580444,
