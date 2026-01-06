@@ -168,6 +168,13 @@
     "order": 1
   },
   {
+    "id": 1767655678389,
+    "text": "Marcar a bateria da Scooter",
+    "status": "next",
+    "updatedAt": 1767655678389,
+    "date": "2026-01-06T06:00"
+  },
+  {
     "id": 1767480832485,
     "text": "Estudar o assunto para fazer a elaboração do esboço da pregação",
     "status": "next",
@@ -178,13 +185,6 @@
     "text": "Colocar tala, pesos, cadeira, potes, telas etc para vender",
     "status": "next",
     "updatedAt": 1767401556311
-  },
-  {
-    "id": 1767655678389,
-    "text": "Marcar a bateria da Scooter",
-    "status": "next",
-    "updatedAt": 1767655678389,
-    "date": "2026-01-06T06:00"
   },
   {
     "id": 1767400580444,
