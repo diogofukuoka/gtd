@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>GTD Fukuoka (v10.5 SafeTouch)</title>
+    <title>GTD Fukuoka (v10.6 Fix JSON)</title>
     <style>
         :root { --primary: #2c3e50; --accent: #3498db; --success: #27ae60; --warning: #f39c12; --danger: #e74c3c; --google: #4285f4; --gray: #95a5a6; --ai: #8e44ad; --github: #24292e; }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -678,12 +678,16 @@
         if (changed) { if(window.sync) window.sync(); else render(); showToast("Tarefas vencidas movidas para Próximas Ações"); }
     }
 
-    // --- IA / MAGIC (CORRIGIDO: gemini-2.5-flash) ---
+    // --- IA / MAGIC (CORRIGIDO: gemini-1.5-flash e Parsing Melhorado) ---
     function cleanJson(text) {
-        // Tenta encontrar o array JSON dentro da resposta (caso a IA fale antes)
+        // 1. Tenta extrair de bloco de código Markdown (ex: ```json ... ```)
+        const markdownMatch = text.match(/```(?:json)?\s*(\[\s*[\s\S]*?\s*\])\s*```/);
+        if (markdownMatch) return markdownMatch[1];
+
+        // 2. Fallback: Pega do primeiro '[' ao último ']'
         const firstBracket = text.indexOf('[');
         const lastBracket = text.lastIndexOf(']');
-        if(firstBracket > -1 && lastBracket > -1) {
+        if(firstBracket > -1 && lastBracket > firstBracket) {
             return text.substring(firstBracket, lastBracket + 1);
         }
         return text;
@@ -695,10 +699,11 @@
         document.getElementById('loadingText').innerText = "IA Pensando...";
         document.getElementById('loadingOverlay').style.display = 'flex';
         const item = items[idx];
-        const prompt = `Quebre a tarefa "${item.text}" em etapas acionáveis. Retorne APENAS um JSON Array de strings, sem formatação markdown.`;
+        // Prompt reforçado para evitar texto extra
+        const prompt = `Quebre a tarefa "${item.text}" em etapas acionáveis. Retorne APENAS um JSON Array de strings. NÃO use formatação Markdown. NÃO adicione explicações. Exemplo: ["passo 1", "passo 2"]`;
         try {
-            // CORREÇÃO: Modelo 1.5
-            const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${config.geminiKey}`, {
+            // CORREÇÃO: Modelo 1.5-flash
+            const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${config.geminiKey}`, {
                 method: 'POST', headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
             });
@@ -706,13 +711,16 @@
             if (data.error) throw new Error(data.error.message);
             
             let txt = data.candidates[0].content.parts[0].text;
-            txt = cleanJson(txt); // Limpa markdown
+            txt = cleanJson(txt); 
             
             const steps = JSON.parse(txt);
             steps.forEach(step => items.push({ id: Date.now() + Math.random(), text: step, status: 'next', note: `De: ${item.text}`, updatedAt: Date.now() }));
             window.sync();
             showToast("Tarefas criadas!");
-        } catch(e) { alert("Erro IA: " + e.message); }
+        } catch(e) { 
+            console.error(e);
+            alert("Erro IA: " + e.message); 
+        } 
         document.getElementById('loadingOverlay').style.display = 'none';
     }
 
@@ -724,10 +732,11 @@
         document.getElementById('loadingOverlay').style.display = 'flex';
         const tasksTxt = inboxItems.map(i => `- ID:${i.id} | TEXTO: ${i.text}`).join('\n');
         const now = new Date().toISOString();
-        const prompt = `Hoje é ${now}. Analise estas tarefas GTD e classifique-as. ${tasksTxt} Regras de Saída (JSON Array puro): [{"id": "...", "status": "...", "date": "YYYY-MM-DDTHH:MM", "note": "..."}]. Regras: 1. Se tiver data/hora específica -> 'calendar'. 2. Se citar outra pessoa -> 'waiting'. 3. <2min -> 'do-now'. 4. Vago -> 'someday'. 5. Ref -> 'reference'. 6. Complexo -> 'project'. 7. Padrão -> 'next'.`;
+        // Prompt reforçado
+        const prompt = `Hoje é ${now}. Analise estas tarefas GTD e classifique-as. ${tasksTxt} Regras de Saída (JSON Array puro): [{"id": "...", "status": "...", "date": "YYYY-MM-DDTHH:MM", "note": "..."}]. Regras: 1. Se tiver data/hora específica -> 'calendar'. 2. Se citar outra pessoa -> 'waiting'. 3. <2min -> 'do-now'. 4. Vago -> 'someday'. 5. Ref -> 'reference'. 6. Complexo -> 'project'. 7. Padrão -> 'next'. Retorne APENAS o JSON. NÃO use Markdown.`;
         try {
-            // CORREÇÃO: Modelo 1.5
-            const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${config.geminiKey}`, {
+            // CORREÇÃO: Modelo 1.5-flash
+            const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${config.geminiKey}`, {
                 method: 'POST', headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
             });
@@ -735,13 +744,16 @@
             if (data.error) throw new Error(data.error.message);
             
             let txt = data.candidates[0].content.parts[0].text;
-            txt = cleanJson(txt); // Limpa markdown
+            txt = cleanJson(txt);
             
             const decisions = JSON.parse(txt);
             for (const d of decisions) { const item = items.find(i => i.id == d.id); if(item) await changeItemStatus(item, d.status, d.date, d.note); }
             window.sync();
             showToast("Processamento IA Concluído!");
-        } catch(e) { alert("Erro IA: " + e.message); } finally { document.getElementById('loadingOverlay').style.display = 'none'; }
+        } catch(e) { 
+            console.error(e);
+            alert("Erro IA: " + e.message); 
+        } finally { document.getElementById('loadingOverlay').style.display = 'none'; }
     }
 </script>
 
