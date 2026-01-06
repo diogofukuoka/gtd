@@ -156,17 +156,17 @@
     "updatedAt": 1767490411393
   },
   {
-    "id": 1767490449861,
-    "text": "Treinar flashcards da Bíblia",
-    "status": "next",
-    "updatedAt": 1767490449861
-  },
-  {
     "id": 1767044479995,
     "text": "Abrir chamado gastos Copel",
     "status": "next",
     "date": "2025-12-30T07:00",
     "googleEventId": "uv4b9611g3p1o9epvittcefm00"
+  },
+  {
+    "id": 1767490449861,
+    "text": "Treinar flashcards da Bíblia",
+    "status": "next",
+    "updatedAt": 1767490449861
   },
   {
     "id": 1767490484466,
