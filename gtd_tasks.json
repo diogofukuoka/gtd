@@ -244,10 +244,11 @@
     "updatedAt": 1767400465538
   },
   {
-    "id": 1767481303188,
-    "text": "Baixar o arquivo Json das tarefas",
+    "id": 1767655678389,
+    "text": "Marcar a bateria da Scooter",
     "status": "next",
-    "updatedAt": 1767481303188
+    "updatedAt": 1767655678389,
+    "date": "2026-01-06T06:00"
   },
   {
     "id": 1767632590855,
@@ -258,11 +259,10 @@
     "googleEventId": "mc6lgcj973p0jba6if0eatlt94"
   },
   {
-    "id": 1767655678389,
-    "text": "Marcar a bateria da Scooter",
+    "id": 1767481303188,
+    "text": "Baixar o arquivo Json das tarefas",
     "status": "next",
-    "updatedAt": 1767655678389,
-    "date": "2026-01-06T06:00"
+    "updatedAt": 1767481303188
   },
   {
     "id": 1767655879306,
