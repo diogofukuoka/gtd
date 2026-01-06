@@ -165,10 +165,11 @@
   {
     "id": 1767135597434,
     "text": "Milena arrumar cód Mentorh 05/01/26 07:30",
-    "status": "next",
+    "status": "completed",
     "note": "Delegado: Milena",
     "date": "2026-01-06T08:00",
-    "googleEventId": "9rpaujfli6k3oer2elun8tk5mg"
+    "googleEventId": "9rpaujfli6k3oer2elun8tk5mg",
+    "completedAt": "2026-01-06T16:40:52.481Z"
   },
   {
     "id": 1767490449861,
