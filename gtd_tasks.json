@@ -276,5 +276,11 @@
     "text": "Ver se refil chegou 07/01 às 07h",
     "status": "inbox",
     "updatedAt": 1767720050031
+  },
+  {
+    "id": 1767720086900,
+    "text": "Ver se climatizador chegou no dia 13/01 às 7 h",
+    "status": "inbox",
+    "updatedAt": 1767720086900
   }
 ]
