@@ -180,6 +180,13 @@
     "updatedAt": 1767401556311
   },
   {
+    "id": 1767655678389,
+    "text": "Marcar a bateria da Scooter",
+    "status": "next",
+    "updatedAt": 1767655678389,
+    "date": "2026-01-06T06:00"
+  },
+  {
     "id": 1767400580444,
     "text": "Carregar bateria da Scooter",
     "status": "next",
@@ -187,13 +194,6 @@
     "date": "2026-01-03T12:00",
     "googleEventId": "mkdfviumcbegb7chulcvg9pdn4",
     "order": null
-  },
-  {
-    "id": 1767655678389,
-    "text": "Marcar a bateria da Scooter",
-    "status": "next",
-    "updatedAt": 1767655678389,
-    "date": "2026-01-06T06:00"
   },
   {
     "id": 1767044479995,
