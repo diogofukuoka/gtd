@@ -286,5 +286,11 @@
     "id": 1767720408834,
     "text": "Corrigir api da IA",
     "updatedAt": 1767720408834
+  },
+  {
+    "id": 1767801407970,
+    "text": "Colocar na planilha eu gasto com o xadrez",
+    "status": "inbox",
+    "updatedAt": 1767801407970
   }
 ]
