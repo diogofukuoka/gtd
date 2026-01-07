@@ -7,10 +7,12 @@
     "completedAt": "2026-01-04T21:09:08.650Z"
   },
   {
-    "id": 1767737839821,
-    "text": "Hospedar todo meu app também no Firebase e testar",
+    "id": 1767614170361,
+    "text": "Ver com a Pop pra levar a Scooter",
     "status": "next",
-    "updatedAt": 1767737839821
+    "updatedAt": 1767614170361,
+    "date": "2026-01-06T07:00",
+    "googleEventId": "5dqkqk6b5lqvvcdq4tlrrar7p8"
   },
   {
     "id": 1767044479995,
@@ -18,14 +20,6 @@
     "status": "next",
     "date": "2025-12-30T07:00",
     "googleEventId": "uv4b9611g3p1o9epvittcefm00"
-  },
-  {
-    "id": 1767614170361,
-    "text": "Ver com a Pop pra levar a Scooter",
-    "status": "next",
-    "updatedAt": 1767614170361,
-    "date": "2026-01-06T07:00",
-    "googleEventId": "5dqkqk6b5lqvvcdq4tlrrar7p8"
   },
   {
     "id": 1767401556311,
@@ -285,7 +279,7 @@
   {
     "id": 1767720050031,
     "text": "Ver se refil chegou 07/01 às 07h",
-    "status": "calendar",
+    "status": "next",
     "updatedAt": 1767720050031,
     "date": "2026-01-07T07:00",
     "googleEventId": "fvsgp92mpuq65rsaaj9s8gfdbg"
@@ -302,5 +296,11 @@
     "id": 1767720408834,
     "text": "Corrigir api da IA",
     "updatedAt": 1767720408834
+  },
+  {
+    "id": 1767720424796,
+    "text": "Corrigir a agendar depois das perguntas",
+    "status": "next",
+    "updatedAt": 1767720424796
   }
 ]
