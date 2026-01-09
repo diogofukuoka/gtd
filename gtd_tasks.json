@@ -91,7 +91,7 @@
   {
     "id": 1767401612331,
     "text": "Fazer o teste da sacada? 09/01/26 às 07:00",
-    "status": "calendar",
+    "status": "next",
     "updatedAt": 1767401612331,
     "date": "2026-01-09T07:00",
     "googleEventId": "ait71dbfbjnd08lfsbktklfres"
@@ -99,7 +99,7 @@
   {
     "id": 1767401646788,
     "text": "GTD: Ver sobre os pombos no telhado para 9 de Janeiro 2026 às 8 horas da manhã  ",
-    "status": "calendar",
+    "status": "next",
     "updatedAt": 1767401646788,
     "date": "2026-01-09T08:00",
     "googleEventId": "7vjh3am6oebif79pri199j7esg"
@@ -241,7 +241,7 @@
   {
     "id": 1767564031174,
     "text": "Chegaram os produtos do salão? 09/01/26 08:30",
-    "status": "calendar",
+    "status": "next",
     "updatedAt": 1767564031174,
     "date": "2026-01-09T08:30",
     "googleEventId": "ahvb7bd9kf9fig9h2p4folub5g"
